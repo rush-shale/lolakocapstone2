@@ -1,68 +1,73 @@
--- LoLaKo initial schema
+-- phpMyAdmin SQL Dump
+-- version 5.2.1
+-- https://www.phpmyadmin.net/
+--
+-- Host: 127.0.0.1
+-- Generation Time: Sep 17, 2025 at 01:19 AM
+-- Server version: 10.4.32-MariaDB
+-- PHP Version: 8.0.30
 
-CREATE TABLE IF NOT EXISTS users (
-	id INT AUTO_INCREMENT PRIMARY KEY,
-	name VARCHAR(100) NOT NULL,
-	email VARCHAR(150) NOT NULL UNIQUE,
-	password_hash VARCHAR(255) NOT NULL,
-	role ENUM('admin','user') NOT NULL DEFAULT 'user',
-	barangay VARCHAR(120) NULL,
-	active TINYINT(1) NOT NULL DEFAULT 1,
-	created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
-
-CREATE TABLE IF NOT EXISTS seniors (
-	id INT AUTO_INCREMENT PRIMARY KEY,
-	first_name VARCHAR(100) NOT NULL,
-	middle_name VARCHAR(100) NULL,
-	last_name VARCHAR(100) NOT NULL,
-	age INT NOT NULL,
-	barangay VARCHAR(120) NOT NULL,
-	contact VARCHAR(50) NULL,
-	benefits_received TINYINT(1) NOT NULL DEFAULT 0,
-	life_status ENUM('living','deceased') NOT NULL DEFAULT 'living',
-	category ENUM('local','national') NOT NULL DEFAULT 'local',
-	created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
-
--- Barangays master table
-CREATE TABLE IF NOT EXISTS barangays (
-	id INT AUTO_INCREMENT PRIMARY KEY,
-	name VARCHAR(150) NOT NULL UNIQUE,
-	created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
-
--- Optional seed
-INSERT INTO barangays (name) VALUES
-('Mantibugao')
-ON DUPLICATE KEY UPDATE name = VALUES(name);
-
-CREATE TABLE IF NOT EXISTS events (
-	id INT AUTO_INCREMENT PRIMARY KEY,
-	title VARCHAR(200) NOT NULL,
-	description TEXT NULL,
-	event_date DATE NOT NULL,
-	event_time TIME NULL,
-	scope ENUM('admin','barangay') NOT NULL DEFAULT 'barangay',
-	barangay VARCHAR(120) NULL,
-	created_by INT NOT NULL,
-	created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-	FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE CASCADE
-);
-
-CREATE TABLE IF NOT EXISTS attendance (
-	id INT AUTO_INCREMENT PRIMARY KEY,
-	senior_id INT NOT NULL,
-	event_id INT NOT NULL,
-	marked_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-	UNIQUE KEY unique_attendance (senior_id, event_id),
-	FOREIGN KEY (senior_id) REFERENCES seniors(id) ON DELETE CASCADE,
-	FOREIGN KEY (event_id) REFERENCES events(id) ON DELETE CASCADE
-);
-
--- Seed an initial admin user (replace password later)
--- INSERT INTO users (name, email, password_hash, role) VALUES (
---   'OSCA Head', 'admin@example.com', '$2y$10$replace_with_password_hash', 'admin'
--- );
+SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
+START TRANSACTION;
+SET time_zone = "+00:00";
 
 
+/*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
+/*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;
+/*!40101 SET @OLD_COLLATION_CONNECTION=@@COLLATION_CONNECTION */;
+/*!40101 SET NAMES utf8mb4 */;
+
+--
+-- Database: `lolako`
+--
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `users`
+--
+
+CREATE TABLE `users` (
+  `id` int(11) NOT NULL,
+  `name` varchar(100) NOT NULL,
+  `email` varchar(150) NOT NULL,
+  `password_hash` varchar(255) NOT NULL,
+  `role` enum('admin','user') NOT NULL DEFAULT 'user',
+  `barangay` varchar(120) DEFAULT NULL,
+  `active` tinyint(1) NOT NULL DEFAULT 1,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `users`
+--
+
+INSERT INTO `users` (`id`, `name`, `email`, `password_hash`, `role`, `barangay`, `active`, `created_at`) VALUES
+(1, 'OSCA Head', 'admin@example.com', '$2y$10$d6.i4lwkQ/bm5d3r12OqQOaHpJ.1Y1eteoMu9g9jURbWliKgsLmLG', 'admin', NULL, 1, '2025-09-16 11:09:08'),
+(2, 'mantibugao', 'angelodatoycabana11@gmail.com', '$2y$10$B3Nw3Ctay0meeWWNHPhLpeR.GbUjof6mZ/mRD34n67WrABQsOrfva', 'user', 'staff', 1, '2025-09-16 11:13:51');
+
+--
+-- Indexes for dumped tables
+--
+
+--
+-- Indexes for table `users`
+--
+ALTER TABLE `users`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `email` (`email`);
+
+--
+-- AUTO_INCREMENT for dumped tables
+--
+
+--
+-- AUTO_INCREMENT for table `users`
+--
+ALTER TABLE `users`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+COMMIT;
+
+/*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
+/*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
+/*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
