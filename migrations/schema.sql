@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Sep 17, 2025 at 01:19 AM
+-- Generation Time: Sep 17, 2025 at 01:23 AM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.0.30
 
@@ -20,6 +20,93 @@ SET time_zone = "+00:00";
 --
 -- Database: `lolako`
 --
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `attendance`
+--
+
+CREATE TABLE `attendance` (
+  `id` int(11) NOT NULL,
+  `senior_id` int(11) NOT NULL,
+  `event_id` int(11) NOT NULL,
+  `marked_at` timestamp NOT NULL DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `barangays`
+--
+
+CREATE TABLE `barangays` (
+  `id` int(11) NOT NULL,
+  `name` varchar(150) NOT NULL,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `barangays`
+--
+
+INSERT INTO `barangays` (`id`, `name`, `created_at`) VALUES
+(1, 'Mantibugao', '2025-09-16 11:29:19'),
+(2, 'tankulan', '2025-09-16 11:30:13');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `events`
+--
+
+CREATE TABLE `events` (
+  `id` int(11) NOT NULL,
+  `title` varchar(200) NOT NULL,
+  `description` text DEFAULT NULL,
+  `event_date` date NOT NULL,
+  `event_time` time DEFAULT NULL,
+  `scope` enum('admin','barangay') NOT NULL DEFAULT 'barangay',
+  `barangay` varchar(120) DEFAULT NULL,
+  `created_by` int(11) NOT NULL,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `events`
+--
+
+INSERT INTO `events` (`id`, `title`, `description`, `event_date`, `event_time`, `scope`, `barangay`, `created_by`, `created_at`) VALUES
+(1, 'xwe', 'qwe', '2002-10-22', '03:44:00', 'admin', NULL, 1, '2025-09-16 11:15:57'),
+(2, '121', '3131', '2222-12-31', '12:03:00', 'barangay', 'staff', 2, '2025-09-16 11:16:43');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `seniors`
+--
+
+CREATE TABLE `seniors` (
+  `id` int(11) NOT NULL,
+  `first_name` varchar(100) NOT NULL,
+  `middle_name` varchar(100) DEFAULT NULL,
+  `last_name` varchar(100) NOT NULL,
+  `age` int(11) NOT NULL,
+  `barangay` varchar(120) NOT NULL,
+  `contact` varchar(50) DEFAULT NULL,
+  `benefits_received` tinyint(1) NOT NULL DEFAULT 0,
+  `life_status` enum('living','deceased') NOT NULL DEFAULT 'living',
+  `category` enum('local','national') NOT NULL DEFAULT 'local',
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `seniors`
+--
+
+INSERT INTO `seniors` (`id`, `first_name`, `middle_name`, `last_name`, `age`, `barangay`, `contact`, `benefits_received`, `life_status`, `category`, `created_at`) VALUES
+(1, 'John Rushel', 'Rushel', 'Hinoyog', 333, 'tankulan', '909009323', 0, 'living', 'national', '2025-09-16 11:15:02'),
+(2, 'John Rushel', 'Rushel', 'Hinoyog', 333, 'Mantibugao', '909009323', 0, 'living', 'local', '2025-09-16 11:30:24');
 
 -- --------------------------------------------------------
 
@@ -51,6 +138,34 @@ INSERT INTO `users` (`id`, `name`, `email`, `password_hash`, `role`, `barangay`,
 --
 
 --
+-- Indexes for table `attendance`
+--
+ALTER TABLE `attendance`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `unique_attendance` (`senior_id`,`event_id`),
+  ADD KEY `event_id` (`event_id`);
+
+--
+-- Indexes for table `barangays`
+--
+ALTER TABLE `barangays`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `name` (`name`);
+
+--
+-- Indexes for table `events`
+--
+ALTER TABLE `events`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `created_by` (`created_by`);
+
+--
+-- Indexes for table `seniors`
+--
+ALTER TABLE `seniors`
+  ADD PRIMARY KEY (`id`);
+
+--
 -- Indexes for table `users`
 --
 ALTER TABLE `users`
@@ -62,10 +177,51 @@ ALTER TABLE `users`
 --
 
 --
+-- AUTO_INCREMENT for table `attendance`
+--
+ALTER TABLE `attendance`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `barangays`
+--
+ALTER TABLE `barangays`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+
+--
+-- AUTO_INCREMENT for table `events`
+--
+ALTER TABLE `events`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+
+--
+-- AUTO_INCREMENT for table `seniors`
+--
+ALTER TABLE `seniors`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+
+--
 -- AUTO_INCREMENT for table `users`
 --
 ALTER TABLE `users`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+
+--
+-- Constraints for dumped tables
+--
+
+--
+-- Constraints for table `attendance`
+--
+ALTER TABLE `attendance`
+  ADD CONSTRAINT `attendance_ibfk_1` FOREIGN KEY (`senior_id`) REFERENCES `seniors` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `attendance_ibfk_2` FOREIGN KEY (`event_id`) REFERENCES `events` (`id`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `events`
+--
+ALTER TABLE `events`
+  ADD CONSTRAINT `events_ibfk_1` FOREIGN KEY (`created_by`) REFERENCES `users` (`id`) ON DELETE CASCADE;
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
