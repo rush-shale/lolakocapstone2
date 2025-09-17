@@ -1,33 +1,22 @@
 <?php
 require_once __DIR__ . '/../../includes/auth.php';
-require_once __DIR__ . '/../../includes/session.php';
 require_once __DIR__ . '/../../config/db.php';
 
-require_role('admin');
+require_role('user');
 $pdo = get_db_connection();
-start_app_session();
 $user = current_user();
-$message = '';
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-	if (!validate_csrf_token($_POST['csrf'] ?? '')) {
-		$message = 'Invalid session token';
-	} else {
-		$title = trim($_POST['title'] ?? '');
-		$description = trim($_POST['description'] ?? '');
-		$event_date = $_POST['event_date'] ?? '';
-		$event_time = $_POST['event_time'] ?? null;
-		$scope = 'admin';
-		if ($title && $event_date) {
-			$stmt = $pdo->prepare('INSERT INTO events (title, description, event_date, event_time, scope, created_by) VALUES (?,?,?,?,?,?)');
-			$stmt->execute([$title,$description ?: null,$event_date,$event_time ?: null,$scope,$user['id']]);
-			$message = 'Event created';
-		}
-	}
-}
-
-$csrf = generate_csrf_token();
+// Get all OSCA Head events
 $events = $pdo->query("SELECT * FROM events WHERE scope='admin' ORDER BY event_date DESC, id DESC")->fetchAll();
+
+// Separate upcoming and past events
+$upcomingEvents = array_filter($events, function($event) {
+    return strtotime($event['event_date']) >= strtotime('today');
+});
+
+$pastEvents = array_filter($events, function($event) {
+    return strtotime($event['event_date']) < strtotime('today');
+});
 
 ?>
 <!doctype html>
@@ -35,50 +24,37 @@ $events = $pdo->query("SELECT * FROM events WHERE scope='admin' ORDER BY event_d
 <head>
 	<meta charset="utf-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1">
-	<title>Admin Events | LoLaKo</title>
+	<title>OSCA Events | LoLaKo</title>
 	<link rel="stylesheet" href="<?= BASE_URL ?>/assets/styles.css">
 </head>
 <body>
-	<?php include __DIR__ . '/../partials/sidebar_admin.php'; ?>
+	<?php include __DIR__ . '/../partials/sidebar_user.php'; ?>
 	<main class="content">
 		<div class="page-header">
-			<h1>📅 OSCA Head Events</h1>
-			<p>Create and manage events for senior citizens</p>
+			<h1>🏛️ OSCA Head Events</h1>
+			<p>View all events created by the OSCA Head for senior citizens</p>
 		</div>
 		
-		<?php if ($message): ?>
-			<div class="alert alert-success"><?= htmlspecialchars($message) ?></div>
-		<?php endif; ?>
-		
+		<div class="stats">
+			<div class="stat success">
+				<h3>📅 Upcoming Events</h3>
+				<p class="number"><?= count($upcomingEvents) ?></p>
+			</div>
+			<div class="stat">
+				<h3>📋 Total Events</h3>
+				<p class="number"><?= count($events) ?></p>
+			</div>
+			<div class="stat warning">
+				<h3>📜 Past Events</h3>
+				<p class="number"><?= count($pastEvents) ?></p>
+			</div>
+		</div>
+
 		<div class="grid grid-2">
 			<div class="card">
 				<div class="card-header">
-					<h2>➕ Create New Event</h2>
-					<p>Schedule a new event for senior citizens</p>
-				</div>
-				<form method="post">
-					<input type="hidden" name="csrf" value="<?= $csrf ?>">
-					
-					<label>Event Title</label>
-					<input name="title" required placeholder="Enter event title">
-					
-					<label>Description</label>
-					<textarea name="description" rows="3" placeholder="Enter event description (optional)"></textarea>
-					
-					<label>Event Date</label>
-					<input type="date" name="event_date" required>
-					
-					<label>Event Time</label>
-					<input type="time" name="event_time" placeholder="Optional time">
-					
-					<button type="submit">📅 Create Event</button>
-				</form>
-			</div>
-
-			<div class="card">
-				<div class="card-header">
-					<h2>📋 All Events</h2>
-					<p>Manage existing OSCA Head events</p>
+					<h2>📅 Upcoming Events</h2>
+					<p>Events scheduled for the future</p>
 				</div>
 				<div class="table-container">
 					<table>
@@ -88,27 +64,57 @@ $events = $pdo->query("SELECT * FROM events WHERE scope='admin' ORDER BY event_d
 								<th>Date</th>
 								<th>Time</th>
 								<th>Description</th>
-								<th>Actions</th>
 							</tr>
 						</thead>
 						<tbody>
-							<?php foreach ($events as $e): ?>
+							<?php foreach ($upcomingEvents as $e): ?>
 								<tr>
 									<td><strong><?= htmlspecialchars($e['title']) ?></strong></td>
 									<td><?= date('M d, Y', strtotime($e['event_date'])) ?></td>
 									<td><?= $e['event_time'] ? date('g:i A', strtotime($e['event_time'])) : 'All Day' ?></td>
 									<td><?= htmlspecialchars($e['description'] ?: 'No description') ?></td>
-									<td>
-										<span class="badge <?= strtotime($e['event_date']) >= strtotime('today') ? 'badge-success' : 'badge-muted' ?>">
-											<?= strtotime($e['event_date']) >= strtotime('today') ? 'Upcoming' : 'Past' ?>
-										</span>
-									</td>
 								</tr>
 							<?php endforeach; ?>
-							<?php if (empty($events)): ?>
+							<?php if (empty($upcomingEvents)): ?>
 								<tr>
-									<td colspan="5" style="text-align: center; padding: 2rem; color: var(--muted);">
-										No events created yet.
+									<td colspan="4" style="text-align: center; padding: 2rem; color: var(--muted);">
+										No upcoming OSCA events scheduled.
+									</td>
+								</tr>
+							<?php endif; ?>
+						</tbody>
+					</table>
+				</div>
+			</div>
+
+			<div class="card">
+				<div class="card-header">
+					<h2>📜 Past Events</h2>
+					<p>Previously held events</p>
+				</div>
+				<div class="table-container">
+					<table>
+						<thead>
+							<tr>
+								<th>Event</th>
+								<th>Date</th>
+								<th>Time</th>
+								<th>Description</th>
+							</tr>
+						</thead>
+						<tbody>
+							<?php foreach ($pastEvents as $e): ?>
+								<tr>
+									<td><strong><?= htmlspecialchars($e['title']) ?></strong></td>
+									<td><?= date('M d, Y', strtotime($e['event_date'])) ?></td>
+									<td><?= $e['event_time'] ? date('g:i A', strtotime($e['event_time'])) : 'All Day' ?></td>
+									<td><?= htmlspecialchars($e['description'] ?: 'No description') ?></td>
+								</tr>
+							<?php endforeach; ?>
+							<?php if (empty($pastEvents)): ?>
+								<tr>
+									<td colspan="4" style="text-align: center; padding: 2rem; color: var(--muted);">
+										No past OSCA events found.
 									</td>
 								</tr>
 							<?php endif; ?>
@@ -121,7 +127,7 @@ $events = $pdo->query("SELECT * FROM events WHERE scope='admin' ORDER BY event_d
 		<div class="card" style="margin-top: 2rem;">
 			<div class="card-header">
 				<h2>📅 Event Calendar</h2>
-				<p>Visual calendar view of all events</p>
+				<p>Visual calendar view of all OSCA Head events</p>
 			</div>
 			<div class="calendar-container">
 				<div class="calendar-header">
@@ -230,5 +236,3 @@ $events = $pdo->query("SELECT * FROM events WHERE scope='admin' ORDER BY event_d
 	<script src="<?= BASE_URL ?>/assets/app.js"></script>
 </body>
 </html>
-
-
