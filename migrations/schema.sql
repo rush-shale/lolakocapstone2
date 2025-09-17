@@ -3,9 +3,9 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Sep 17, 2025 at 01:23 AM
+-- Generation Time: Sep 17, 2025 at 04:22 AM
 -- Server version: 10.4.32-MariaDB
--- PHP Version: 8.0.30
+-- PHP Version: 8.2.12
 
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 START TRANSACTION;
@@ -52,7 +52,8 @@ CREATE TABLE `barangays` (
 
 INSERT INTO `barangays` (`id`, `name`, `created_at`) VALUES
 (1, 'Mantibugao', '2025-09-16 11:29:19'),
-(2, 'tankulan', '2025-09-16 11:30:13');
+(2, 'tankulan', '2025-09-16 11:30:13'),
+(3, 'lunocan', '2025-09-17 01:34:00');
 
 -- --------------------------------------------------------
 
@@ -78,7 +79,9 @@ CREATE TABLE `events` (
 
 INSERT INTO `events` (`id`, `title`, `description`, `event_date`, `event_time`, `scope`, `barangay`, `created_by`, `created_at`) VALUES
 (1, 'xwe', 'qwe', '2002-10-22', '03:44:00', 'admin', NULL, 1, '2025-09-16 11:15:57'),
-(2, '121', '3131', '2222-12-31', '12:03:00', 'barangay', 'staff', 2, '2025-09-16 11:16:43');
+(2, '121', '3131', '2222-12-31', '12:03:00', 'barangay', 'staff', 2, '2025-09-16 11:16:43'),
+(3, 'release pension', 'sda', '2025-09-24', '10:00:00', 'admin', NULL, 1, '2025-09-17 01:28:31'),
+(4, 'christmas party', 'all seniors must attend', '2025-12-18', '10:00:00', 'admin', NULL, 1, '2025-09-17 01:35:27');
 
 -- --------------------------------------------------------
 
@@ -105,8 +108,11 @@ CREATE TABLE `seniors` (
 --
 
 INSERT INTO `seniors` (`id`, `first_name`, `middle_name`, `last_name`, `age`, `barangay`, `contact`, `benefits_received`, `life_status`, `category`, `created_at`) VALUES
-(1, 'John Rushel', 'Rushel', 'Hinoyog', 333, 'tankulan', '909009323', 0, 'living', 'national', '2025-09-16 11:15:02'),
-(2, 'John Rushel', 'Rushel', 'Hinoyog', 333, 'Mantibugao', '909009323', 0, 'living', 'local', '2025-09-16 11:30:24');
+(1, 'John Rushel', 'Rushel', 'Hinoyog', 333, 'tankulan', '909009323', 1, 'deceased', 'national', '2025-09-16 11:15:02'),
+(2, 'John Rushel', 'Rushel', 'Hinoyog', 333, 'Mantibugao', '909009323', 0, 'living', 'local', '2025-09-16 11:30:24'),
+(3, 'ronel', 'hawdw', 'cinco', 120, 'Mantibugao', NULL, 1, 'living', 'local', '2025-09-17 01:32:38'),
+(4, 'ronel', 'hawdw', 'cinco', 60, 'lunocan', '2', 0, 'living', 'national', '2025-09-17 01:44:45'),
+(5, 'll', 'ad', 'awdw', 61, 'Mantibugao', '3', 0, 'deceased', 'local', '2025-09-17 01:46:33');
 
 -- --------------------------------------------------------
 
@@ -131,7 +137,8 @@ CREATE TABLE `users` (
 
 INSERT INTO `users` (`id`, `name`, `email`, `password_hash`, `role`, `barangay`, `active`, `created_at`) VALUES
 (1, 'OSCA Head', 'admin@example.com', '$2y$10$d6.i4lwkQ/bm5d3r12OqQOaHpJ.1Y1eteoMu9g9jURbWliKgsLmLG', 'admin', NULL, 1, '2025-09-16 11:09:08'),
-(2, 'mantibugao', 'angelodatoycabana11@gmail.com', '$2y$10$B3Nw3Ctay0meeWWNHPhLpeR.GbUjof6mZ/mRD34n67WrABQsOrfva', 'user', 'staff', 1, '2025-09-16 11:13:51');
+(2, 'mantibugao', 'angelodatoycabana11@gmail.com', '$2y$10$B3Nw3Ctay0meeWWNHPhLpeR.GbUjof6mZ/mRD34n67WrABQsOrfva', 'user', 'staff', 1, '2025-09-16 11:13:51'),
+(3, 'Brgy. ALAE', 'anjuuugd@gmail.com', '$2y$10$qHW2wdHj2uCsZFbviwRvwOgOxVhx/Yuv119GuBnsEuqA87/YJyE2S', 'user', 'staff', 1, '2025-09-17 01:38:51');
 
 --
 -- Indexes for dumped tables
@@ -186,25 +193,25 @@ ALTER TABLE `attendance`
 -- AUTO_INCREMENT for table `barangays`
 --
 ALTER TABLE `barangays`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 
 --
 -- AUTO_INCREMENT for table `events`
 --
 ALTER TABLE `events`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
 
 --
 -- AUTO_INCREMENT for table `seniors`
 --
 ALTER TABLE `seniors`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
 
 --
 -- AUTO_INCREMENT for table `users`
 --
 ALTER TABLE `users`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 
 --
 -- Constraints for dumped tables
