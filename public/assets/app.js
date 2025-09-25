@@ -582,6 +582,26 @@ function clearFieldError(e) {
             }, 300);
         }
 
+        // Navigation Dropdown Toggle Function
+        window.toggleDropdown = function(dropdownId) {
+            const dropdown = document.getElementById(dropdownId);
+            const dropdownTrigger = dropdown.previousElementSibling;
+            
+            if (!dropdown || !dropdownTrigger) return;
+            
+            // Close all other dropdowns first
+            document.querySelectorAll('.nav-submenu.active').forEach(menu => {
+                if (menu.id !== dropdownId) {
+                    menu.classList.remove('active');
+                    menu.previousElementSibling.classList.remove('active');
+                }
+            });
+            
+            // Toggle current dropdown
+            dropdown.classList.toggle('active');
+            dropdownTrigger.classList.toggle('active');
+        }
+
         function updateThemeIcons(theme) {
             const themeIcons = document.querySelectorAll('.theme-icon');
             themeIcons.forEach(icon => {

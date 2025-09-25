@@ -9,14 +9,33 @@
 			<span class="nav-icon">📊</span>
 			<span class="nav-text">Dashboard</span>
 		</a>
-		<a href="<?= BASE_URL ?>/admin/seniors.php" class="nav-item">
+		<div class="nav-item nav-dropdown" onclick="toggleDropdown('seniorsDropdown')">
 			<span class="nav-icon">👥</span>
-			<span class="nav-text">All Seniors</span>
-		</a>
-		<a href="<?= BASE_URL ?>/admin/deceased.php" class="nav-item">
-			<span class="nav-icon">💀</span>
-			<span class="nav-text">Deceased Seniors</span>
-		</a>
+			<span class="nav-text">SENIORS</span>
+			<span class="nav-arrow">▼</span>
+		</div>
+		<div class="nav-submenu" id="seniorsDropdown">
+			<a href="<?= BASE_URL ?>/admin/seniors.php" class="nav-subitem">
+				<span class="nav-icon">👥</span>
+				<span class="nav-text">All Seniors</span>
+			</a>
+			<a href="<?= BASE_URL ?>/admin/seniors.php?status=active" class="nav-subitem">
+				<span class="nav-icon">✅</span>
+				<span class="nav-text">Active</span>
+			</a>
+			<a href="<?= BASE_URL ?>/admin/seniors.php?status=inactive" class="nav-subitem">
+				<span class="nav-icon">⏸️</span>
+				<span class="nav-text">Inactive</span>
+			</a>
+			<a href="<?= BASE_URL ?>/admin/deceased.php" class="nav-subitem">
+				<span class="nav-icon">💀</span>
+				<span class="nav-text">Deceased</span>
+			</a>
+			<a href="<?= BASE_URL ?>/admin/seniors.php?status=transferred" class="nav-subitem">
+				<span class="nav-icon">🚚</span>
+				<span class="nav-text">Transferred</span>
+			</a>
+		</div>
 		<a href="<?= BASE_URL ?>/admin/benefits.php" class="nav-item">
 			<span class="nav-icon">🎁</span>
 			<span class="nav-text">Benefits Management</span>

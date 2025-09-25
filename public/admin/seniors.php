@@ -77,6 +77,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 $csrf = generate_csrf_token();
 
+// Get status from URL parameter
+$status = $_GET['status'] ?? 'all';
+
 // Filters
 $life = $_GET['life'] ?? 'all'; // all|living|deceased
 $benefits = $_GET['benefits'] ?? 'all'; // all|received|notyet
@@ -84,17 +87,54 @@ $category = $_GET['category'] ?? 'all'; // all|local|national
 
 $where = [];
 $params = [];
-if ($life === 'living' || $life === 'deceased') { $where[] = 'life_status = ?'; $params[] = $life; }
-if ($benefits === 'received') { $where[] = 'benefits_received = 1'; }
-if ($benefits === 'notyet') { $where[] = 'benefits_received = 0'; }
-if ($category === 'local' || $category === 'national') { $where[] = 'category = ?'; $params[] = $category; }
 
-$sql = 'SELECT * FROM seniors';
-if (!empty($where)) { $sql .= ' WHERE ' . implode(' AND ', $where); }
-$sql .= ' ORDER BY created_at DESC';
-$stmtAll = $pdo->prepare($sql);
-$stmtAll->execute($params);
-$seniors = $stmtAll->fetchAll();
+// Handle different status views
+if ($status === 'active') {
+    // Active seniors: those who have attended events
+    $sql = 'SELECT DISTINCT s.*, COUNT(a.id) as event_count, GROUP_CONCAT(e.title SEPARATOR ", ") as events_attended
+            FROM seniors s
+            LEFT JOIN attendance a ON s.id = a.senior_id
+            LEFT JOIN events e ON a.event_id = e.id
+            WHERE s.life_status = "living"
+            GROUP BY s.id
+            HAVING event_count > 0
+            ORDER BY event_count DESC, s.created_at DESC';
+    $stmtAll = $pdo->prepare($sql);
+    $stmtAll->execute();
+    $seniors = $stmtAll->fetchAll();
+} elseif ($status === 'inactive') {
+    // Inactive seniors: those who have not attended any events
+    $sql = 'SELECT s.*, 0 as event_count, "" as events_attended
+            FROM seniors s
+            LEFT JOIN attendance a ON s.id = a.senior_id
+            WHERE s.life_status = "living" AND a.id IS NULL
+            ORDER BY s.created_at DESC';
+    $stmtAll = $pdo->prepare($sql);
+    $stmtAll->execute();
+    $seniors = $stmtAll->fetchAll();
+} elseif ($status === 'transferred') {
+    // Transferred seniors: those who have moved to another barangay
+    $sql = 'SELECT s.*, 0 as event_count, "" as events_attended
+            FROM seniors s
+            WHERE s.life_status = "living" AND s.category = "national"
+            ORDER BY s.created_at DESC';
+    $stmtAll = $pdo->prepare($sql);
+    $stmtAll->execute();
+    $seniors = $stmtAll->fetchAll();
+} else {
+    // All seniors with regular filters
+    if ($life === 'living' || $life === 'deceased') { $where[] = 'life_status = ?'; $params[] = $life; }
+    if ($benefits === 'received') { $where[] = 'benefits_received = 1'; }
+    if ($benefits === 'notyet') { $where[] = 'benefits_received = 0'; }
+    if ($category === 'local' || $category === 'national') { $where[] = 'category = ?'; $params[] = $category; }
+
+    $sql = 'SELECT *, 0 as event_count, "" as events_attended FROM seniors';
+    if (!empty($where)) { $sql .= ' WHERE ' . implode(' AND ', $where); }
+    $sql .= ' ORDER BY created_at DESC';
+    $stmtAll = $pdo->prepare($sql);
+    $stmtAll->execute($params);
+    $seniors = $stmtAll->fetchAll();
+}
 
 $livingCount = (int)$pdo->query("SELECT COUNT(*) FROM seniors WHERE life_status='living'")->fetchColumn();
 $deceasedCount = (int)$pdo->query("SELECT COUNT(*) FROM seniors WHERE life_status='deceased'")->fetchColumn();
@@ -105,7 +145,7 @@ $deceasedCount = (int)$pdo->query("SELECT COUNT(*) FROM seniors WHERE life_statu
 <head>
 	<meta charset="utf-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1">
-	<title>All Seniors | LoLaKo</title>
+	<title><?= ucfirst($status) ?> Seniors | LoLaKo</title>
 	<link rel="stylesheet" href="<?= BASE_URL ?>/assets/styles.css">
 	<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
 	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -117,8 +157,19 @@ $deceasedCount = (int)$pdo->query("SELECT COUNT(*) FROM seniors WHERE life_statu
 		<div class="page-header animate-fade-in">
 			<div class="page-header-content">
 				<div class="page-title">
-					<h1>👥 All Seniors</h1>
-					<p>Manage senior citizen records, benefits, and categories</p>
+					<?php if ($status === 'active'): ?>
+						<h1>✅ Active Seniors</h1>
+						<p>Seniors who have participated in events and activities</p>
+					<?php elseif ($status === 'inactive'): ?>
+						<h1>⏸️ Inactive Seniors</h1>
+						<p>Seniors who have not attended any events</p>
+					<?php elseif ($status === 'transferred'): ?>
+						<h1>🚚 Transferred Seniors</h1>
+						<p>Seniors who have moved to another place or barangay</p>
+					<?php else: ?>
+						<h1>👥 All Seniors</h1>
+						<p>Manage senior citizen records, benefits, and categories</p>
+					<?php endif; ?>
 				</div>
 				<div class="page-actions">
 					<button class="button primary" onclick="openAddModal()">
@@ -258,12 +309,15 @@ $deceasedCount = (int)$pdo->query("SELECT COUNT(*) FROM seniors WHERE life_statu
 								<th>Category</th>
 								<th>Benefits</th>
 								<th>Status</th>
+								<?php if ($status === 'active'): ?>
+								<th>Events Attended</th>
+								<?php endif; ?>
 								<th>Actions</th>
 							</tr>
 						</thead>
 						<tbody id="seniorsTable">
 							<?php foreach ($seniors as $senior): ?>
-							<tr>
+							<tr onclick="viewSeniorDetails(<?= $senior['id'] ?>)" style="cursor: pointer;">
 								<td>
 									<span class="badge badge-primary">#<?= $senior['id'] ?></span>
 								</td>
@@ -304,8 +358,24 @@ $deceasedCount = (int)$pdo->query("SELECT COUNT(*) FROM seniors WHERE life_statu
 										<?= ucfirst($senior['life_status']) ?>
 									</span>
 								</td>
+								<?php if ($status === 'active'): ?>
 								<td>
-									<div class="action-buttons">
+									<span class="event-count-badge">
+										<i class="fas fa-calendar-check"></i>
+										<?= $senior['event_count'] ?> events
+									</span>
+									<?php if ($senior['events_attended']): ?>
+									<div class="events-list">
+										<small><?= htmlspecialchars(substr($senior['events_attended'], 0, 50)) ?><?= strlen($senior['events_attended']) > 50 ? '...' : '' ?></small>
+									</div>
+									<?php endif; ?>
+								</td>
+								<?php endif; ?>
+								<td>
+									<div class="action-buttons" onclick="event.stopPropagation()">
+										<button class="button small primary" onclick="viewSeniorDetails(<?= $senior['id'] ?>)">
+											<i class="fas fa-eye"></i>
+										</button>
 										<button class="button small secondary" onclick="editSenior(<?= $senior['id'] ?>)">
 											<i class="fas fa-edit"></i>
 										</button>
@@ -562,6 +632,26 @@ $deceasedCount = (int)$pdo->query("SELECT COUNT(*) FROM seniors WHERE life_statu
 		</div>
 	</div>
 
+	<!-- Senior Details Modal -->
+	<div class="modal-overlay" id="seniorDetailsModal">
+		<div class="modal large">
+			<div class="modal-header">
+				<h2 class="modal-title">
+					<i class="fas fa-user"></i>
+					Senior Details
+				</h2>
+				<button class="modal-close" onclick="closeSeniorDetailsModal()">&times;</button>
+			</div>
+			<div class="modal-body" id="seniorDetailsContent">
+				<!-- Content will be loaded via AJAX -->
+				<div class="loading-state">
+					<div class="loading-spinner"></div>
+					<p>Loading senior details...</p>
+				</div>
+			</div>
+		</div>
+	</div>
+
 	<script src="<?= BASE_URL ?>/assets/app.js"></script>
 	<script>
 		// Initialize theme and functionality on page load
@@ -597,6 +687,27 @@ $deceasedCount = (int)$pdo->query("SELECT COUNT(*) FROM seniors WHERE life_statu
 
 		function closeDeleteModal() {
 			document.getElementById('deleteModal').classList.remove('active');
+			document.body.style.overflow = '';
+		}
+
+		function viewSeniorDetails(id) {
+			document.getElementById('seniorDetailsModal').classList.add('active');
+			document.body.style.overflow = 'hidden';
+			
+			// Load senior details via AJAX
+			fetch(`senior_details.php?id=${id}`)
+				.then(response => response.text())
+				.then(html => {
+					document.getElementById('seniorDetailsContent').innerHTML = html;
+				})
+				.catch(error => {
+					document.getElementById('seniorDetailsContent').innerHTML = 
+						'<div class="error-state"><p>Error loading senior details. Please try again.</p></div>';
+				});
+		}
+
+		function closeSeniorDetailsModal() {
+			document.getElementById('seniorDetailsModal').classList.remove('active');
 			document.body.style.overflow = '';
 		}
 
