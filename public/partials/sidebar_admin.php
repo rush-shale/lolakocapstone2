@@ -1,79 +1,83 @@
-<?php $user = current_user(); ?>
+<?php 
+$user = current_user(); 
+$current_page = basename($_SERVER['PHP_SELF']);
+?>
+
 <aside class="sidebar">
-	<div class="brand">
-		<span style="font-size: 1.5rem; margin-right: 0.5rem;">🏛️</span>
-		LoLaKo
+	<div class="sidebar-header">
+		<a href="<?= BASE_URL ?>/admin/dashboard.php" class="sidebar-brand">
+			<div class="sidebar-logo">🏛️</div>
+			<div class="sidebar-title">SeniorCare Admin</div>
+		</a>
 	</div>
-	<nav>
-		<a href="<?= BASE_URL ?>/admin/dashboard.php" class="nav-item">
-			<span class="nav-icon">📊</span>
-			<span class="nav-text">Dashboard</span>
-		</a>
-		<div class="nav-item nav-dropdown" onclick="toggleDropdown('seniorsDropdown')">
-			<span class="nav-icon">👥</span>
-			<span class="nav-text">SENIORS</span>
-			<span class="nav-arrow">▼</span>
+	
+	<nav class="sidebar-nav">
+		<div class="nav-item">
+			<a href="<?= BASE_URL ?>/admin/dashboard.php" class="nav-link <?= $current_page === 'dashboard.php' ? 'active' : '' ?>">
+				<span class="nav-icon">📊</span>
+				<span>Dashboard</span>
+			</a>
 		</div>
-		<div class="nav-submenu" id="seniorsDropdown">
-			<a href="<?= BASE_URL ?>/admin/seniors.php" class="nav-subitem">
+		
+		<div class="nav-item">
+			<a href="<?= BASE_URL ?>/admin/events.php" class="nav-link <?= $current_page === 'events.php' ? 'active' : '' ?>">
+				<span class="nav-icon">📅</span>
+				<span>Events Management</span>
+			</a>
+		</div>
+		
+		<div class="nav-item">
+			<a href="<?= BASE_URL ?>/admin/seniors.php" class="nav-link <?= $current_page === 'seniors.php' ? 'active' : '' ?>">
 				<span class="nav-icon">👥</span>
-				<span class="nav-text">All Seniors</span>
-			</a>
-			<a href="<?= BASE_URL ?>/admin/seniors.php?status=active" class="nav-subitem">
-				<span class="nav-icon">✅</span>
-				<span class="nav-text">Active</span>
-			</a>
-			<a href="<?= BASE_URL ?>/admin/seniors.php?status=inactive" class="nav-subitem">
-				<span class="nav-icon">⏸️</span>
-				<span class="nav-text">Inactive</span>
-			</a>
-			<a href="<?= BASE_URL ?>/admin/deceased.php" class="nav-subitem">
-				<span class="nav-icon">💀</span>
-				<span class="nav-text">Deceased</span>
-			</a>
-			<a href="<?= BASE_URL ?>/admin/seniors.php?status=transferred" class="nav-subitem">
-				<span class="nav-icon">🚚</span>
-				<span class="nav-text">Transferred</span>
+				<span>Senior Citizens</span>
 			</a>
 		</div>
-		<a href="<?= BASE_URL ?>/admin/benefits.php" class="nav-item">
-			<span class="nav-icon">🎁</span>
-			<span class="nav-text">Benefits Management</span>
-		</a>
-		<a href="<?= BASE_URL ?>/admin/events.php" class="nav-item">
-			<span class="nav-icon">📅</span>
-			<span class="nav-text">Events</span>
-		</a>
-		<a href="<?= BASE_URL ?>/admin/senior_id.php" class="nav-item">
-			<span class="nav-icon">🆔</span>
-			<span class="nav-text">Generate ID</span>
-		</a>
-		<a href="<?= BASE_URL ?>/admin/barangays.php" class="nav-item">
-			<span class="nav-icon">🏘️</span>
-			<span class="nav-text">Barangays</span>
-		</a>
-		<a href="<?= BASE_URL ?>/admin/users.php" class="nav-item">
-			<span class="nav-icon">👤</span>
-			<span class="nav-text">Users</span>
-		</a>
-		<a href="<?= BASE_URL ?>/admin/reports.php" class="nav-item">
-			<span class="nav-icon">📈</span>
-			<span class="nav-text">Reports</span>
-		</a>
+		
+		<div class="nav-item">
+			<a href="#" class="nav-link" onclick="openAddModal()">
+				<span class="nav-icon">📝</span>
+				<span>Registration</span>
+			</a>
+		</div>
+		
+		<div class="nav-item">
+			<a href="<?= BASE_URL ?>/admin/benefits.php" class="nav-link <?= $current_page === 'benefits.php' ? 'active' : '' ?>">
+				<span class="nav-icon">🎁</span>
+				<span>Benefits</span>
+			</a>
+		</div>
+		
+		<div class="nav-item">
+			<a href="<?= BASE_URL ?>/admin/barangays.php" class="nav-link <?= $current_page === 'barangays.php' ? 'active' : '' ?>">
+				<span class="nav-icon">🏘️</span>
+				<span>Barangays</span>
+			</a>
+		</div>
+		
+		<div class="nav-item">
+			<a href="<?= BASE_URL ?>/admin/users.php" class="nav-link <?= $current_page === 'users.php' ? 'active' : '' ?>">
+				<span class="nav-icon">👤</span>
+				<span>User Management</span>
+			</a>
+		</div>
+		
+		<div class="nav-item">
+			<a href="<?= BASE_URL ?>/admin/reports.php" class="nav-link <?= $current_page === 'reports.php' ? 'active' : '' ?>">
+				<span class="nav-icon">📈</span>
+				<span>Reports & Analytics</span>
+			</a>
+		</div>
 	</nav>
+	
 	<div class="user">
 		<div class="user-info">
 			<div class="user-avatar">👨‍💼</div>
 			<div class="user-details">
 				<span class="user-name"><?= htmlspecialchars($user['name']) ?></span>
-				<span class="user-role">Administrator</span>
+				<span class="user-role">System Administrator</span>
 			</div>
 		</div>
 		<div class="user-actions">
-			<button class="theme-toggle" onclick="toggleTheme()" title="Toggle Dark Mode">
-				<span class="theme-icon">🌙</span>
-				<span class="theme-text">Dark Mode</span>
-			</button>
 			<a class="logout" href="<?= BASE_URL ?>/logout.php">
 				<span>🚪</span>
 				<span>Logout</span>
@@ -81,5 +85,3 @@
 		</div>
 	</div>
 </aside>
-
-

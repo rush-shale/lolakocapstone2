@@ -25,15 +25,16 @@ $recentPastEvents = $recentPast->fetchAll();
 <head>
 	<meta charset="utf-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1">
-	<title>Staff Dashboard | LoLaKo</title>
-	<link rel="stylesheet" href="<?= BASE_URL ?>/assets/styles.css">
+	<title>Staff Dashboard | SeniorCare Information System</title>
+	<link rel="stylesheet" href="<?= BASE_URL ?>/assets/government-portal.css">
+	<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
 </head>
 <body>
 	<?php include __DIR__ . '/../partials/sidebar_user.php'; ?>
 	<main class="content">
 		<div class="page-header">
 			<h1>Welcome back, <?= htmlspecialchars($user['name']) ?></h1>
-			<p>Manage your barangay's senior citizen activities and events</p>
+			<p>SeniorCare Information System - Staff Portal for <?= htmlspecialchars($user['barangay']) ?></p>
 		</div>
 		
 		<div class="stats">

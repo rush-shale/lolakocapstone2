@@ -40,45 +40,35 @@ $barangays = $pdo->query('SELECT * FROM barangays ORDER BY name ASC')->fetchAll(
 <head>
 	<meta charset="utf-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1">
-	<title>Barangays Management | LoLaKo</title>
-	<link rel="stylesheet" href="<?= BASE_URL ?>/assets/styles.css">
+	<title>Barangays Management | SeniorCare Information System</title>
+	<link rel="stylesheet" href="<?= BASE_URL ?>/assets/government-portal.css">
 	<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
 	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
 	<?php include __DIR__ . '/../partials/sidebar_admin.php'; ?>
-	<main class="content">
-		<!-- Page Header -->
-		<div class="page-header animate-fade-in">
-			<div class="page-header-content">
-				<div class="page-title">
-					<h1>🏘️ Barangays Management</h1>
-					<p>Manage barangay information and locations</p>
-				</div>
-				<div class="page-actions">
-					<button class="button primary" onclick="openAddModal()">
-						<i class="fas fa-plus"></i>
-						Add Barangay
-					</button>
-				</div>
-			</div>
-		</div>
+	<main class="main-content">
+		<header class="content-header">
+			<h1 class="content-title">Barangays Management</h1>
+			<p class="content-subtitle">Manage barangay information and locations</p>
+		</header>
+		
+		<div class="content-body">
 
-		<!-- Alert Messages -->
-		<?php if ($message): ?>
-		<div class="alert alert-success animate-fade-in">
-			<div class="alert-icon">
-				<i class="fas fa-check-circle"></i>
+			<?php if ($message): ?>
+			<div class="alert alert-success animate-fade-in">
+				<div class="alert-icon">
+					<i class="fas fa-check-circle"></i>
+				</div>
+				<div class="alert-content">
+					<strong>Success!</strong>
+					<p><?= htmlspecialchars($message) ?></p>
+				</div>
 			</div>
-			<div class="alert-content">
-				<strong>Success!</strong>
-				<p><?= htmlspecialchars($message) ?></p>
-			</div>
-		</div>
-		<?php endif; ?>
+			<?php endif; ?>
 
-		<!-- Statistics Cards -->
-		<div class="stats animate-fade-in">
+			<!-- Statistics Cards -->
+			<div class="stats animate-fade-in">
 			<div class="stat">
 				<div class="stat-icon">
 					<i class="fas fa-map-marker-alt"></i>
@@ -106,22 +96,26 @@ $barangays = $pdo->query('SELECT * FROM barangays ORDER BY name ASC')->fetchAll(
 					<p class="number">100%</p>
 				</div>
 			</div>
-		</div>
+			</div>
 
-		<!-- Barangays List -->
-		<div class="card animate-fade-in">
-			<div class="card-header">
-				<h2>
-					<i class="fas fa-list"></i>
-					All Barangays
-				</h2>
-				<div class="card-actions">
-					<div class="search-container">
-						<span class="search-icon">🔍</span>
-						<input type="text" placeholder="Search barangays..." id="searchBarangays">
+			<!-- Barangays List -->
+			<div class="card animate-fade-in">
+				<div class="card-header">
+					<h2 class="card-title">
+						<i class="fas fa-list"></i>
+						All Barangays
+					</h2>
+					<div class="card-actions">
+						<button class="button primary" onclick="openAddModal()">
+							<i class="fas fa-plus"></i>
+							Add Barangay
+						</button>
+						<div class="search-container">
+							<span class="search-icon">🔍</span>
+							<input type="text" placeholder="Search barangays..." id="searchBarangays">
+						</div>
 					</div>
 				</div>
-			</div>
 			<div class="card-body">
 				<?php if (!empty($barangays)): ?>
 				<div class="table-container">
@@ -179,6 +173,7 @@ $barangays = $pdo->query('SELECT * FROM barangays ORDER BY name ASC')->fetchAll(
 					</button>
 				</div>
 				<?php endif; ?>
+				</div>
 			</div>
 		</div>
 	</main>
@@ -262,17 +257,10 @@ $barangays = $pdo->query('SELECT * FROM barangays ORDER BY name ASC')->fetchAll(
 
 	<script src="<?= BASE_URL ?>/assets/app.js"></script>
 	<script>
-		// Initialize theme on page load
+		// Initialize functionality on page load
 		document.addEventListener('DOMContentLoaded', function() {
-			initializeTheme();
 			initializeSearch();
 		});
-
-		// Theme functionality
-		function initializeTheme() {
-			const savedTheme = localStorage.getItem('theme') || 'light';
-			document.documentElement.setAttribute('data-theme', savedTheme);
-		}
 
 		// Modal functions
 		function openAddModal() {

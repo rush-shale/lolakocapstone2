@@ -22,147 +22,73 @@ $csrf = generate_csrf_token();
 <head>
 	<meta charset="utf-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1">
-	<title>LoLaKo | Senior Citizen Management System</title>
-	<link rel="stylesheet" href="<?= BASE_URL ?>/assets/styles.css">
+	<title>SeniorCare Information System | Official Portal</title>
+	<link rel="stylesheet" href="<?= BASE_URL ?>/assets/government-portal.css">
 	<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
-	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
-<body class="auth">
-	<!-- Animated Background -->
-	<div class="auth-background">
-		<div class="floating-shapes">
-			<div class="shape shape-1"></div>
-			<div class="shape shape-2"></div>
-			<div class="shape shape-3"></div>
-			<div class="shape shape-4"></div>
-			<div class="shape shape-5"></div>
-		</div>
-	</div>
-
-	<!-- Dark Mode Toggle -->
-	<div class="theme-toggle-container">
-		<button class="theme-toggle-btn" onclick="toggleTheme()" title="Toggle Dark Mode">
-			<span class="theme-icon">🌙</span>
-		</button>
-	</div>
-
-	<!-- Main Login Card -->
-	<div class="auth-container">
-		<div class="auth-card">
-			<!-- Header Section -->
-			<div class="auth-header">
-				<div class="auth-logo">
-					<div class="logo-icon">
-						<i class="fas fa-building"></i>
-					</div>
-					<h1>LoLaKo</h1>
-					<p class="auth-subtitle">Senior Citizen Management System</p>
+<body>
+	<div class="login-container">
+		<!-- Government Header -->
+		<div class="login-header">
+			<div class="login-header-content">
+				<div class="login-logo">🏛️</div>
+				<div>
+					<div class="login-title">SeniorCare Information System</div>
+					<div class="login-subtitle">Office of Senior Citizens Affairs - Official Portal</div>
 				</div>
 			</div>
-
-			<!-- Error Alert -->
-			<?php if ($error): ?>
-				<div class="alert alert-error animate-slide-in">
-					<div class="alert-icon">
-						<i class="fas fa-exclamation-triangle"></i>
-					</div>
-					<div class="alert-content">
-						<strong>Login Failed</strong>
-						<p><?= htmlspecialchars($error) ?></p>
-					</div>
-				</div>
-			<?php endif; ?>
-
-			<!-- Login Form -->
-			<form method="post" action="<?= BASE_URL ?>/login.php" class="auth-form">
-				<input type="hidden" name="csrf" value="<?= $csrf ?>">
+		</div>
+		
+		<!-- Login Form -->
+		<div class="login-form-container">
+			<div class="login-form-card">
+				<h2>System Access Portal</h2>
+				<p class="text-center text-muted mb-6">Enter your credentials to access the system</p>
 				
-				<div class="form-group">
-					<label for="email" class="form-label">
-						<i class="fas fa-envelope"></i>
-						Email Address
-					</label>
-					<input 
-						type="email" 
-						name="email" 
-						id="email"
-						class="form-input" 
-						placeholder="Enter your email address"
-						required
-						autocomplete="email"
-					>
-					<div class="input-focus-line"></div>
-				</div>
-
-				<div class="form-group">
-					<label for="password" class="form-label">
-						<i class="fas fa-lock"></i>
-						Password
-					</label>
-					<div class="password-input-wrapper">
-						<input 
-							type="password" 
-							name="password" 
-							id="password"
-							class="form-input" 
-							placeholder="Enter your password"
-							required
-							autocomplete="current-password"
-						>
-						<button type="button" class="password-toggle" onclick="togglePassword()">
-							<i class="fas fa-eye" id="password-icon"></i>
+				<?php if ($error): ?>
+					<div class="alert alert-danger">
+						<strong>⚠️ Access Denied:</strong> <?= htmlspecialchars($error) ?>
+					</div>
+				<?php endif; ?>
+				
+				<form method="post" action="<?= BASE_URL ?>/login.php" class="login-form">
+					<input type="hidden" name="csrf" value="<?= $csrf ?>">
+					
+					<div class="form-group">
+						<label for="email" class="form-label">📧 Username / Email Address</label>
+						<input type="email" id="email" name="email" class="form-input" required placeholder="Enter your official email address">
+					</div>
+					
+					<div class="form-group">
+						<label for="password" class="form-label">🔒 Password</label>
+						<input type="password" id="password" name="password" class="form-input" required placeholder="Enter your secure password">
+					</div>
+					
+					<div class="form-group">
+						<button type="submit" class="btn btn-primary btn-lg btn-full">
+							🚀 Access System
 						</button>
 					</div>
-					<div class="input-focus-line"></div>
-				</div>
-
-				<div class="form-options">
-					<label class="checkbox-wrapper">
-						<input type="checkbox" name="remember" id="remember">
-						<span class="checkmark"></span>
-						<span class="checkbox-label">Remember me</span>
-					</label>
-					<a href="#" class="forgot-password">Forgot Password?</a>
-				</div>
-
-				<button type="submit" class="auth-button">
-					<span class="button-text">Sign In</span>
-					<div class="button-loading">
-						<i class="fas fa-spinner fa-spin"></i>
+					
+					<div class="text-center">
+						<a href="#" onclick="alert('Contact system administrator for password reset')" class="text-muted">
+							🔑 Forgot Password?
+						</a>
 					</div>
-					<div class="button-ripple"></div>
-				</button>
-			</form>
-
-			<!-- Footer -->
-			<div class="auth-footer">
-				<p>&copy; 2024 LoLaKo. All rights reserved.</p>
-				<p class="auth-version">Version 2.0.0</p>
+				</form>
 			</div>
 		</div>
-
-		<!-- Features Preview -->
-		<div class="auth-features">
-			<div class="feature-card">
-				<div class="feature-icon">
-					<i class="fas fa-users"></i>
+		
+		<!-- Government Footer -->
+		<div class="gov-footer">
+			<div class="gov-footer-content">
+				<p>&copy; 2025 Department of Social Services - Republic of the Philippines</p>
+				<p>SeniorCare Information System - Official Government Portal</p>
+				<div class="gov-footer-links">
+					<a href="#" onclick="alert('Technical Support: (02) 123-4567')">🆘 Technical Support</a>
+					<a href="#" onclick="alert('Unauthorized access is punishable under Republic Act 10175')">⚖️ Security Notice</a>
+					<a href="#" onclick="alert('Data Privacy Act of 2012 Compliance')">🔒 Privacy Policy</a>
 				</div>
-				<h3>Senior Management</h3>
-				<p>Comprehensive senior citizen database management</p>
-			</div>
-			<div class="feature-card">
-				<div class="feature-icon">
-					<i class="fas fa-calendar-alt"></i>
-				</div>
-				<h3>Event Planning</h3>
-				<p>Organize and manage senior citizen events</p>
-			</div>
-			<div class="feature-card">
-				<div class="feature-icon">
-					<i class="fas fa-chart-line"></i>
-				</div>
-				<h3>Analytics</h3>
-				<p>Track and analyze senior citizen data</p>
 			</div>
 		</div>
 	</div>
@@ -229,33 +155,7 @@ $csrf = generate_csrf_token();
 			setTimeout(() => {
 				authCard.classList.add('animate-fade-in');
 			}, 100);
-			
-			// Initialize theme
-			initializeTheme();
 		});
-
-		// Theme functionality
-		function initializeTheme() {
-			const savedTheme = localStorage.getItem('theme') || 'light';
-			document.documentElement.setAttribute('data-theme', savedTheme);
-			updateThemeIcon(savedTheme);
-		}
-
-		function toggleTheme() {
-			const currentTheme = document.documentElement.getAttribute('data-theme');
-			const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
-			
-			document.documentElement.setAttribute('data-theme', newTheme);
-			localStorage.setItem('theme', newTheme);
-			updateThemeIcon(newTheme);
-		}
-
-		function updateThemeIcon(theme) {
-			const themeIcon = document.querySelector('.theme-icon');
-			if (themeIcon) {
-				themeIcon.textContent = theme === 'dark' ? '☀️' : '🌙';
-			}
-		}
 	</script>
 </body>
 </html>

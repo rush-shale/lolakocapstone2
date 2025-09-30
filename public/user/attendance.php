@@ -90,39 +90,35 @@ $csrf = generate_csrf_token();
 <head>
 	<meta charset="utf-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1">
-	<title>Attendance Management | LoLaKo</title>
-	<link rel="stylesheet" href="<?= BASE_URL ?>/assets/styles.css">
+	<title>Attendance Management | SeniorCare Information System</title>
+	<link rel="stylesheet" href="<?= BASE_URL ?>/assets/government-portal.css">
 	<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
 	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
 	<?php include __DIR__ . '/../partials/sidebar_user.php'; ?>
-	<main class="content">
-		<!-- Page Header -->
-		<div class="page-header animate-fade-in">
-			<div class="page-header-content">
-				<div class="page-title">
-					<h1>📅 Attendance Management</h1>
-					<p>Mark attendance and track active seniors in <?= htmlspecialchars($user['barangay']) ?></p>
+	<main class="main-content">
+		<header class="content-header">
+			<h1 class="content-title">Attendance Management</h1>
+			<p class="content-subtitle">Mark attendance and track active seniors in <?= htmlspecialchars($user['barangay']) ?></p>
+		</header>
+		
+		<div class="content-body">
+
+			<?php if ($message): ?>
+			<div class="alert alert-success animate-fade-in">
+				<div class="alert-icon">
+					<i class="fas fa-check-circle"></i>
+				</div>
+				<div class="alert-content">
+					<strong>Success!</strong>
+					<p><?= htmlspecialchars($message) ?></p>
 				</div>
 			</div>
-		</div>
+			<?php endif; ?>
 
-		<!-- Alert Messages -->
-		<?php if ($message): ?>
-		<div class="alert alert-success animate-fade-in">
-			<div class="alert-icon">
-				<i class="fas fa-check-circle"></i>
-			</div>
-			<div class="alert-content">
-				<strong>Success!</strong>
-				<p><?= htmlspecialchars($message) ?></p>
-			</div>
-		</div>
-		<?php endif; ?>
-
-		<!-- Statistics Cards -->
-		<div class="stats animate-fade-in">
+			<!-- Statistics Cards -->
+			<div class="stats animate-fade-in">
 			<div class="stat success">
 				<div class="stat-icon">
 					<i class="fas fa-users"></i>
@@ -159,10 +155,10 @@ $csrf = generate_csrf_token();
 					<p class="number"><?= count($attendanceHistory) ?></p>
 				</div>
 			</div>
-		</div>
+			</div>
 
-		<!-- Main Content Grid -->
-		<div class="grid grid-2 animate-fade-in">
+			<!-- Main Content Grid -->
+			<div class="grid grid-2 animate-fade-in">
 			<!-- Mark Attendance Card -->
 			<div class="card">
 				<div class="card-header">
@@ -267,10 +263,10 @@ $csrf = generate_csrf_token();
 					<?php endif; ?>
 				</div>
 			</div>
-		</div>
+			</div>
 
-		<!-- Active Seniors Section -->
-		<div class="card animate-fade-in">
+			<!-- Active Seniors Section -->
+			<div class="card animate-fade-in">
 			<div class="card-header">
 				<h2>
 					<i class="fas fa-star"></i>
@@ -319,10 +315,10 @@ $csrf = generate_csrf_token();
 				</div>
 				<?php endif; ?>
 			</div>
-		</div>
+			</div>
 
-		<!-- Recent Attendance History -->
-		<div class="card animate-fade-in">
+			<!-- Recent Attendance History -->
+			<div class="card animate-fade-in">
 			<div class="card-header">
 				<h2>
 					<i class="fas fa-history"></i>
@@ -382,21 +378,16 @@ $csrf = generate_csrf_token();
 				</div>
 				<?php endif; ?>
 			</div>
+			</div>
 		</div>
 	</main>
 
 	<script src="<?= BASE_URL ?>/assets/app.js"></script>
 	<script>
-		// Initialize theme and functionality on page load
+		// Initialize functionality on page load
 		document.addEventListener('DOMContentLoaded', function() {
-			initializeTheme();
+			// Page initialization code can go here
 		});
-
-		// Theme functionality
-		function initializeTheme() {
-			const savedTheme = localStorage.getItem('theme') || 'light';
-			document.documentElement.setAttribute('data-theme', savedTheme);
-		}
 	</script>
 </body>
 </html>

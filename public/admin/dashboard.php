@@ -114,8 +114,8 @@ $user = current_user();
 <head>
 	<meta charset="utf-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1">
-	<title>Admin Dashboard | LoLaKo</title>
-	<link rel="stylesheet" href="<?= BASE_URL ?>/assets/styles.css">
+	<title>Admin Dashboard | SeniorCare Information System</title>
+	<link rel="stylesheet" href="<?= BASE_URL ?>/assets/government-portal.css">
 	<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
 	<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
@@ -124,7 +124,7 @@ $user = current_user();
 	<main class="content">
 		<div class="page-header animate-fade-in">
 			<h1>Welcome back, <?= htmlspecialchars($user['name']) ?></h1>
-			<p>Here's an overview of your senior citizen management system</p>
+			<p>SeniorCare Information System - Administrative Dashboard</p>
 		</div>
 		
 

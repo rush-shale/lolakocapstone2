@@ -19,32 +19,27 @@ foreach ($stmt as $row) { $byBarangay[$row['barangay']][] = $row; }
 <head>
 	<meta charset="utf-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1">
-	<title>Barangays & Seniors | LoLaKo</title>
-	<link rel="stylesheet" href="<?= BASE_URL ?>/assets/styles.css">
+	<title>Barangays & Seniors | SeniorCare Information System</title>
+	<link rel="stylesheet" href="<?= BASE_URL ?>/assets/government-portal.css">
 	<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
 	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
 	<?php include __DIR__ . '/../partials/sidebar_user.php'; ?>
-	<main class="content">
-		<!-- Page Header -->
-		<div class="page-header animate-fade-in">
-			<div class="page-header-content">
-				<div class="page-title">
-					<h1>🏘️ Barangays & Seniors</h1>
-					<p>View seniors organized by barangay location</p>
-				</div>
-				<div class="page-actions">
-					<div class="search-container">
-						<span class="search-icon">🔍</span>
-						<input type="text" placeholder="Search barangays or seniors..." id="searchInput">
-					</div>
-				</div>
+	<main class="main-content">
+		<header class="content-header">
+			<h1 class="content-title">Barangays & Seniors</h1>
+			<p class="content-subtitle">View seniors organized by barangay location</p>
+		</header>
+		
+		<div class="content-body">
+			<div class="search-container">
+				<span class="search-icon">🔍</span>
+				<input type="text" placeholder="Search barangays or seniors..." id="searchInput">
 			</div>
-		</div>
 
-		<!-- Statistics Cards -->
-		<div class="stats animate-fade-in">
+			<!-- Statistics Cards -->
+			<div class="stats animate-fade-in">
 			<div class="stat">
 				<div class="stat-icon">
 					<i class="fas fa-map-marker-alt"></i>
@@ -72,10 +67,10 @@ foreach ($stmt as $row) { $byBarangay[$row['barangay']][] = $row; }
 					<p class="number"><?= count(array_filter($byBarangay, function($seniors) { return !empty($seniors); })) ?>/<?= count($barangays) ?></p>
 				</div>
 			</div>
-		</div>
+			</div>
 
-		<!-- Barangays Grid -->
-		<div class="barangays-grid animate-fade-in" id="barangaysGrid">
+			<!-- Barangays Grid -->
+			<div class="barangays-grid animate-fade-in" id="barangaysGrid">
 			<?php foreach ($barangays as $index => $barangay): ?>
 			<div class="barangay-card" data-barangay="<?= strtolower(htmlspecialchars($barangay['name'])) ?>">
 				<div class="barangay-card-header">
@@ -124,33 +119,27 @@ foreach ($stmt as $row) { $byBarangay[$row['barangay']][] = $row; }
 				</div>
 			</div>
 			<?php endforeach; ?>
-		</div>
-
-		<?php if (empty($barangays)): ?>
-		<div class="empty-state">
-			<div class="empty-icon">
-				<i class="fas fa-map-marker-alt"></i>
 			</div>
-			<h3>No Barangays Found</h3>
-			<p>There are no barangays registered in the system yet.</p>
+
+			<?php if (empty($barangays)): ?>
+			<div class="empty-state">
+				<div class="empty-icon">
+					<i class="fas fa-map-marker-alt"></i>
+				</div>
+				<h3>No Barangays Found</h3>
+				<p>There are no barangays registered in the system yet.</p>
+			</div>
+			<?php endif; ?>
 		</div>
-		<?php endif; ?>
 	</main>
 
 	<script src="<?= BASE_URL ?>/assets/app.js"></script>
 	<script>
-		// Initialize theme and functionality on page load
+		// Initialize functionality on page load
 		document.addEventListener('DOMContentLoaded', function() {
-			initializeTheme();
 			initializeSearch();
 			initializeBarangayCards();
 		});
-
-		// Theme functionality
-		function initializeTheme() {
-			const savedTheme = localStorage.getItem('theme') || 'light';
-			document.documentElement.setAttribute('data-theme', savedTheme);
-		}
 
 		// Search functionality
 		function initializeSearch() {

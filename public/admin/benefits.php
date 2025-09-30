@@ -53,50 +53,78 @@ $totalReceived = count($receivedSeniors);
 <head>
 	<meta charset="utf-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1">
-	<title>Benefits Management | LoLaKo</title>
-	<link rel="stylesheet" href="<?= BASE_URL ?>/assets/styles.css">
+	<title>Benefits Management | SeniorCare Information System</title>
+	<link rel="stylesheet" href="<?= BASE_URL ?>/assets/government-portal.css">
 </head>
 <body>
 	<?php include __DIR__ . '/../partials/sidebar_admin.php'; ?>
-	<main class="content">
-		<div class="page-header">
-			<h1>🎁 Benefits Management</h1>
-			<p>Mark seniors as having received their benefits</p>
-		</div>
+	<main class="main-content">
+		<header class="content-header">
+			<h1 class="content-title">Benefits Management</h1>
+			<p class="content-subtitle">Mark seniors as having received their benefits</p>
+		</header>
 		
-		<?php if ($message): ?>
-			<div class="alert alert-success"><?= htmlspecialchars($message) ?></div>
-		<?php endif; ?>
-		
-		<div class="stats">
-			<div class="stat warning">
-				<h3>⏳ Pending Benefits</h3>
-				<p class="number"><?= $totalPending ?></p>
-			</div>
-			<div class="stat success">
-				<h3>✅ Benefits Received</h3>
-				<p class="number"><?= $totalReceived ?></p>
-			</div>
-			<div class="stat">
-				<h3>📊 Total Living</h3>
-				<p class="number"><?= $totalPending + $totalReceived ?></p>
-			</div>
-		</div>
-
-		<div class="grid grid-2">
-			<div class="card">
-				<div class="card-header">
-					<h2>⏳ Seniors Pending Benefits</h2>
-					<p>Mark these seniors as having received their benefits</p>
+		<div class="content-body">
+			<?php if ($message): ?>
+			<div class="alert alert-success animate-fade-in">
+				<div class="alert-icon">
+					<i class="fas fa-check-circle"></i>
 				</div>
+				<div class="alert-content">
+					<strong>Success!</strong>
+					<p><?= htmlspecialchars($message) ?></p>
+				</div>
+			</div>
+			<?php endif; ?>
+		
+			<div class="stats animate-fade-in">
+				<div class="stat warning">
+					<div class="stat-icon">
+						<i class="fas fa-clock"></i>
+					</div>
+					<div class="stat-content">
+						<h3>Pending Benefits</h3>
+						<p class="number"><?= $totalPending ?></p>
+					</div>
+				</div>
+				<div class="stat success">
+					<div class="stat-icon">
+						<i class="fas fa-check-circle"></i>
+					</div>
+					<div class="stat-content">
+						<h3>Benefits Received</h3>
+						<p class="number"><?= $totalReceived ?></p>
+					</div>
+				</div>
+				<div class="stat">
+					<div class="stat-icon">
+						<i class="fas fa-users"></i>
+					</div>
+					<div class="stat-content">
+						<h3>Total Living</h3>
+						<p class="number"><?= $totalPending + $totalReceived ?></p>
+					</div>
+				</div>
+			</div>
+
+			<div class="grid grid-2">
+				<div class="card">
+					<div class="card-header">
+						<h2 class="card-title">
+							<i class="fas fa-clock"></i>
+							Seniors Pending Benefits
+						</h2>
+						<p class="card-subtitle">Mark these seniors as having received their benefits</p>
+					</div>
 				<form method="post" id="bulk-form">
 					<input type="hidden" name="csrf" value="<?= $csrf ?>">
 					<input type="hidden" name="op" value="bulk_mark">
 					<input type="hidden" name="bulk_benefits" value="1">
 					
-					<div style="margin-bottom: 1rem;">
-						<button type="submit" class="success" onclick="return confirm('Mark all selected seniors as having received benefits?')">
-							✅ Mark All Selected as Received
+					<div class="form-actions">
+						<button type="submit" class="button success" onclick="return confirm('Mark all selected seniors as having received benefits?')">
+							<i class="fas fa-check-double"></i>
+							Mark All Selected as Received
 						</button>
 					</div>
 					
@@ -119,10 +147,17 @@ $totalReceived = count($receivedSeniors);
 											<input type="checkbox" name="senior_ids[]" value="<?= (int)$s['id'] ?>" class="pending-checkbox">
 										</td>
 										<td>
-											<strong><?= htmlspecialchars($s['last_name'] . ', ' . $s['first_name']) ?></strong>
-											<?php if ($s['middle_name']): ?>
-												<br><small><?= htmlspecialchars($s['middle_name']) ?></small>
-											<?php endif; ?>
+											<div class="senior-info">
+												<div class="senior-avatar">
+													<i class="fas fa-user"></i>
+												</div>
+												<div class="senior-details">
+													<span class="senior-name"><?= htmlspecialchars($s['last_name'] . ', ' . $s['first_name']) ?></span>
+													<?php if ($s['middle_name']): ?>
+														<span class="senior-middle"><?= htmlspecialchars($s['middle_name']) ?></span>
+													<?php endif; ?>
+												</div>
+											</div>
 										</td>
 										<td><?= (int)$s['age'] ?></td>
 										<td><?= htmlspecialchars($s['barangay']) ?></td>
@@ -137,15 +172,24 @@ $totalReceived = count($receivedSeniors);
 												<input type="hidden" name="op" value="mark_benefits">
 												<input type="hidden" name="id" value="<?= (int)$s['id'] ?>">
 												<input type="hidden" name="benefits_received" value="1">
-												<button type="submit" class="small success">✅ Mark Received</button>
+												<button type="submit" class="button small success">
+													<i class="fas fa-check"></i>
+													Mark Received
+												</button>
 											</form>
 										</td>
 									</tr>
 								<?php endforeach; ?>
 								<?php if (empty($pendingSeniors)): ?>
 									<tr>
-										<td colspan="6" style="text-align: center; padding: 2rem; color: var(--muted);">
-											🎉 All seniors have received their benefits!
+										<td colspan="6">
+											<div class="empty-state">
+												<div class="empty-icon">
+													<i class="fas fa-check-circle"></i>
+												</div>
+												<h3>All Benefits Distributed!</h3>
+												<p>All seniors have received their benefits.</p>
+											</div>
 										</td>
 									</tr>
 								<?php endif; ?>
@@ -155,11 +199,14 @@ $totalReceived = count($receivedSeniors);
 				</form>
 			</div>
 
-			<div class="card">
-				<div class="card-header">
-					<h2>✅ Seniors Who Received Benefits</h2>
-					<p>Seniors who have already received their benefits</p>
-				</div>
+				<div class="card">
+					<div class="card-header">
+						<h2 class="card-title">
+							<i class="fas fa-check-circle"></i>
+							Seniors Who Received Benefits
+						</h2>
+						<p class="card-subtitle">Seniors who have already received their benefits</p>
+					</div>
 				<div class="table-container">
 					<table>
 						<thead>
@@ -175,10 +222,17 @@ $totalReceived = count($receivedSeniors);
 							<?php foreach ($receivedSeniors as $s): ?>
 								<tr>
 									<td>
-										<strong><?= htmlspecialchars($s['last_name'] . ', ' . $s['first_name']) ?></strong>
-										<?php if ($s['middle_name']): ?>
-											<br><small><?= htmlspecialchars($s['middle_name']) ?></small>
-										<?php endif; ?>
+										<div class="senior-info">
+											<div class="senior-avatar">
+												<i class="fas fa-user"></i>
+											</div>
+											<div class="senior-details">
+												<span class="senior-name"><?= htmlspecialchars($s['last_name'] . ', ' . $s['first_name']) ?></span>
+												<?php if ($s['middle_name']): ?>
+													<span class="senior-middle"><?= htmlspecialchars($s['middle_name']) ?></span>
+												<?php endif; ?>
+											</div>
+										</div>
 									</td>
 									<td><?= (int)$s['age'] ?></td>
 									<td><?= htmlspecialchars($s['barangay']) ?></td>
@@ -192,21 +246,31 @@ $totalReceived = count($receivedSeniors);
 											<input type="hidden" name="csrf" value="<?= $csrf ?>">
 											<input type="hidden" name="op" value="mark_benefits">
 											<input type="hidden" name="id" value="<?= (int)$s['id'] ?>">
-											<button type="submit" class="small warning">⏳ Mark Pending</button>
+											<button type="submit" class="button small warning">
+												<i class="fas fa-clock"></i>
+												Mark Pending
+											</button>
 										</form>
 									</td>
 								</tr>
 							<?php endforeach; ?>
 							<?php if (empty($receivedSeniors)): ?>
 								<tr>
-									<td colspan="5" style="text-align: center; padding: 2rem; color: var(--muted);">
-										No seniors have received benefits yet.
+									<td colspan="5">
+										<div class="empty-state">
+											<div class="empty-icon">
+												<i class="fas fa-gift"></i>
+											</div>
+											<h3>No Benefits Distributed Yet</h3>
+											<p>No seniors have received benefits yet.</p>
+										</div>
 									</td>
 								</tr>
 							<?php endif; ?>
 						</tbody>
 					</table>
 				</div>
+			</div>
 			</div>
 		</div>
 	</main>

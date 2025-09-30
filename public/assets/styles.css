@@ -4010,4 +4010,471 @@ tr:last-child td {
     border-bottom: none;
 }
 
+/* Registration Form Styles */
+.registration-modal {
+    max-width: 1200px;
+    width: 95vw;
+    max-height: 90vh;
+    overflow-y: auto;
+}
+
+.registration-form {
+    padding: 0;
+}
+
+.form-section {
+    margin-bottom: 2rem;
+    padding: 1.5rem;
+    background: var(--card);
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow-sm);
+}
+
+.section-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--primary);
+    margin-bottom: 1.5rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid var(--primary-light);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.section-title::before {
+    content: '';
+    width: 4px;
+    height: 20px;
+    background: var(--primary);
+    border-radius: 2px;
+}
+
+.registration-form .form-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.registration-form .form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.registration-form .form-group.full-width {
+    grid-column: 1 / -1;
+}
+
+.registration-form .form-label {
+    font-weight: 500;
+    color: var(--text-secondary);
+    font-size: 0.875rem;
+}
+
+.registration-form .label-text {
+    display: block;
+    margin-bottom: 0.25rem;
+}
+
+.registration-form .form-input {
+    padding: 0.75rem;
+    border: 2px solid var(--border);
+    border-radius: 8px;
+    font-size: 0.875rem;
+    transition: all var(--transition-fast);
+    background: var(--card);
+}
+
+.registration-form .form-input:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px var(--primary-light);
+    transform: translateY(-1px);
+}
+
+.registration-form .form-input:read-only {
+    background: var(--bg-secondary);
+    cursor: not-allowed;
+}
+
+.registration-form textarea.form-input {
+    resize: vertical;
+    min-height: 80px;
+}
+
+/* Family Composition Styles */
+.family-member-row {
+    background: var(--bg-secondary);
+    padding: 1rem;
+    border-radius: 8px;
+    margin-bottom: 1rem;
+    border: 1px solid var(--border-light);
+    position: relative;
+}
+
+.family-member-row:last-child {
+    margin-bottom: 0;
+}
+
+.family-member-row .form-row {
+    margin-bottom: 0.75rem;
+}
+
+.family-member-row .form-row:last-child {
+    margin-bottom: 0;
+}
+
+/* Hidden fields for existing functionality */
+.hidden-fields {
+    display: none;
+}
+
+/* Checkbox and Radio Styles for Registration Form */
+.registration-form .checkbox-group {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.registration-form .checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    cursor: pointer;
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+}
+
+.registration-form .checkbox-input {
+    width: 18px;
+    height: 18px;
+    accent-color: var(--primary);
+}
+
+.registration-form .checkbox-custom {
+    width: 18px;
+    height: 18px;
+    border: 2px solid var(--border);
+    border-radius: 4px;
+    display: inline-block;
+    position: relative;
+    background: var(--card);
+    transition: all var(--transition-fast);
+}
+
+.registration-form .checkbox-input:checked + .checkbox-custom {
+    background: var(--primary);
+    border-color: var(--primary);
+}
+
+.registration-form .checkbox-input:checked + .checkbox-custom::after {
+    content: '✓';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: white;
+    font-size: 12px;
+    font-weight: bold;
+}
+
+/* Button Styles for Registration Form */
+.registration-form .button.secondary.small {
+    padding: 0.5rem;
+    font-size: 0.75rem;
+    min-width: auto;
+    width: auto;
+    height: auto;
+    border-radius: 6px;
+}
+
+/* Responsive Design for Registration Form */
+@media (max-width: 768px) {
+    .registration-modal {
+        width: 98vw;
+        max-height: 95vh;
+    }
+    
+    .registration-form .form-row {
+        grid-template-columns: 1fr;
+        gap: 0.75rem;
+    }
+    
+    .form-section {
+        padding: 1rem;
+        margin-bottom: 1.5rem;
+    }
+    
+    .section-title {
+        font-size: 1.125rem;
+        margin-bottom: 1rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .registration-modal {
+        width: 100vw;
+        height: 100vh;
+        max-height: 100vh;
+        border-radius: 0;
+    }
+    
+    .form-section {
+        padding: 0.75rem;
+        margin-bottom: 1rem;
+        border-radius: 8px;
+    }
+    
+    .family-member-row {
+        padding: 0.75rem;
+    }
+}
+
+/* Form Validation Styles */
+.registration-form .form-input:invalid {
+    border-color: var(--danger);
+}
+
+.registration-form .form-input:invalid:focus {
+    box-shadow: 0 0 0 3px var(--danger-light);
+}
+
+/* Loading and Success States */
+.registration-form .form-input:disabled {
+    background: var(--bg-secondary);
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
+.registration-form .form-group.success .form-input {
+    border-color: var(--success);
+}
+
+.registration-form .form-group.error .form-input {
+    border-color: var(--danger);
+}
+
+.registration-form .form-group.error .form-label::after {
+    content: ' *';
+    color: var(--danger);
+}
+
+/* Animation for form sections */
+.form-section {
+    animation: slideInUp 0.3s ease-out;
+}
+
+@keyframes slideInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Print Styles for Registration Form */
+@media print {
+    .registration-modal {
+        position: static;
+        width: 100%;
+        height: auto;
+        max-height: none;
+        box-shadow: none;
+        border: 1px solid #000;
+    }
+    
+    .modal-header,
+    .form-actions,
+    .button {
+        display: none;
+    }
+    
+    .form-section {
+        break-inside: avoid;
+        margin-bottom: 1rem;
+        box-shadow: none;
+        border: 1px solid #ccc;
+    }
+    
+    .registration-form .form-input {
+        border: 1px solid #ccc;
+        background: transparent;
+    }
+}
+
+/* Barangay Section Styles */
+.barangay-section {
+    margin-bottom: 2rem;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: var(--shadow-sm);
+}
+
+.barangay-header {
+    background: var(--primary-gradient);
+    color: white;
+    padding: 1rem 1.5rem;
+    border-bottom: 1px solid var(--border);
+}
+
+.barangay-header h3 {
+    margin: 0;
+    font-size: 1.125rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.barangay-count {
+    font-size: 0.875rem;
+    opacity: 0.9;
+    font-weight: 400;
+}
+
+.barangay-section .table-container {
+    margin: 0;
+    border-radius: 0;
+}
+
+.barangay-section table {
+    margin: 0;
+    border: none;
+}
+
+.barangay-section th {
+    background: var(--bg-secondary);
+    border-bottom: 1px solid var(--border);
+    font-weight: 600;
+    color: var(--text-secondary);
+}
+
+.barangay-section tr:hover {
+    background: var(--bg-secondary);
+}
+
+/* Gender Badge Styles */
+.badge-pink {
+    background: linear-gradient(135deg, #ec4899 0%, #be185d 100%);
+    color: white;
+}
+
+.badge-rainbow {
+    background: linear-gradient(135deg, #ff0000 0%, #ff8000 14%, #ffff00 28%, #00ff00 42%, #0080ff 57%, #8000ff 71%, #ff0080 85%, #ff0000 100%);
+    color: white;
+    font-weight: 600;
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
+}
+
+.badge-info {
+    background: var(--info);
+    color: white;
+}
+
+/* Form Actions Styles */
+.form-actions {
+    display: flex;
+    gap: 0.75rem;
+    align-items: center;
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--border-light);
+}
+
+.form-actions .button {
+    margin: 0;
+}
+
+/* Event Form Grid Styles */
+.grid.grid-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+}
+
+@media (max-width: 768px) {
+    .grid.grid-2 {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Action Buttons Styles */
+.action-buttons {
+    display: flex;
+    gap: 0.25rem;
+    align-items: center;
+}
+
+.action-buttons .button.small {
+    padding: 0.375rem;
+    font-size: 0.75rem;
+    min-width: auto;
+    width: auto;
+    height: auto;
+    border-radius: 6px;
+}
+
+/* Animation for Barangay Sections */
+.barangay-section {
+    animation: slideInUp 0.3s ease-out;
+}
+
+@keyframes slideInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Search Enhancement for Barangay Sections */
+#searchSeniors:focus + .search-container {
+    transform: scale(1.02);
+}
+
+.search-container {
+    transition: transform var(--transition-fast);
+}
+
+/* Responsive Design for Barangay Sections */
+@media (max-width: 768px) {
+    .barangay-header {
+        padding: 0.75rem 1rem;
+    }
+    
+    .barangay-header h3 {
+        font-size: 1rem;
+    }
+    
+    .barangay-count {
+        font-size: 0.75rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .barangay-section .table-container {
+        overflow-x: auto;
+    }
+    
+    .action-buttons {
+        flex-direction: column;
+        gap: 0.25rem;
+    }
+    
+    .action-buttons .button.small {
+        width: 100%;
+        justify-content: center;
+    }
+}
+
 

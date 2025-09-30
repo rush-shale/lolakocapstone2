@@ -24,38 +24,58 @@ $pastEvents = array_filter($events, function($event) {
 <head>
 	<meta charset="utf-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1">
-	<title>OSCA Events | LoLaKo</title>
-	<link rel="stylesheet" href="<?= BASE_URL ?>/assets/styles.css">
+	<title>OSCA Events | SeniorCare Information System</title>
+	<link rel="stylesheet" href="<?= BASE_URL ?>/assets/government-portal.css">
 </head>
 <body>
 	<?php include __DIR__ . '/../partials/sidebar_user.php'; ?>
-	<main class="content">
-		<div class="page-header">
-			<h1>🏛️ OSCA Head Events</h1>
-			<p>View all events created by the OSCA Head for senior citizens</p>
-		</div>
+	<main class="main-content">
+		<header class="content-header">
+			<h1 class="content-title">OSCA Events</h1>
+			<p class="content-subtitle">View all events created by the OSCA Head for senior citizens</p>
+		</header>
 		
-		<div class="stats">
-			<div class="stat success">
-				<h3>📅 Upcoming Events</h3>
-				<p class="number"><?= count($upcomingEvents) ?></p>
-			</div>
-			<div class="stat">
-				<h3>📋 Total Events</h3>
-				<p class="number"><?= count($events) ?></p>
-			</div>
-			<div class="stat warning">
-				<h3>📜 Past Events</h3>
-				<p class="number"><?= count($pastEvents) ?></p>
-			</div>
-		</div>
-
-		<div class="grid grid-2">
-			<div class="card">
-				<div class="card-header">
-					<h2>📅 Upcoming Events</h2>
-					<p>Events scheduled for the future</p>
+		<div class="content-body">
+		
+			<div class="stats animate-fade-in">
+				<div class="stat success">
+					<div class="stat-icon">
+						<i class="fas fa-calendar-plus"></i>
+					</div>
+					<div class="stat-content">
+						<h3>Upcoming Events</h3>
+						<p class="number"><?= count($upcomingEvents) ?></p>
+					</div>
 				</div>
+				<div class="stat">
+					<div class="stat-icon">
+						<i class="fas fa-calendar-alt"></i>
+					</div>
+					<div class="stat-content">
+						<h3>Total Events</h3>
+						<p class="number"><?= count($events) ?></p>
+					</div>
+				</div>
+				<div class="stat warning">
+					<div class="stat-icon">
+						<i class="fas fa-history"></i>
+					</div>
+					<div class="stat-content">
+						<h3>Past Events</h3>
+						<p class="number"><?= count($pastEvents) ?></p>
+					</div>
+				</div>
+			</div>
+
+			<div class="grid grid-2">
+				<div class="card">
+					<div class="card-header">
+						<h2 class="card-title">
+							<i class="fas fa-calendar-plus"></i>
+							Upcoming Events
+						</h2>
+						<p class="card-subtitle">Events scheduled for the future</p>
+					</div>
 				<div class="table-container">
 					<table>
 						<thead>
@@ -77,8 +97,14 @@ $pastEvents = array_filter($events, function($event) {
 							<?php endforeach; ?>
 							<?php if (empty($upcomingEvents)): ?>
 								<tr>
-									<td colspan="4" style="text-align: center; padding: 2rem; color: var(--muted);">
-										No upcoming OSCA events scheduled.
+									<td colspan="4">
+										<div class="empty-state">
+											<div class="empty-icon">
+												<i class="fas fa-calendar-plus"></i>
+											</div>
+											<h3>No Upcoming Events</h3>
+											<p>No upcoming OSCA events scheduled.</p>
+										</div>
 									</td>
 								</tr>
 							<?php endif; ?>
@@ -87,11 +113,14 @@ $pastEvents = array_filter($events, function($event) {
 				</div>
 			</div>
 
-			<div class="card">
-				<div class="card-header">
-					<h2>📜 Past Events</h2>
-					<p>Previously held events</p>
-				</div>
+				<div class="card">
+					<div class="card-header">
+						<h2 class="card-title">
+							<i class="fas fa-history"></i>
+							Past Events
+						</h2>
+						<p class="card-subtitle">Previously held events</p>
+					</div>
 				<div class="table-container">
 					<table>
 						<thead>
@@ -113,8 +142,14 @@ $pastEvents = array_filter($events, function($event) {
 							<?php endforeach; ?>
 							<?php if (empty($pastEvents)): ?>
 								<tr>
-									<td colspan="4" style="text-align: center; padding: 2rem; color: var(--muted);">
-										No past OSCA events found.
+									<td colspan="4">
+										<div class="empty-state">
+											<div class="empty-icon">
+												<i class="fas fa-history"></i>
+											</div>
+											<h3>No Past Events</h3>
+											<p>No past OSCA events found.</p>
+										</div>
 									</td>
 								</tr>
 							<?php endif; ?>
@@ -122,13 +157,16 @@ $pastEvents = array_filter($events, function($event) {
 					</table>
 				</div>
 			</div>
-		</div>
-
-		<div class="card" style="margin-top: 2rem;">
-			<div class="card-header">
-				<h2>📅 Event Calendar</h2>
-				<p>Visual calendar view of all OSCA Head events</p>
 			</div>
+
+			<div class="card" style="margin-top: 2rem;">
+				<div class="card-header">
+					<h2 class="card-title">
+						<i class="fas fa-calendar-alt"></i>
+						Event Calendar
+					</h2>
+					<p class="card-subtitle">Visual calendar view of all OSCA Head events</p>
+				</div>
 			<div class="calendar-container">
 				<div class="calendar-header">
 					<h3 id="calendar-month-year"></h3>

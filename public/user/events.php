@@ -36,39 +36,127 @@ $events = $events->fetchAll();
 <head>
 	<meta charset="utf-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1">
-	<title>My Barangay Events | LoLaKo</title>
-	<link rel="stylesheet" href="<?= BASE_URL ?>/assets/styles.css">
+	<title>My Barangay Events | SeniorCare Information System</title>
+	<link rel="stylesheet" href="<?= BASE_URL ?>/assets/government-portal.css">
 </head>
 <body>
 	<?php include __DIR__ . '/../partials/sidebar_user.php'; ?>
-	<main class="content">
-		<h1>My Barangay Events</h1>
-		<?php if ($message): ?><div class="alert"><?= htmlspecialchars($message) ?></div><?php endif; ?>
-		<div class="grid">
-			<section>
-				<h2>Create Event</h2>
-				<form method="post">
-					<input type="hidden" name="csrf" value="<?= $csrf ?>">
-					<label>Title</label>
-					<input name="title" required>
-					<label>Description</label>
-					<input name="description">
-					<label>Date</label>
-					<input type="date" name="event_date" required>
-					<label>Time</label>
-					<input type="time" name="event_time">
-					<button type="submit">Save</button>
-				</form>
-			</section>
-			<section>
-				<h2>All My Barangay Events</h2>
-				<ul>
-					<?php foreach ($events as $e): ?>
-						<li><?= htmlspecialchars($e['event_date']) ?> - <?= htmlspecialchars($e['title']) ?></li>
-					<?php endforeach; ?>
-					<?php if (empty($events)): ?><li>No events.</li><?php endif; ?>
-				</ul>
-			</section>
+	<main class="main-content">
+		<header class="content-header">
+			<h1 class="content-title">My Barangay Events</h1>
+			<p class="content-subtitle">Manage events for your barangay</p>
+		</header>
+		
+		<div class="content-body">
+			<?php if ($message): ?>
+			<div class="alert alert-success animate-fade-in">
+				<div class="alert-icon">
+					<i class="fas fa-check-circle"></i>
+				</div>
+				<div class="alert-content">
+					<strong>Success!</strong>
+					<p><?= htmlspecialchars($message) ?></p>
+				</div>
+			</div>
+			<?php endif; ?>
+			
+			<div class="grid">
+				<div class="card">
+					<div class="card-header">
+						<h2 class="card-title">
+							<i class="fas fa-plus-circle"></i>
+							Create New Event
+						</h2>
+						<p class="card-subtitle">Add a new event for your barangay</p>
+					</div>
+					<div class="card-body">
+						<form method="post" class="form">
+							<input type="hidden" name="csrf" value="<?= $csrf ?>">
+							
+							<div class="form-group">
+								<label class="form-label">Event Title</label>
+								<input type="text" name="title" class="form-input" required placeholder="Enter event title">
+							</div>
+							
+							<div class="form-group">
+								<label class="form-label">Description</label>
+								<textarea name="description" class="form-input" rows="3" placeholder="Enter event description (optional)"></textarea>
+							</div>
+							
+							<div class="form-row">
+								<div class="form-group">
+									<label class="form-label">Event Date</label>
+									<input type="date" name="event_date" class="form-input" required>
+								</div>
+								<div class="form-group">
+									<label class="form-label">Event Time</label>
+									<input type="time" name="event_time" class="form-input" placeholder="Optional time">
+								</div>
+							</div>
+							
+							<div class="form-actions">
+								<button type="submit" class="button primary">
+									<i class="fas fa-save"></i>
+									Create Event
+								</button>
+							</div>
+						</form>
+					</div>
+				</div>
+				
+				<div class="card">
+					<div class="card-header">
+						<h2 class="card-title">
+							<i class="fas fa-calendar-alt"></i>
+							All Barangay Events
+						</h2>
+						<p class="card-subtitle">Events created for your barangay</p>
+					</div>
+					<div class="card-body">
+						<?php if (!empty($events)): ?>
+						<div class="table-container">
+							<table class="table">
+								<thead>
+									<tr>
+										<th>Event Title</th>
+										<th>Date</th>
+										<th>Time</th>
+										<th>Status</th>
+									</tr>
+								</thead>
+								<tbody>
+									<?php foreach ($events as $e): ?>
+									<tr>
+										<td>
+											<strong><?= htmlspecialchars($e['title']) ?></strong>
+											<?php if ($e['description']): ?>
+												<br><small class="text-muted"><?= htmlspecialchars($e['description']) ?></small>
+											<?php endif; ?>
+										</td>
+										<td><?= date('M d, Y', strtotime($e['event_date'])) ?></td>
+										<td><?= $e['event_time'] ? date('g:i A', strtotime($e['event_time'])) : 'All Day' ?></td>
+										<td>
+											<span class="badge <?= strtotime($e['event_date']) >= strtotime('today') ? 'badge-info' : 'badge-muted' ?>">
+												<?= strtotime($e['event_date']) >= strtotime('today') ? 'Upcoming' : 'Past' ?>
+											</span>
+										</td>
+									</tr>
+									<?php endforeach; ?>
+								</tbody>
+							</table>
+						</div>
+						<?php else: ?>
+						<div class="empty-state">
+							<div class="empty-icon">
+								<i class="fas fa-calendar-plus"></i>
+							</div>
+							<h3>No Events Yet</h3>
+							<p>Create your first event for the barangay using the form above.</p>
+						</div>
+						<?php endif; ?>
+					</div>
+				</div>
+			</div>
 		</div>
 	</main>
 	<script src="<?= BASE_URL ?>/assets/app.js"></script>
