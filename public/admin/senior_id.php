@@ -16,75 +16,336 @@ if (!$id) {
 	<head>
 		<meta charset="utf-8">
 		<meta name="viewport" content="width=device-width, initial-scale=1">
-		<title>Generate Senior ID | LoLaKo</title>
-		<link rel="stylesheet" href="<?= BASE_URL ?>/assets/styles.css">
+		<title>Generate Senior ID | SeniorCare Information System</title>
+		<link rel="stylesheet" href="<?= BASE_URL ?>/assets/government-portal.css">
+		<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+		<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+		<style>
+			/* Custom styles for Generate ID page */
+			.senior-info {
+				display: flex;
+				flex-direction: column;
+				gap: 0.5rem;
+			}
+			
+			.senior-name {
+				display: flex;
+				align-items: center;
+				gap: 0.5rem;
+				font-weight: 600;
+			}
+			
+			.senior-name i {
+				color: var(--primary);
+				font-size: 0.875rem;
+			}
+			
+			.middle-name {
+				color: var(--muted);
+				font-weight: 400;
+			}
+			
+			.senior-contact {
+				display: flex;
+				align-items: center;
+				gap: 0.5rem;
+				font-size: 0.875rem;
+				color: var(--muted);
+			}
+			
+			.senior-contact i {
+				color: var(--success);
+				font-size: 0.75rem;
+			}
+			
+			.age-badge {
+				background: var(--primary-light);
+				color: var(--primary);
+				padding: 0.25rem 0.75rem;
+				border-radius: 1rem;
+				font-weight: 600;
+				font-size: 0.875rem;
+			}
+			
+			.barangay-info {
+				display: flex;
+				align-items: center;
+				gap: 0.5rem;
+				font-weight: 500;
+			}
+			
+			.barangay-info i {
+				color: var(--info);
+				font-size: 0.875rem;
+			}
+			
+			.action-buttons {
+				display: flex;
+				gap: 0.5rem;
+			}
+			
+			.action-buttons .button {
+				display: inline-flex;
+				align-items: center;
+				gap: 0.5rem;
+				text-decoration: none;
+				font-size: 0.875rem;
+				padding: 0.5rem 1rem;
+			}
+			
+			.badge i {
+				margin-right: 0.25rem;
+			}
+			
+			/* Enhanced table styling */
+			.table tbody tr:hover {
+				background: var(--bg-secondary);
+				transform: translateY(-1px);
+				box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+			}
+			
+			/* Search container styling */
+			.search-container {
+				position: relative;
+				display: flex;
+				align-items: center;
+				background: var(--bg-secondary);
+				border: 1px solid var(--border);
+				border-radius: 0.5rem;
+				padding: 0.5rem 1rem;
+				min-width: 300px;
+			}
+			
+			.search-icon {
+				color: var(--muted);
+				margin-right: 0.5rem;
+			}
+			
+			.search-container input {
+				border: none;
+				background: transparent;
+				outline: none;
+				flex: 1;
+				font-size: 0.875rem;
+			}
+			
+			.search-container input::placeholder {
+				color: var(--muted);
+			}
+			
+			/* Animation for stats */
+			.stats .stat {
+				transition: all 0.3s ease;
+			}
+			
+			.stats .stat:hover {
+				transform: translateY(-2px);
+				box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+			}
+		</style>
 	</head>
 	<body>
 		<?php include __DIR__ . '/../partials/sidebar_admin.php'; ?>
-		<main class="content">
-			<div class="page-header">
-				<h1>🆔 Generate Senior ID</h1>
-				<p>Select a senior citizen to generate their ID card</p>
-			</div>
+		
+		<main class="main-content">
+			<header class="content-header">
+				<h1 class="content-title">Generate Senior ID</h1>
+				<p class="content-subtitle">Select a senior citizen to generate their official ID card</p>
+			</header>
 			
-			<div class="card">
-				<div class="card-header">
-					<h2>👥 Select Senior Citizen</h2>
-					<p>Choose a senior to generate their ID card</p>
+			<div class="content-body">
+				<!-- Statistics Cards -->
+				<div class="stats animate-fade-in">
+					<div class="stat">
+						<div class="stat-icon">
+							<i class="fas fa-id-card"></i>
+						</div>
+						<div class="stat-content">
+							<h3>Total Seniors</h3>
+							<p class="number"><?= count($seniors) ?></p>
+						</div>
+					</div>
+					<div class="stat success">
+						<div class="stat-icon">
+							<i class="fas fa-check-circle"></i>
+						</div>
+						<div class="stat-content">
+							<h3>With Benefits</h3>
+							<p class="number"><?= count(array_filter($seniors, fn($s) => $s['benefits_received'])) ?></p>
+						</div>
+					</div>
+					<div class="stat info">
+						<div class="stat-icon">
+							<i class="fas fa-map-marker-alt"></i>
+						</div>
+						<div class="stat-content">
+							<h3>Barangays</h3>
+							<p class="number"><?= count(array_unique(array_column($seniors, 'barangay'))) ?></p>
+						</div>
+					</div>
 				</div>
-				<div class="table-container">
-					<table>
-						<thead>
-							<tr>
-								<th>Name</th>
-								<th>Age</th>
-								<th>Barangay</th>
-								<th>Category</th>
-								<th>Benefits</th>
-								<th>Action</th>
-							</tr>
-						</thead>
-						<tbody>
-							<?php foreach ($seniors as $s): ?>
-								<tr>
-									<td>
-										<strong><?= htmlspecialchars($s['last_name'] . ', ' . $s['first_name']) ?></strong>
-										<?php if ($s['middle_name']): ?>
-											<br><small><?= htmlspecialchars($s['middle_name']) ?></small>
-										<?php endif; ?>
-									</td>
-									<td><?= (int)$s['age'] ?></td>
-									<td><?= htmlspecialchars($s['barangay']) ?></td>
-									<td>
-										<span class="badge <?= $s['category'] === 'local' ? 'badge-primary' : 'badge-warning' ?>">
-											<?= $s['category'] === 'local' ? 'Local' : 'National' ?>
-										</span>
-									</td>
-									<td>
-										<span class="badge <?= $s['benefits_received'] ? 'badge-success' : 'badge-warning' ?>">
-											<?= $s['benefits_received'] ? 'Received' : 'Pending' ?>
-										</span>
-									</td>
-									<td>
-										<a href="<?= BASE_URL ?>/admin/senior_id.php?id=<?= (int)$s['id'] ?>" target="_blank" style="text-decoration:none">
-											<button class="small">🆔 Generate ID</button>
-										</a>
-									</td>
-								</tr>
-							<?php endforeach; ?>
-							<?php if (empty($seniors)): ?>
-								<tr>
-									<td colspan="6" style="text-align: center; padding: 2rem; color: var(--muted);">
-										No living seniors found.
-									</td>
-								</tr>
-							<?php endif; ?>
-						</tbody>
-					</table>
+
+				<!-- Senior Selection Card -->
+				<div class="card animate-fade-in">
+					<div class="card-header">
+						<h2 class="card-title">
+							<i class="fas fa-users"></i>
+							Select Senior Citizen
+						</h2>
+						<div class="card-actions">
+							<div class="search-container">
+								<span class="search-icon">🔍</span>
+								<input type="text" placeholder="Search seniors..." id="searchSeniors">
+							</div>
+						</div>
+					</div>
+					<div class="card-body">
+						<?php if (!empty($seniors)): ?>
+						<div class="table-container">
+							<table class="table">
+								<thead>
+									<tr>
+										<th>Senior Information</th>
+										<th>Age</th>
+										<th>Barangay</th>
+										<th>Category</th>
+										<th>Benefits Status</th>
+										<th>Actions</th>
+									</tr>
+								</thead>
+								<tbody id="seniorsTable">
+									<?php foreach ($seniors as $s): ?>
+										<tr>
+											<td>
+												<div class="senior-info">
+													<div class="senior-name">
+														<i class="fas fa-user"></i>
+														<strong><?= htmlspecialchars($s['last_name'] . ', ' . $s['first_name']) ?></strong>
+														<?php if ($s['middle_name']): ?>
+															<br><small class="middle-name"><?= htmlspecialchars($s['middle_name']) ?></small>
+														<?php endif; ?>
+													</div>
+													<?php if ($s['contact']): ?>
+														<div class="senior-contact">
+															<i class="fas fa-phone"></i>
+															<?= htmlspecialchars($s['contact']) ?>
+														</div>
+													<?php endif; ?>
+												</div>
+											</td>
+											<td>
+												<span class="age-badge">
+													<?= (int)$s['age'] ?> years
+												</span>
+											</td>
+											<td>
+												<div class="barangay-info">
+													<i class="fas fa-map-marker-alt"></i>
+													<?= htmlspecialchars($s['barangay']) ?>
+												</div>
+											</td>
+											<td>
+												<span class="badge <?= $s['category'] === 'local' ? 'badge-primary' : 'badge-warning' ?>">
+													<?= $s['category'] === 'local' ? 'Local' : 'National' ?>
+												</span>
+											</td>
+											<td>
+												<span class="badge <?= $s['benefits_received'] ? 'badge-success' : 'badge-warning' ?>">
+													<i class="fas fa-<?= $s['benefits_received'] ? 'check' : 'clock' ?>"></i>
+													<?= $s['benefits_received'] ? 'Received' : 'Pending' ?>
+												</span>
+											</td>
+											<td>
+												<div class="action-buttons">
+													<a href="<?= BASE_URL ?>/admin/senior_id.php?id=<?= (int)$s['id'] ?>" target="_blank" class="button primary">
+														<i class="fas fa-id-card"></i>
+														Generate ID
+													</a>
+												</div>
+											</td>
+										</tr>
+									<?php endforeach; ?>
+								</tbody>
+							</table>
+						</div>
+						<?php else: ?>
+						<div class="empty-state">
+							<div class="empty-icon">
+								<i class="fas fa-users"></i>
+							</div>
+							<h3>No Seniors Found</h3>
+							<p>No living seniors are currently registered in the system.</p>
+							<a href="<?= BASE_URL ?>/admin/seniors.php" class="button primary">
+								<i class="fas fa-plus"></i>
+								Add Seniors
+							</a>
+						</div>
+						<?php endif; ?>
+					</div>
 				</div>
 			</div>
 		</main>
+		
 		<script src="<?= BASE_URL ?>/assets/app.js"></script>
+		<script>
+			// Initialize functionality on page load
+			document.addEventListener('DOMContentLoaded', function() {
+				initializeSearch();
+			});
+
+			// Search functionality
+			function initializeSearch() {
+				const searchInput = document.getElementById('searchSeniors');
+				const table = document.getElementById('seniorsTable');
+				
+				if (searchInput && table) {
+					searchInput.addEventListener('input', function() {
+						const searchTerm = this.value.toLowerCase();
+						const rows = table.querySelectorAll('tr');
+						let visibleCount = 0;
+						
+						rows.forEach(row => {
+							const text = row.textContent.toLowerCase();
+							const isVisible = text.includes(searchTerm);
+							row.style.display = isVisible ? '' : 'none';
+							if (isVisible) visibleCount++;
+						});
+						
+						// Update search results indicator
+						updateSearchResults(searchInput, visibleCount, rows.length);
+					});
+				}
+			}
+
+			function updateSearchResults(input, visible, total) {
+				let indicator = input.parentNode.querySelector('.search-results');
+				if (!indicator) {
+					indicator = document.createElement('div');
+					indicator.className = 'search-results';
+					indicator.style.cssText = `
+						position: absolute;
+						right: 1rem;
+						top: 50%;
+						transform: translateY(-50%);
+						font-size: var(--font-size-xs);
+						color: var(--muted);
+						font-weight: 600;
+						background: var(--bg-secondary);
+						padding: var(--space-xs) var(--space-sm);
+						border-radius: var(--radius-sm);
+					`;
+					input.parentNode.style.position = 'relative';
+					input.parentNode.appendChild(indicator);
+				}
+				
+				if (total > visible) {
+					indicator.textContent = `${visible} of ${total}`;
+					indicator.style.color = 'var(--warning)';
+				} else {
+					indicator.textContent = '';
+				}
+			}
+		</script>
 	</body>
 	</html>
 	<?php

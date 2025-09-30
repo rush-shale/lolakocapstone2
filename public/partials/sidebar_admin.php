@@ -29,14 +29,14 @@ $current_page = basename($_SERVER['PHP_SELF']);
 		<div class="nav-item">
 			<a href="<?= BASE_URL ?>/admin/seniors.php" class="nav-link <?= $current_page === 'seniors.php' ? 'active' : '' ?>">
 				<span class="nav-icon">👥</span>
-				<span>Senior Citizens</span>
+				<span>All Seniors</span>
 			</a>
 		</div>
 		
 		<div class="nav-item">
-			<a href="#" class="nav-link" onclick="openAddModal()">
-				<span class="nav-icon">📝</span>
-				<span>Registration</span>
+			<a href="<?= BASE_URL ?>/admin/senior_id.php" class="nav-link <?= $current_page === 'senior_id.php' ? 'active' : '' ?>">
+				<span class="nav-icon">🆔</span>
+				<span>Generate ID</span>
 			</a>
 		</div>
 		

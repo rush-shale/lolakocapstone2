@@ -158,12 +158,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 $csrf = generate_csrf_token();
+$barangays = $pdo->query('SELECT name FROM barangays ORDER BY name')->fetchAll();
 
 // Get status from URL parameter
 $status = $_GET['status'] ?? 'all';
 
-// Filters
-$life = $_GET['life'] ?? 'all'; // all|living|deceased
+// Map status to life_status for filtering
+$life = 'all';
+if ($status === 'active') {
+    $life = 'living';
+} elseif ($status === 'deceased') {
+    $life = 'deceased';
+}
+
+// Additional filters
 $benefits = $_GET['benefits'] ?? 'all'; // all|received|notyet
 $category = $_GET['category'] ?? 'all'; // all|local|national
 
@@ -229,38 +237,383 @@ $deceasedCount = (int)$pdo->query("SELECT COUNT(*) FROM seniors WHERE life_statu
 	<meta name="viewport" content="width=device-width, initial-scale=1">
 	<title>All Seniors | SeniorCare Information System</title>
 	<link rel="stylesheet" href="<?= BASE_URL ?>/assets/government-portal.css">
+	<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+	<style>
+		/* Clean, Professional Styles */
+		.content-body {
+			display: flex;
+			gap: 1.5rem;
+			align-items: flex-start;
+		}
+		
+		.filter-sidebar {
+			width: 250px;
+			background: #ffffff;
+			border: 1px solid #e5e7eb;
+			border-radius: 8px;
+			position: sticky;
+			top: 1rem;
+		}
+		
+		.filter-header {
+			padding: 1rem;
+			border-bottom: 1px solid #e5e7eb;
+			background: #f9fafb;
+		}
+		
+		.filter-header h3 {
+			margin: 0;
+			font-size: 1rem;
+			font-weight: 600;
+			color: #374151;
+		}
+		
+		.filter-options {
+			padding: 0.5rem 0;
+		}
+		
+		.filter-option {
+			display: flex;
+			align-items: center;
+			padding: 0.75rem 1rem;
+			text-decoration: none;
+			color: #6b7280;
+			border-left: 3px solid transparent;
+		}
+		
+		.filter-option:hover {
+			background: #f3f4f6;
+			color: #374151;
+		}
+		
+		.filter-option.active {
+			background: #eff6ff;
+			color: #2563eb;
+			border-left-color: #2563eb;
+			font-weight: 500;
+		}
+		
+		.filter-option i {
+			width: 16px;
+			margin-right: 0.5rem;
+			font-size: 0.875rem;
+		}
+		
+		.filter-option span:first-of-type {
+			flex: 1;
+			font-size: 0.875rem;
+		}
+		
+		.filter-option .count {
+			background: #e5e7eb;
+			color: #6b7280;
+			padding: 0.125rem 0.375rem;
+			border-radius: 12px;
+			font-size: 0.75rem;
+			font-weight: 500;
+			min-width: 20px;
+			text-align: center;
+		}
+		
+		.filter-option.active .count {
+			background: #2563eb;
+			color: white;
+		}
+		
+		.main-content-area {
+			flex: 1;
+			min-width: 0;
+		}
+		
+		/* Simplify table styling */
+		.table {
+			background: white;
+			border: 1px solid #e5e7eb;
+			border-radius: 8px;
+			overflow: hidden;
+		}
+		
+		.table th {
+			background: #f9fafb;
+			color: #374151;
+			font-weight: 600;
+			font-size: 0.875rem;
+			padding: 0.75rem 1rem;
+			border-bottom: 1px solid #e5e7eb;
+		}
+		
+		.table td {
+			padding: 0.75rem 1rem;
+			border-bottom: 1px solid #f3f4f6;
+			font-size: 0.875rem;
+		}
+		
+		.table tbody tr:hover {
+			background: #f9fafb;
+		}
+		
+		.table tbody tr:last-child td {
+			border-bottom: none;
+		}
+		
+		/* Simplify badges */
+		.badge {
+			padding: 0.25rem 0.5rem;
+			border-radius: 4px;
+			font-size: 0.75rem;
+			font-weight: 500;
+		}
+		
+		.badge-primary {
+			background: #dbeafe;
+			color: #1e40af;
+		}
+		
+		.badge-success {
+			background: #d1fae5;
+			color: #065f46;
+		}
+		
+		.badge-warning {
+			background: #fef3c7;
+			color: #92400e;
+		}
+		
+		.badge-danger {
+			background: #fee2e2;
+			color: #991b1b;
+		}
+		
+		/* Simplify buttons */
+		.button {
+			padding: 0.5rem 1rem;
+			border-radius: 6px;
+			font-size: 0.875rem;
+			font-weight: 500;
+			text-decoration: none;
+			display: inline-flex;
+			align-items: center;
+			gap: 0.5rem;
+			border: 1px solid transparent;
+		}
+		
+		.button.primary {
+			background: #2563eb;
+			color: white;
+		}
+		
+		.button.primary:hover {
+			background: #1d4ed8;
+		}
+		
+		.button.secondary {
+			background: #f3f4f6;
+			color: #374151;
+			border-color: #d1d5db;
+		}
+		
+		.button.secondary:hover {
+			background: #e5e7eb;
+		}
+		
+		.button.danger {
+			background: #dc2626;
+			color: white;
+		}
+		
+		.button.danger:hover {
+			background: #b91c1c;
+		}
+		
+		.button.small {
+			padding: 0.375rem 0.75rem;
+			font-size: 0.8125rem;
+		}
+		
+		/* Remove excessive animations */
+		.animate-fade-in {
+			animation: none;
+		}
+		
+		/* Action buttons styling */
+		.action-buttons {
+			display: flex;
+			gap: 0.25rem;
+			flex-wrap: wrap;
+		}
+		
+		.action-buttons .button {
+			padding: 0.25rem 0.5rem;
+			font-size: 0.75rem;
+			min-width: auto;
+		}
+		
+		/* Senior info styling */
+		.senior-info {
+			line-height: 1.4;
+		}
+		
+		.senior-info small {
+			color: #6b7280;
+			font-size: 0.75rem;
+		}
+		
+		/* Card styling */
+		.card {
+			background: white;
+			border: 1px solid #e5e7eb;
+			border-radius: 8px;
+			overflow: hidden;
+		}
+		
+		.card-header {
+			background: #f9fafb;
+			padding: 1rem 1.5rem;
+			border-bottom: 1px solid #e5e7eb;
+			display: flex;
+			justify-content: space-between;
+			align-items: center;
+		}
+		
+		.card-header h2 {
+			margin: 0;
+			font-size: 1.125rem;
+			font-weight: 600;
+			color: #374151;
+		}
+		
+		.card-body {
+			padding: 0;
+		}
+		
+		/* Search container */
+		.search-container {
+			display: flex;
+			align-items: center;
+			background: white;
+			border: 1px solid #d1d5db;
+			border-radius: 6px;
+			padding: 0.5rem 0.75rem;
+			min-width: 250px;
+		}
+		
+		.search-container input {
+			border: none;
+			outline: none;
+			background: transparent;
+			flex: 1;
+			font-size: 0.875rem;
+		}
+		
+		.search-icon {
+			color: #6b7280;
+			margin-right: 0.5rem;
+		}
+		
+		/* Responsive design */
+		@media (max-width: 1024px) {
+			.content-body {
+				flex-direction: column;
+			}
+			
+			.filter-sidebar {
+				width: 100%;
+				position: static;
+			}
+			
+			.filter-options {
+				display: flex;
+				overflow-x: auto;
+				padding: 0.5rem;
+			}
+			
+			.filter-option {
+				flex-shrink: 0;
+				white-space: nowrap;
+				border-left: none;
+				border-bottom: 3px solid transparent;
+				padding: 0.5rem 0.75rem;
+			}
+			
+			.filter-option.active {
+				border-left-color: transparent;
+				border-bottom-color: #2563eb;
+			}
+		}
+	</style>
 </head>
 <body>
 	<?php include __DIR__ . '/../partials/sidebar_admin.php'; ?>
 	
 	<main class="main-content">
 		<header class="content-header">
-			<h1 class="content-title">Senior Citizens Management</h1>
+			<h1 class="content-title">All Seniors</h1>
 			<p class="content-subtitle">Manage senior citizen records and information</p>
 		</header>
 		
 		<div class="content-body">
+			<!-- Filter Sidebar -->
+			<div class="filter-sidebar">
+				<div class="filter-header">
+					<h3>Filter by Status</h3>
+				</div>
+				<div class="filter-options">
+					<a href="<?= BASE_URL ?>/admin/seniors.php?status=all" class="filter-option <?= $status === 'all' ? 'active' : '' ?>">
+						<i class="fas fa-users"></i>
+						<span>All Seniors</span>
+						<span class="count"><?= count($seniors) ?></span>
+					</a>
+					<a href="<?= BASE_URL ?>/admin/seniors.php?status=active" class="filter-option <?= $status === 'active' ? 'active' : '' ?>">
+						<i class="fas fa-user-check"></i>
+						<span>Active</span>
+						<span class="count"><?= $livingCount ?></span>
+					</a>
+					<a href="<?= BASE_URL ?>/admin/seniors.php?status=inactive" class="filter-option <?= $status === 'inactive' ? 'active' : '' ?>">
+						<i class="fas fa-user-times"></i>
+						<span>Inactive</span>
+						<span class="count">0</span>
+					</a>
+					<a href="<?= BASE_URL ?>/admin/seniors.php?status=deceased" class="filter-option <?= $status === 'deceased' ? 'active' : '' ?>">
+						<i class="fas fa-user-slash"></i>
+						<span>Deceased</span>
+						<span class="count"><?= $deceasedCount ?></span>
+					</a>
+					<a href="<?= BASE_URL ?>/admin/seniors.php?status=transferred" class="filter-option <?= $status === 'transferred' ? 'active' : '' ?>">
+						<i class="fas fa-user-arrow-right"></i>
+						<span>Transferred</span>
+						<span class="count">0</span>
+					</a>
+				</div>
+			</div>
+			
+			<!-- Main Content Area -->
+			<div class="main-content-area">
 		<!-- All Seniors Section -->
 		<div class="content-section">
 			<div class="section-header">
-				<h2 class="section-title">All Seniors</h2>
+				<h2 class="section-title">
+					<?php
+					switch($status) {
+						case 'active':
+							echo 'Active Seniors';
+							break;
+						case 'inactive':
+							echo 'Inactive Seniors';
+							break;
+						case 'deceased':
+							echo 'Deceased Seniors';
+							break;
+						case 'transferred':
+							echo 'Transferred Seniors';
+							break;
+						default:
+							echo 'All Seniors';
+					}
+					?>
+				</h2>
 				<div class="header-actions">
-					<div class="dropdown">
-						<div class="dropdown-toggle">
-							<i class="fas fa-filter"></i>
-							<span>Select Barangay</span>
-							<i class="fas fa-chevron-down"></i>
-						</div>
-						<div class="dropdown-menu">
-							<a href="#" class="dropdown-item" onclick="filterByBarangay('all')">All Barangays</a>
-							<?php foreach ($barangays as $barangay): ?>
-								<a href="#" class="dropdown-item" onclick="filterByBarangay('<?= htmlspecialchars($barangay['name']) ?>')">
-									<?= htmlspecialchars($barangay['name']) ?>
-								</a>
-							<?php endforeach; ?>
-						</div>
-					</div>
-					<button class="btn btn-primary" onclick="openAddModal()">
+					<button class="button primary" onclick="openAddModal()">
 						<i class="fas fa-plus"></i>
 						Add Senior
 					</button>
@@ -269,7 +622,7 @@ $deceasedCount = (int)$pdo->query("SELECT COUNT(*) FROM seniors WHERE life_statu
 
 		<!-- Alert Messages -->
 		<?php if ($message): ?>
-		<div class="alert alert-success animate-fade-in">
+		<div class="alert alert-success">
 			<div class="alert-icon">
 				<i class="fas fa-check-circle"></i>
 			</div>
@@ -280,97 +633,10 @@ $deceasedCount = (int)$pdo->query("SELECT COUNT(*) FROM seniors WHERE life_statu
 		</div>
 		<?php endif; ?>
 
-		<!-- Statistics Cards -->
-		<div class="stats animate-fade-in">
-			<div class="stat success">
-				<div class="stat-icon">
-					<i class="fas fa-users"></i>
-				</div>
-				<div class="stat-content">
-					<h3>Living Seniors</h3>
-					<p class="number"><?= $livingCount ?></p>
-				</div>
-			</div>
-			<div class="stat danger">
-				<div class="stat-icon">
-					<i class="fas fa-skull"></i>
-				</div>
-				<div class="stat-content">
-					<h3>Deceased</h3>
-					<p class="number"><?= $deceasedCount ?></p>
-				</div>
-			</div>
-			<div class="stat">
-				<div class="stat-icon">
-					<i class="fas fa-home"></i>
-				</div>
-				<div class="stat-content">
-					<h3>Local</h3>
-					<p class="number"><?= (int)$pdo->query("SELECT COUNT(*) FROM seniors WHERE life_status='living' AND category='local'")->fetchColumn() ?></p>
-				</div>
-			</div>
-			<div class="stat info">
-				<div class="stat-icon">
-					<i class="fas fa-flag"></i>
-				</div>
-				<div class="stat-content">
-					<h3>National</h3>
-					<p class="number"><?= (int)$pdo->query("SELECT COUNT(*) FROM seniors WHERE life_status='living' AND category='national'")->fetchColumn() ?></p>
-				</div>
-			</div>
-		</div>
 
-		<!-- Filters -->
-		<div class="filters animate-fade-in">
-			<form method="get" class="filters-form">
-				<div class="filter-group">
-					<label class="filter-label">
-						<i class="fas fa-heartbeat"></i>
-						Life Status
-					</label>
-					<select name="life" class="filter-select">
-						<option value="all" <?= $life==='all'?'selected':'' ?>>All</option>
-						<option value="living" <?= $life==='living'?'selected':'' ?>>Living</option>
-						<option value="deceased" <?= $life==='deceased'?'selected':'' ?>>Deceased</option>
-					</select>
-				</div>
-				<div class="filter-group">
-					<label class="filter-label">
-						<i class="fas fa-gift"></i>
-						Benefits Status
-					</label>
-					<select name="benefits" class="filter-select">
-						<option value="all" <?= $benefits==='all'?'selected':'' ?>>All</option>
-						<option value="received" <?= $benefits==='received'?'selected':'' ?>>Received</option>
-						<option value="notyet" <?= $benefits==='notyet'?'selected':'' ?>>Not Yet</option>
-					</select>
-				</div>
-				<div class="filter-group">
-					<label class="filter-label">
-						<i class="fas fa-tags"></i>
-						Category
-					</label>
-					<select name="category" class="filter-select">
-						<option value="all" <?= $category==='all'?'selected':'' ?>>All</option>
-						<option value="local" <?= $category==='local'?'selected':'' ?>>Local</option>
-						<option value="national" <?= $category==='national'?'selected':'' ?>>National</option>
-					</select>
-				</div>
-				<div class="filter-actions">
-					<button type="submit" class="button primary">
-						<i class="fas fa-filter"></i>
-						Apply Filters
-					</button>
-					<a href="seniors.php" class="button secondary">
-						<i class="fas fa-refresh"></i>
-						Reset
-					</a>
-				</div>
-			</form>
-		</div>
 
 		<!-- Seniors List -->
-		<div class="card animate-fade-in">
+		<div class="card">
 			<div class="card-header">
 				<h2>
 					<i class="fas fa-list"></i>
@@ -525,224 +791,9 @@ $deceasedCount = (int)$pdo->query("SELECT COUNT(*) FROM seniors WHERE life_statu
 				<?php endif; ?>
 			</div>
 		</div>
+			</div> <!-- Close main-content-area -->
+		</div> <!-- Close content-body -->
 	</main>
-
-	<!-- Add Senior Modal -->
-	<div class="modal-overlay" id="addSeniorModal">
-		<div class="modal registration-modal">
-			<div class="modal-header">
-				<h2 class="modal-title">
-					<i class="fas fa-user-plus"></i>
-					REGISTRATION FORM
-				</h2>
-				<button class="modal-close" onclick="closeAddModal()">&times;</button>
-			</div>
-			<div class="modal-body">
-				<form method="post" class="registration-form" id="addSeniorForm">
-					<input type="hidden" name="csrf" value="<?= $csrf ?>">
-					<input type="hidden" name="op" value="create">
-					
-					<!-- Personal Information Section -->
-					<div class="form-section">
-						<h3 class="section-title">Personal Information</h3>
-						
-						<div class="form-row">
-							<div class="form-group">
-								<label for="first_name" class="form-label">
-									<span class="label-text">First Name</span>
-								</label>
-								<input 
-									type="text" 
-									name="first_name" 
-									id="first_name"
-									class="form-input" 
-									required 
-									placeholder="Enter first name"
-								>
-							</div>
-							
-							<div class="form-group">
-								<label for="middle_name" class="form-label">
-									<span class="label-text">Middle Name</span>
-								</label>
-								<input 
-									type="text" 
-									name="middle_name" 
-									id="middle_name"
-									class="form-input" 
-									placeholder="Enter middle name (optional)"
-								>
-							</div>
-							
-							<div class="form-group">
-								<label for="last_name" class="form-label">
-									<span class="label-text">Last Name</span>
-								</label>
-								<input 
-									type="text" 
-									name="last_name" 
-									id="last_name"
-									class="form-input" 
-									required 
-									placeholder="Enter last name"
-								>
-							</div>
-						</div>
-						
-						<div class="form-row">
-							<div class="form-group">
-								<label for="date_of_birth" class="form-label">
-									<span class="label-text">Date of Birth</span>
-								</label>
-								<input 
-									type="date" 
-									name="date_of_birth" 
-									id="date_of_birth"
-									class="form-input"
-									onchange="calculateAge()"
-								>
-							</div>
-							
-							<div class="form-group">
-								<label for="age" class="form-label">
-									<span class="label-text">Age</span>
-								</label>
-								<input 
-									type="number" 
-									name="age" 
-									id="age"
-									class="form-input" 
-									min="60" 
-									max="120" 
-									required 
-									placeholder="Enter age"
-									readonly
-								>
-							</div>
-							
-							<div class="form-group">
-								<label for="sex" class="form-label">
-									<span class="label-text">Sex</span>
-								</label>
-								<select name="sex" id="sex" class="form-input">
-									<option value="">Select Sex</option>
-									<option value="male">Male</option>
-									<option value="female">Female</option>
-									<option value="lgbtq">LGBTQ</option>
-								</select>
-							</div>
-						</div>
-						
-						<div class="form-row">
-							<div class="form-group">
-								<label for="place_of_birth" class="form-label">
-									<span class="label-text">Place of Birth</span>
-								</label>
-								<input 
-									type="text" 
-									name="place_of_birth" 
-									id="place_of_birth"
-									class="form-input" 
-									placeholder="Enter place of birth"
-								>
-							</div>
-							
-							<div class="form-group">
-								<label for="civil_status" class="form-label">
-									<span class="label-text">Civil Status</span>
-								</label>
-								<select name="civil_status" id="civil_status" class="form-input">
-									<option value="">Select Civil Status</option>
-									<option value="single">Single</option>
-									<option value="married">Married</option>
-									<option value="widowed">Widowed</option>
-									<option value="divorced">Divorced</option>
-									<option value="separated">Separated</option>
-								</select>
-							</div>
-						</div>
-						
-						<div class="form-row">
-							<div class="form-group">
-								<label for="barangay" class="form-label">
-									<span class="label-text">Address (Barangay)</span>
-								</label>
-								<select 
-									name="barangay" 
-									id="barangay"
-									class="form-input" 
-									required
-								>
-									<option value="">Select Barangay</option>
-									<?php
-									$barangays = $pdo->query('SELECT name FROM barangays ORDER BY name')->fetchAll();
-									foreach ($barangays as $b) {
-										echo '<option value="' . htmlspecialchars($b['name']) . '">' . htmlspecialchars($b['name']) . '</option>';
-									}
-									?>
-								</select>
-							</div>
-							
-							<div class="form-group">
-								<label for="contact" class="form-label">
-									<span class="label-text">Contact Number</span>
-								</label>
-								<input 
-									type="tel" 
-									name="contact" 
-									id="contact"
-									class="form-input" 
-									placeholder="Enter contact number"
-								>
-							</div>
-						</div>
-						
-						<div class="form-row">
-							<div class="form-group">
-								<label for="educational_attainment" class="form-label">
-									<span class="label-text">Educational Attainment</span>
-								</label>
-								<select name="educational_attainment" id="educational_attainment" class="form-input">
-									<option value="">Select Educational Attainment</option>
-									<option value="no_formal_education">No Formal Education</option>
-									<option value="elementary">Elementary</option>
-									<option value="high_school">High School</option>
-									<option value="vocational">Vocational</option>
-									<option value="college">College</option>
-									<option value="graduate">Graduate</option>
-									<option value="post_graduate">Post Graduate</option>
-								</select>
-							</div>
-							
-							<div class="form-group">
-								<label for="occupation" class="form-label">
-									<span class="label-text">Occupation</span>
-								</label>
-								<input 
-									type="text" 
-									name="occupation" 
-									id="occupation"
-									class="form-input" 
-									placeholder="Enter occupation"
-								>
-							</div>
-						</div>
-						
-						<div class="form-row">
-							<div class="form-group">
-								<label for="annual_income" class="form-label">
-									<span class="label-text">Annual Income</span>
-								</label>
-								<input 
-									type="number" 
-									name="annual_income" 
-									id="annual_income"
-									class="form-input" 
-									step="0.01"
-									min="0"
-									placeholder="Enter annual income"
-								>
-							</div>
 							
 							<div class="form-group full-width">
 								<label for="other_skills" class="form-label">
@@ -996,7 +1047,7 @@ $deceasedCount = (int)$pdo->query("SELECT COUNT(*) FROM seniors WHERE life_statu
 						</button>
 						<button type="submit" class="button primary">
 							<i class="fas fa-save"></i>
-							Register Senior
+							Add Senior
 						</button>
 					</div>
 				</form>
