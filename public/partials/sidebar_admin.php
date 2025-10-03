@@ -6,7 +6,9 @@ $current_page = basename($_SERVER['PHP_SELF']);
 <aside class="sidebar">
 	<div class="sidebar-header">
 		<a href="<?= BASE_URL ?>/admin/dashboard.php" class="sidebar-brand">
-			<div class="sidebar-logo">🏛️</div>
+			<div class="sidebar-logo">
+				<img src="<?= BASE_URL ?>/images/logo.png" alt="SeniorCare Admin Logo" style="height: 40px; width: auto;">
+			</div>
 			<div class="sidebar-title">SeniorCare Admin</div>
 		</a>
 	</div>
@@ -26,11 +28,44 @@ $current_page = basename($_SERVER['PHP_SELF']);
 			</a>
 		</div>
 		
-		<div class="nav-item">
-			<a href="<?= BASE_URL ?>/admin/seniors.php" class="nav-link <?= $current_page === 'seniors.php' ? 'active' : '' ?>">
+		<?php 
+		$seniors_pages = [
+			'seniors.php',
+			'active_seniors.php',
+			'inactive_seniors.php',
+			'deceased_seniors.php',
+			'transferred_seniors.php',
+			'waiting_seniors.php'
+		];
+		$is_seniors_active = in_array($current_page, $seniors_pages);
+		?>
+		<div class="nav-item has-submenu <?= $is_seniors_active ? 'expanded' : '' ?>">
+			<a href="#" class="nav-link seniors-toggle <?= $is_seniors_active ? 'active' : '' ?>" id="seniors-toggle">
 				<span class="nav-icon">👥</span>
 				<span>All Seniors</span>
+				<span class="nav-chevron">▶</span>
 			</a>
+			<div class="submenu" id="seniors-submenu">
+                <div class="submenu-heading">All Seniors</div>
+				<a href="<?= BASE_URL ?>/admin/seniors.php" class="submenu-link <?= $current_page === 'seniors.php' ? 'active' : '' ?>">
+					<span>All Seniors</span>
+				</a>
+				<a href="<?= BASE_URL ?>/admin/active_seniors.php" class="submenu-link <?= $current_page === 'active_seniors.php' ? 'active' : '' ?>">
+					<span>Active Seniors</span>
+				</a>
+				<a href="<?= BASE_URL ?>/admin/inactive_seniors.php" class="submenu-link <?= $current_page === 'inactive_seniors.php' ? 'active' : '' ?>">
+					<span>Inactive Seniors</span>
+				</a>
+				<a href="<?= BASE_URL ?>/admin/deceased_seniors.php" class="submenu-link <?= $current_page === 'deceased_seniors.php' ? 'active' : '' ?>">
+					<span>Deceased Seniors</span>
+				</a>
+				<a href="<?= BASE_URL ?>/admin/transferred_seniors.php" class="submenu-link <?= $current_page === 'transferred_seniors.php' ? 'active' : '' ?>">
+					<span>Transferred Seniors</span>
+				</a>
+				<a href="<?= BASE_URL ?>/admin/waiting_seniors.php" class="submenu-link <?= $current_page === 'waiting_seniors.php' ? 'active' : '' ?>">
+					<span>Waiting Seniors</span>
+				</a>
+			</div>
 		</div>
 		
 		<div class="nav-item">
@@ -77,7 +112,7 @@ $current_page = basename($_SERVER['PHP_SELF']);
 				<span class="user-role">System Administrator</span>
 			</div>
 		</div>
-		<div class="user-actions">
+	<div class="user-actions">
 			<a class="logout" href="<?= BASE_URL ?>/logout.php">
 				<span>🚪</span>
 				<span>Logout</span>
@@ -85,3 +120,4 @@ $current_page = basename($_SERVER['PHP_SELF']);
 		</div>
 	</div>
 </aside>
+<script src="<?= BASE_URL ?>/assets/sidebar-toggle.js"></script>

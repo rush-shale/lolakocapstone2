@@ -44,6 +44,47 @@ $barangays = $pdo->query('SELECT * FROM barangays ORDER BY name ASC')->fetchAll(
 	<link rel="stylesheet" href="<?= BASE_URL ?>/assets/government-portal.css">
 	<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
 	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+	<style>
+		.modal-overlay {
+			position: fixed;
+			top: 0; left: 0; right: 0; bottom: 0;
+			background: rgba(0,0,0,0.5);
+			display: none;
+			justify-content: center;
+			align-items: center;
+			z-index: 1000;
+		}
+		.modal-overlay.active {
+			display: flex;
+			backdrop-filter: blur(5px);
+		}
+		.modal {
+			background: white;
+			border-radius: 8px;
+			max-width: 500px;
+			width: 90%;
+			padding: 1rem;
+			box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+			position: relative;
+		}
+		.modal-header {
+			position: relative;
+			padding-right: 2.5rem;
+		}
+		.modal-close {
+			position: absolute;
+			top: 0.5rem;
+			right: 0.5rem;
+			background: transparent;
+			border: none;
+			font-size: 1.5rem;
+			cursor: pointer;
+			color: #333;
+		}
+		.modal-close:hover {
+			color: #000;
+		}
+	</style>
 </head>
 <body>
 	<?php include __DIR__ . '/../partials/sidebar_admin.php'; ?>
@@ -105,16 +146,15 @@ $barangays = $pdo->query('SELECT * FROM barangays ORDER BY name ASC')->fetchAll(
 						<i class="fas fa-list"></i>
 						All Barangays
 					</h2>
-					<div class="card-actions">
-						<button class="button primary" onclick="openAddModal()">
-							<i class="fas fa-plus"></i>
-							Add Barangay
-						</button>
-						<div class="search-container">
-							<span class="search-icon">🔍</span>
-							<input type="text" placeholder="Search barangays..." id="searchBarangays">
+						<div class="card-actions">
+							<button class="button primary" onclick="openAddModal()">
+								<i class="fas fa-plus"></i>
+								Add Barangay
+							</button>
+							<div class="search-container" style="max-width: 300px;">
+								<input type="text" placeholder="Search barangays..." id="searchBarangays" style="width: 100%; padding: 8px 12px; border: 1px solid #ccc; border-radius: 12px; outline: none; font-size: 0.9rem;">
+							</div>
 						</div>
-					</div>
 				</div>
 			<div class="card-body">
 				<?php if (!empty($barangays)): ?>
@@ -178,7 +218,6 @@ $barangays = $pdo->query('SELECT * FROM barangays ORDER BY name ASC')->fetchAll(
 		</div>
 	</main>
 
-	<!-- Add Barangay Modal -->
 	<div class="modal-overlay" id="addBarangayModal">
 		<div class="modal">
 			<div class="modal-header">

@@ -1,0 +1,30 @@
+-- Full SQL schema for seniors table with gender column (sex)
+
+CREATE TABLE `seniors` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `first_name` varchar(100) NOT NULL,
+  `middle_name` varchar(100) DEFAULT NULL,
+  `last_name` varchar(100) NOT NULL,
+  `age` int(11) NOT NULL,
+  `date_of_birth` date DEFAULT NULL,
+  `sex` enum('male','female','lgbtq') DEFAULT NULL,
+  `place_of_birth` varchar(150) DEFAULT NULL,
+  `civil_status` enum('single','married','widowed','divorced','separated') DEFAULT NULL,
+  `educational_attainment` enum('no_formal_education','elementary','high_school','vocational','college','graduate','post_graduate') DEFAULT NULL,
+  `occupation` varchar(150) DEFAULT NULL,
+  `annual_income` decimal(12,2) DEFAULT NULL,
+  `other_skills` text DEFAULT NULL,
+  `barangay` varchar(120) NOT NULL,
+  `contact` varchar(50) DEFAULT NULL,
+  `benefits_received` tinyint(1) NOT NULL DEFAULT 0,
+  `life_status` enum('living','deceased') NOT NULL DEFAULT 'living',
+  `category` enum('local','national') NOT NULL DEFAULT 'local',
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `validation_status` enum('Not Validated','Validated') DEFAULT 'Not Validated',
+  `validation_date` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `idx_seniors_barangay` (`barangay`),
+  KEY `idx_seniors_life_status` (`life_status`),
+  KEY `idx_seniors_category` (`category`),
+  KEY `idx_seniors_sex` (`sex`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;

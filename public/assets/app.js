@@ -68,8 +68,28 @@ function initializeSidebarInteractions() {
     if (mobileToggle) {
         mobileToggle.addEventListener('click', () => {
             sidebar.classList.toggle('mobile-open');
+            toggleSidebarOverlay(sidebar);
         });
     }
+
+    // Close sidebar when clicking on overlay
+    document.addEventListener('click', (e) => {
+        const overlay = document.querySelector('.sidebar-overlay');
+        if (sidebar.classList.contains('mobile-open') && e.target === overlay) {
+            sidebar.classList.remove('mobile-open');
+            removeSidebarOverlay();
+        }
+    });
+
+    // Submenu toggle for nav items with submenu
+    const submenuToggles = sidebar.querySelectorAll('.nav-item.has-submenu > .nav-link');
+    submenuToggles.forEach(toggle => {
+        toggle.addEventListener('click', (e) => {
+            e.preventDefault();
+            const parentItem = toggle.parentElement;
+            parentItem.classList.toggle('expanded');
+        });
+    });
 }
 
 // Ripple Effect for Interactive Elements
@@ -101,6 +121,51 @@ function createRippleEffect(event, element) {
     setTimeout(() => {
         ripple.remove();
     }, 600);
+}
+
+// Sidebar overlay management
+function toggleSidebarOverlay(sidebar) {
+    let overlay = document.querySelector('.sidebar-overlay');
+    if (!overlay) {
+        overlay = document.createElement('div');
+        overlay.className = 'sidebar-overlay';
+        overlay.style.cssText = `
+            position: fixed;
+            top: 0;
+            left: 240px;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.4);
+            z-index: 999;
+            cursor: pointer;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        `;
+        document.body.appendChild(overlay);
+
+        overlay.addEventListener('click', () => {
+            sidebar.classList.remove('mobile-open');
+            removeSidebarOverlay();
+        });
+
+        requestAnimationFrame(() => {
+            overlay.style.opacity = '1';
+        });
+    } else {
+        removeSidebarOverlay();
+    }
+}
+
+function removeSidebarOverlay() {
+    const overlay = document.querySelector('.sidebar-overlay');
+    if (overlay) {
+        overlay.style.opacity = '0';
+        overlay.addEventListener('transitionend', () => {
+            if (overlay.parentNode) {
+                overlay.parentNode.removeChild(overlay);
+            }
+        }, { once: true });
+    }
 }
 
         // Enhanced Form Interactions

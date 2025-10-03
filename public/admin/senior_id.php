@@ -155,35 +155,7 @@ if (!$id) {
 			
 			<div class="content-body">
 				<!-- Statistics Cards -->
-				<div class="stats animate-fade-in">
-					<div class="stat">
-						<div class="stat-icon">
-							<i class="fas fa-id-card"></i>
-						</div>
-						<div class="stat-content">
-							<h3>Total Seniors</h3>
-							<p class="number"><?= count($seniors) ?></p>
-						</div>
-					</div>
-					<div class="stat success">
-						<div class="stat-icon">
-							<i class="fas fa-check-circle"></i>
-						</div>
-						<div class="stat-content">
-							<h3>With Benefits</h3>
-							<p class="number"><?= count(array_filter($seniors, fn($s) => $s['benefits_received'])) ?></p>
-						</div>
-					</div>
-					<div class="stat info">
-						<div class="stat-icon">
-							<i class="fas fa-map-marker-alt"></i>
-						</div>
-						<div class="stat-content">
-							<h3>Barangays</h3>
-							<p class="number"><?= count(array_unique(array_column($seniors, 'barangay'))) ?></p>
-						</div>
-					</div>
-				</div>
+				<!-- Removed statistics cards as per user request -->
 
 				<!-- Senior Selection Card -->
 				<div class="card animate-fade-in">
@@ -193,9 +165,8 @@ if (!$id) {
 							Select Senior Citizen
 						</h2>
 						<div class="card-actions">
-							<div class="search-container">
-								<span class="search-icon">🔍</span>
-								<input type="text" placeholder="Search seniors..." id="searchSeniors">
+							<div class="search-container" style="max-width: 300px;">
+								<input type="text" placeholder="Search seniors..." id="searchSeniors" style="width: 100%; padding: 8px 12px; border: 1px solid #ccc; border-radius: 12px; outline: none; font-size: 0.9rem;">
 							</div>
 						</div>
 					</div>
@@ -256,12 +227,12 @@ if (!$id) {
 												</span>
 											</td>
 											<td>
-												<div class="action-buttons">
-													<a href="<?= BASE_URL ?>/admin/senior_id.php?id=<?= (int)$s['id'] ?>" target="_blank" class="button primary">
-														<i class="fas fa-id-card"></i>
-														Generate ID
-													</a>
-												</div>
+													<div class="action-buttons">
+														<a href="<?= BASE_URL ?>/admin/senior_id.php?id=<?= (int)$s['id'] ?>" target="_blank" class="button primary">
+															<i class="fas fa-id-card"></i>
+															Generate ID
+														</a>
+													</div>
 											</td>
 										</tr>
 									<?php endforeach; ?>
@@ -367,56 +338,197 @@ function h($v){ return htmlspecialchars((string)$v, ENT_QUOTES | ENT_SUBSTITUTE,
 <!doctype html>
 <html lang="en">
 <head>
-	<meta charset="utf-8">
-	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1" />
 	<title>Senior ID | <?= h($s['last_name'].', '.$s['first_name']) ?></title>
 	<style>
-		body{margin:0;background:#f8fafc;font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif}
-		.wrapper{display:grid;min-height:100vh;place-items:center;padding:1rem}
-		.card{width:400px;height:250px;background:#ffffff;color:#1e293b;border-radius:16px;box-shadow:0 10px 15px -3px rgba(0,0,0,0.1),0 4px 6px -2px rgba(0,0,0,0.05);padding:24px;position:relative;border:1px solid #e2e8f0}
-		.header{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px}
-		.brand{font-weight:800;font-size:18px;color:#3b82f6;letter-spacing:-0.025em}
-		.meta{font-size:12px;color:#64748b;background:#f1f5f9;padding:4px 8px;border-radius:6px}
-		.hr{height:2px;background:linear-gradient(90deg,#3b82f6,#22d3ee);margin:16px 0;border-radius:1px}
-		.row{display:flex;gap:16px}
-		.photo{width:100px;height:120px;background:#f8fafc;border:2px solid #e2e8f0;border-radius:12px;display:flex;align-items:center;justify-content:center;color:#64748b;font-size:12px;font-weight:500}
-		.info{flex:1}
-		.label{font-size:11px;color:#64748b;margin-top:8px;font-weight:500;text-transform:uppercase;letter-spacing:0.05em}
-		.value{font-size:14px;font-weight:600;margin-bottom:4px}
-		.footer{position:absolute;left:24px;right:24px;bottom:16px;display:flex;justify-content:space-between;align-items:center;font-size:11px;color:#64748b;background:#f8fafc;padding:8px 12px;border-radius:8px}
-		.controls{margin-top:24px;text-align:center}
-		button{padding:12px 24px;border:none;border-radius:8px;background:#3b82f6;color:white;font-weight:600;cursor:pointer;font-size:14px;transition:all 0.2s ease}
-		button:hover{background:#2563eb;transform:translateY(-1px);box-shadow:0 4px 6px -1px rgba(0,0,0,0.1)}
-		.back-btn{background:#64748b;margin-right:12px}
-		.back-btn:hover{background:#475569}
-		@media print{.controls{display:none}body{background:#fff}.card{box-shadow:none;border:1px solid #000}}
+		body {
+			margin: 0;
+			background: #f8fafc;
+			font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+		}
+		.wrapper {
+			display: grid;
+			min-height: 100vh;
+			place-items: center;
+			padding: 1rem;
+		}
+		.card {
+			width: 450px;
+			height: 280px;
+			background: #ffffff;
+			color: #1e293b;
+			border-radius: 16px;
+			box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -2px rgba(0,0,0,0.05);
+			padding: 20px 24px;
+			position: relative;
+			border: 1px solid #e2e8f0;
+			display: flex;
+			flex-direction: column;
+			justify-content: space-between;
+		}
+		.header {
+			display: flex;
+			justify-content: space-between;
+			align-items: center;
+			margin-bottom: 8px;
+		}
+		.logo {
+			width: 60px;
+			height: 60px;
+			background: #ddd;
+			border-radius: 8px;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			font-size: 12px;
+			color: #666;
+			user-select: none;
+		}
+		.title {
+			flex: 1;
+			text-align: center;
+			font-weight: 700;
+			font-size: 14px;
+			line-height: 1.2;
+			letter-spacing: 0.05em;
+			color: #000;
+		}
+		.title .line1 {
+			font-weight: 900;
+			font-size: 16px;
+			margin-bottom: 2px;
+		}
+		.title .line2 {
+			font-weight: 700;
+			font-size: 14px;
+			margin-bottom: 2px;
+		}
+		.title .line3 {
+			font-weight: 600;
+			font-size: 13px;
+		}
+		.content {
+			margin-top: 8px;
+			flex: 1;
+			display: flex;
+			gap: 12px;
+		}
+		.photo {
+			width: 100px;
+			height: 120px;
+			background: #f8fafc;
+			border: 2px solid #e2e8f0;
+			border-radius: 12px;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			color: #64748b;
+			font-size: 12px;
+			font-weight: 500;
+			user-select: none;
+		}
+		.info {
+			flex: 1;
+			display: flex;
+			flex-direction: column;
+			justify-content: space-between;
+			font-size: 13px;
+			color: #000;
+		}
+		.info .field {
+			display: flex;
+			justify-content: space-between;
+			align-items: center;
+			border-bottom: 1px solid #000;
+			padding: 2px 0;
+			font-weight: 700;
+			letter-spacing: 0.05em;
+		}
+		.info .field label {
+			font-weight: 600;
+			font-size: 11px;
+			color: #555;
+			user-select: none;
+		}
+		.info .field .value {
+			flex: 1;
+			text-align: right;
+			text-transform: uppercase;
+		}
+		.bottom-row {
+			display: flex;
+			justify-content: space-between;
+			align-items: center;
+			margin-top: 12px;
+			font-size: 11px;
+			color: #555;
+			user-select: none;
+		}
+		.signature {
+			flex: 1;
+			border-bottom: 1px solid #000;
+			margin-right: 12px;
+			height: 20px;
+		}
+		.control-number {
+			font-weight: 700;
+			font-size: 14px;
+		}
+		.note {
+			margin-top: 8px;
+			text-align: center;
+			font-size: 11px;
+			color: #555;
+			font-style: italic;
+			user-select: none;
+		}
 	</style>
 </head>
 <body>
 	<div class="wrapper">
-		<div class="card">
+		<div class="card" id="senior-id-card">
 			<div class="header">
-				<div class="brand">LoLaKo Senior ID</div>
-				<div class="meta">ID: #<?= (int)$s['id'] ?></div>
-			</div>
-			<div class="hr"></div>
-			<div class="row">
-				<div class="photo">📷<br>Photo</div>
-				<div class="info">
-					<div class="label">Full Name</div>
-					<div class="value"><?= h($s['last_name'] . ', ' . $s['first_name'] . ($s['middle_name']? ' ' . $s['middle_name'] : '')) ?></div>
-					<div class="label">Age</div>
-					<div class="value"><?= (int)$s['age'] ?> years old</div>
-					<div class="label">Barangay</div>
-					<div class="value"><?= h($s['barangay']) ?></div>
-					<div class="label">Category & Status</div>
-					<div class="value"><?= h(strtoupper($s['category'])) ?> • <?= h(ucfirst($s['life_status'])) ?></div>
+				<div class="logo" title="Logo 1">Logo 1</div>
+				<div class="title">
+					<div class="line1">Republic of the Philippines</div>
+					<div class="line2">Office of the Senior Citizens Affairs (OSCA)</div>
+					<div class="line3">Municipality of Manolo Fortich Bukidnon</div>
 				</div>
+				<div class="logo" title="Logo 2">Logo 2</div>
 			</div>
-			<div class="footer">
-				<div>Benefits: <?= $s['benefits_received'] ? '✅ Received' : '⏳ Pending' ?></div>
-				<div>Issued: <?= date('M d, Y') ?></div>
+			<div class="content">
+				<div class="info">
+					<div class="field">
+						<label>Name:</label>
+						<div class="value"><?= h(strtoupper($s['last_name'] . ', ' . $s['first_name'] . ($s['middle_name'] ? ' ' . $s['middle_name'] : ''))) ?></div>
+					</div>
+					<div class="field">
+						<label>Address:</label>
+						<div class="value"><?= h(strtoupper($s['barangay'])) ?></div>
+					</div>
+					<div class="field">
+						<label>&nbsp;</label>
+						<div class="value"><?= h('Manolo Fortich, Bukidnon') ?></div>
+					</div>
+					<div class="field" style="margin-top: 12px;">
+						<label>Date of Birth</label>
+						<label>Sex</label>
+						<label>Date Issued</label>
+					</div>
+					<div class="field" style="font-weight: 700;">
+						<div class="value"><?= h(date('m-d-Y', strtotime($s['birthdate'] ?? ''))) ?></div>
+						<div class="value"><?= h(strtoupper($s['sex'] ?? '')) ?></div>
+						<div class="value"><?= h(date('m-d-Y')) ?></div>
+					</div>
+				</div>
+				<div class="photo">📷<br>Photo</div>
 			</div>
+			<div class="bottom-row">
+				<div class="signature" title="Signature / Thumbmark"></div>
+				<div class="control-number">Control No: 19349</div>
+			</div>
+			<div class="note">This Card is Non-Transferable</div>
 		</div>
 		<div class="controls">
 			<button class="back-btn" onclick="window.close()">← Back</button>

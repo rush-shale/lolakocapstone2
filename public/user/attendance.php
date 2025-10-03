@@ -23,7 +23,7 @@ $events = $eventsStmt->fetchAll();
 $attendanceHistoryStmt = $pdo->prepare("
     SELECT 
         a.id,
-        a.created_at as attendance_date,
+        a.marked_at as attendance_date,
         s.first_name,
         s.last_name,
         s.middle_name,
@@ -33,7 +33,7 @@ $attendanceHistoryStmt = $pdo->prepare("
     JOIN seniors s ON a.senior_id = s.id
     JOIN events e ON a.event_id = e.id
     WHERE s.barangay = ? AND e.event_date >= DATE_SUB(CURDATE(), INTERVAL 30 DAY)
-    ORDER BY a.created_at DESC
+    ORDER BY a.marked_at DESC
     LIMIT 50
 ");
 $attendanceHistoryStmt->execute([$user['barangay']]);
@@ -48,7 +48,7 @@ $activeSeniorsStmt = $pdo->prepare("
         s.middle_name,
         s.age,
         COUNT(a.id) as attendance_count,
-        MAX(a.created_at) as last_attendance
+        MAX(a.marked_at) as last_attendance
     FROM seniors s
     LEFT JOIN attendance a ON s.id = a.senior_id
     LEFT JOIN events e ON a.event_id = e.id
