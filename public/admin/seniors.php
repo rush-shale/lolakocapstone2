@@ -37,7 +37,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 		$purok = trim($_POST['purok'] ?? '');
 		$cellphone = trim($_POST['cellphone'] ?? '');
 		$benefits_received = isset($_POST['benefits_received']) ? 1 : 0;
-		$life_status = (isset($_POST['life_status']) && $_POST['life_status'] === 'deceased') ? 'deceased' : 'living';
+		$life_status = ($_POST['life_status'] ?? '') === 'deceased' ? 'deceased' : 'living';
 		$category = $_POST['category'] === 'national' ? 'national' : 'local';
 
 		// Check if waiting list checkbox is set
@@ -49,7 +49,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 		$validation_status = $category === 'waiting' ? 'Not Validated' : 'Validated';
 		$validation_date = $category === 'waiting' ? null : date('Y-m-d H:i:s');
 
-		if ($first_name && $last_name && $age && $barangay) {
+		if ($first_name && $last_name && $age && $barangay && $osca_id_no) {
 			try {
 				$pdo->beginTransaction();
 
@@ -60,7 +60,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 						$date_of_birth ?: null, $sex ?: null, $place_of_birth ?: null,
 						$civil_status ?: '', $educational_attainment ?: '',
 						$occupation ?: null, $annual_income, $other_skills,
-						$barangay, $contact ?: null, $osca_id_no ?: null, $remarks ?: null,
+						$barangay, $contact ?: null, $osca_id_no, $remarks ?: null,
 						$health_condition ?: null, $purok ?: null, $cellphone ?: null,
 						$benefits_received, $life_status, $category, $validation_status, $validation_date
 					]);
@@ -73,7 +73,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 						$date_of_birth ?: null, $sex ?: null, $place_of_birth ?: null,
 						$civil_status ?: '', $educational_attainment ?: '',
 						$occupation ?: null, $annual_income, $other_skills,
-						$barangay, $contact ?: null, $osca_id_no ?: null, $remarks ?: null,
+						$barangay, $contact ?: null, $osca_id_no, $remarks ?: null,
 						$health_condition ?: null, $purok ?: null, $cellphone ?: null,
 						$benefits_received, $life_status, $category, $validation_status, $validation_date, $id
 					]);
@@ -1312,6 +1312,7 @@ $waitingCount = (int)$pdo->query("SELECT COUNT(*) FROM seniors WHERE life_status
 									id="osca_id_no"
 									class="form-input"
 									placeholder="Enter OSCA ID Number"
+									required
 								>
 							</div>
 
