@@ -24,14 +24,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 		$date_of_birth = $_POST['date_of_birth'] ?? null;
 		$sex = $_POST['sex'] ?? null;
 		$place_of_birth = trim($_POST['place_of_birth'] ?? '');
-		$civil_status = $_POST['civil_status'] ?? null;
-		$educational_attainment = $_POST['educational_attainment'] ?? null;
+		$civil_status = $_POST['civil_status'] ?? '';
+		$educational_attainment = $_POST['educational_attainment'] ?? '';
 		$occupation = trim($_POST['occupation'] ?? '');
 		$annual_income = $_POST['annual_income'] ? (float)$_POST['annual_income'] : null;
 		$other_skills = trim($_POST['other_skills'] ?? '');
-		if ($other_skills === null) {
-			$other_skills = '';
-		}
 		$barangay = trim($_POST['barangay'] ?? '');
 		$contact = trim($_POST['contact'] ?? '');
 		$osca_id_no = trim($_POST['osca_id_no'] ?? '');
@@ -40,7 +37,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 		$purok = trim($_POST['purok'] ?? '');
 		$cellphone = trim($_POST['cellphone'] ?? '');
 		$benefits_received = isset($_POST['benefits_received']) ? 1 : 0;
-		$life_status = $_POST['life_status'] === 'deceased' ? 'deceased' : 'living';
+		$life_status = (isset($_POST['life_status']) && $_POST['life_status'] === 'deceased') ? 'deceased' : 'living';
 		$category = $_POST['category'] === 'national' ? 'national' : 'local';
 
 		// Check if waiting list checkbox is set
@@ -61,7 +58,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 					$stmt->execute([
 						$first_name, $middle_name ?: null, $last_name, $ext_name ?: null, $age,
 						$date_of_birth ?: null, $sex ?: null, $place_of_birth ?: null,
-						$civil_status ?: null, $educational_attainment ?: null,
+						$civil_status ?: '', $educational_attainment ?: '',
 						$occupation ?: null, $annual_income, $other_skills,
 						$barangay, $contact ?: null, $osca_id_no ?: null, $remarks ?: null,
 						$health_condition ?: null, $purok ?: null, $cellphone ?: null,
@@ -74,7 +71,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 					$stmt->execute([
 						$first_name, $middle_name ?: null, $last_name, $ext_name ?: null, $age,
 						$date_of_birth ?: null, $sex ?: null, $place_of_birth ?: null,
-						$civil_status ?: null, $educational_attainment ?: null,
+						$civil_status ?: '', $educational_attainment ?: '',
 						$occupation ?: null, $annual_income, $other_skills,
 						$barangay, $contact ?: null, $osca_id_no ?: null, $remarks ?: null,
 						$health_condition ?: null, $purok ?: null, $cellphone ?: null,
@@ -85,53 +82,54 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 				}
 				
 				// Handle family composition
-				if ($op === 'update') {
-					// Delete existing family members
-					$stmt = $pdo->prepare('DELETE FROM family_composition WHERE senior_id = ?');
-					$stmt->execute([$senior_id]);
-				}
-				
-				if (isset($_POST['family_name']) && is_array($_POST['family_name'])) {
-					for ($i = 0; $i < count($_POST['family_name']); $i++) {
-						$family_name = trim($_POST['family_name'][$i] ?? '');
-						$family_birthday = $_POST['family_birthday'][$i] ?? null;
-						$family_age = (int)($_POST['family_age'][$i] ?? 0);
-						$family_relation = trim($_POST['family_relation'][$i] ?? '');
-						$family_civil_status = trim($_POST['family_civil_status'][$i] ?? '');
-						$family_occupation = trim($_POST['family_occupation'][$i] ?? '');
-						$family_income = $_POST['family_income'][$i] ? (float)$_POST['family_income'][$i] : null;
-						
-						if ($family_name && $family_relation) {
-							$stmt = $pdo->prepare('INSERT INTO family_composition (senior_id, name, birthday, age, relation, civil_status, occupation, income) VALUES (?, ?, ?, ?, ?, ?, ?, ?)');
-							$stmt->execute([
-								$senior_id, $family_name, $family_birthday ?: null, 
-								$family_age ?: null, $family_relation, $family_civil_status ?: null,
-								$family_occupation ?: null, $family_income
-							]);
+				if ($op === 'update' || $op === 'create') {
+					if ($op === 'update') {
+						// Delete existing family members
+						$stmt = $pdo->prepare('DELETE FROM family_composition WHERE senior_id = ?');
+						$stmt->execute([$senior_id]);
+					}
+					
+					if (isset($_POST['family_name']) && is_array($_POST['family_name'])) {
+						for ($i = 0; $i < count($_POST['family_name']); $i++) {
+							$family_name = trim($_POST['family_name'][$i] ?? '');
+							$family_birthday = $_POST['family_birthday'][$i] ?? null;
+							$family_age = (int)($_POST['family_age'][$i] ?? 0);
+							$family_relation = trim($_POST['family_relation'][$i] ?? '');
+							$family_civil_status = trim($_POST['family_civil_status'][$i] ?? '');
+							$family_occupation = trim($_POST['family_occupation'][$i] ?? '');
+							$family_income = $_POST['family_income'][$i] ? (float)$_POST['family_income'][$i] : null;
+							
+							if ($family_name && $family_relation) {
+								$stmt = $pdo->prepare('INSERT INTO family_composition (senior_id, name, birthday, age, relation, civil_status, occupation, income) VALUES (?, ?, ?, ?, ?, ?, ?, ?)');
+								$stmt->execute([
+									$senior_id, $family_name, $family_birthday ?: null, 
+									$family_age ?: null, $family_relation, $family_civil_status ?: null,
+									$family_occupation ?: null, $family_income
+								]);
+							}
 						}
 					}
-				}
-				
-				// Handle association information
-				if ($op === 'update') {
-					// Delete existing association info
-					$stmt = $pdo->prepare('DELETE FROM association_info WHERE senior_id = ?');
-					$stmt->execute([$senior_id]);
-				}
-				
-				$association_name = trim($_POST['association_name'] ?? '');
-				$association_address = trim($_POST['association_address'] ?? '');
-				$membership_date = $_POST['membership_date'] ?? null;
-				$is_officer = isset($_POST['is_officer']) ? 1 : 0;
-				$position = trim($_POST['position'] ?? '');
-				$date_elected = $_POST['date_elected'] ?? null;
-				
-				if ($association_name || $association_address || $membership_date || $is_officer) {
-					$stmt = $pdo->prepare('INSERT INTO association_info (senior_id, association_name, association_address, membership_date, is_officer, position, date_elected) VALUES (?, ?, ?, ?, ?, ?, ?)');
-					$stmt->execute([
-						$senior_id, $association_name ?: null, $association_address ?: null,
-						$membership_date ?: null, $is_officer, $position ?: null, $date_elected ?: null
-					]);
+					
+					if ($op === 'update') {
+						// Delete existing association info
+						$stmt = $pdo->prepare('DELETE FROM association_info WHERE senior_id = ?');
+						$stmt->execute([$senior_id]);
+					}
+					
+					$association_name = trim($_POST['association_name'] ?? '');
+					$association_address = trim($_POST['association_address'] ?? '');
+					$membership_date = $_POST['membership_date'] ?? null;
+					$is_officer = isset($_POST['is_officer']) ? 1 : 0;
+					$position = trim($_POST['position'] ?? '');
+					$date_elected = $_POST['date_elected'] ?? null;
+					
+					if ($association_name || $association_address || $membership_date || $is_officer) {
+						$stmt = $pdo->prepare('INSERT INTO association_info (senior_id, association_name, association_address, membership_date, is_officer, position, date_elected) VALUES (?, ?, ?, ?, ?, ?, ?)');
+						$stmt->execute([
+							$senior_id, $association_name ?: null, $association_address ?: null,
+							$membership_date ?: null, $is_officer, $position ?: null, $date_elected ?: null
+						]);
+					}
 				}
 				
 				$pdo->commit();
@@ -1026,10 +1024,11 @@ $waitingCount = (int)$pdo->query("SELECT COUNT(*) FROM seniors WHERE life_status
 					}
 				} else {
 					// senior row
-					const name = row.cells[1].querySelector('strong').textContent.toLowerCase();
-					const middle = row.cells[1].querySelector('small') ? row.cells[1].querySelector('small').textContent.toLowerCase() : '';
+					const lastName = row.cells[0].textContent.toLowerCase();
+					const firstName = row.cells[1].textContent.toLowerCase();
+					const middleName = row.cells[2].textContent.toLowerCase();
 					const barangay = row.cells[4].textContent.toLowerCase();
-					if (showGroup || name.includes(filter) || middle.includes(filter) || barangay.includes(filter)) {
+					if (showGroup || lastName.includes(filter) || firstName.includes(filter) || middleName.includes(filter) || barangay.includes(filter)) {
 						row.style.display = '';
 						if (!showGroup) {
 							// if this senior matches, show the header too
@@ -1114,6 +1113,7 @@ $waitingCount = (int)$pdo->query("SELECT COUNT(*) FROM seniors WHERE life_status
 									required
 								>
 							</div>
+							
 
 							<div class="form-group">
 								<label for="middle_name" class="form-label">
@@ -1217,12 +1217,13 @@ $waitingCount = (int)$pdo->query("SELECT COUNT(*) FROM seniors WHERE life_status
 								<label for="civil_status" class="form-label">
 									<span class="label-text">Civil Status</span>
 								</label>
-								<select name="civil_status" id="civil_status" class="form-input">
+								<select name="civil_status" id="civil_status" class="form-input" required>
 									<option value="">Select civil status</option>
 									<option value="single">Single</option>
 									<option value="married">Married</option>
 									<option value="widowed">Widowed</option>
 									<option value="separated">Separated</option>
+									<option value="divorced">Divorced</option>
 								</select>
 							</div>
 
@@ -1230,14 +1231,15 @@ $waitingCount = (int)$pdo->query("SELECT COUNT(*) FROM seniors WHERE life_status
 								<label for="educational_attainment" class="form-label">
 									<span class="label-text">Educational Attainment</span>
 								</label>
-								<select name="educational_attainment" id="educational_attainment" class="form-input">
+								<select name="educational_attainment" id="educational_attainment" class="form-input" required>
 									<option value="">Select educational attainment</option>
-									<option value="none">None</option>
+									<option value="no_formal_education">None</option>
 									<option value="elementary">Elementary</option>
 									<option value="high_school">High School</option>
 									<option value="college">College</option>
 									<option value="vocational">Vocational</option>
 									<option value="graduate">Graduate</option>
+									<option value="post_graduate">Post Graduate</option>
 								</select>
 							</div>
 						</div>
@@ -1730,19 +1732,20 @@ $waitingCount = (int)$pdo->query("SELECT COUNT(*) FROM seniors WHERE life_status
 				<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
 					<div>
 						<label for="editCivilStatus" style="font-weight: 600; margin-bottom: 0.25rem; display: block;">Civil Status</label>
-						<select id="editCivilStatus" name="civil_status" style="width: 100%; padding: 0.5rem; border: 1px solid #d1d5db; border-radius: 6px;">
+						<select id="editCivilStatus" name="civil_status" required style="width: 100%; padding: 0.5rem; border: 1px solid #d1d5db; border-radius: 6px;">
 							<option value="">Select Status</option>
 							<option value="single">Single</option>
 							<option value="married">Married</option>
 							<option value="widowed">Widowed</option>
+							<option value="separated">Separated</option>
 							<option value="divorced">Divorced</option>
 						</select>
 					</div>
 					<div>
 						<label for="editEducationalAttainment" style="font-weight: 600; margin-bottom: 0.25rem; display: block;">Educational Attainment</label>
-						<select id="editEducationalAttainment" name="educational_attainment" style="width: 100%; padding: 0.5rem; border: 1px solid #d1d5db; border-radius: 6px;">
+						<select id="editEducationalAttainment" name="educational_attainment" required style="width: 100%; padding: 0.5rem; border: 1px solid #d1d5db; border-radius: 6px;">
 							<option value="">Select Education</option>
-							<option value="none">None</option>
+							<option value="no_formal_education">None</option>
 							<option value="elementary">Elementary</option>
 							<option value="high_school">High School</option>
 							<option value="college">College</option>
