@@ -1413,20 +1413,7 @@ try {
 							</div>
 						</div>
 
-						<div class="form-row">
-							<div class="form-group">
-								<label for="contact" class="form-label">
-									<span class="label-text">Contact</span>
-								</label>
-								<input
-									type="text"
-									name="contact"
-									id="contact"
-									class="form-input"
-									placeholder="Enter contact number"
-								>
-							</div>
-						</div>
+						<!-- Contact field removed per request -->
 
 						<div class="form-row">
 							<div class="form-group">
@@ -1918,16 +1905,13 @@ try {
 					</select>
 				</div>
 
-				<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
-					<div>
-						<label for="editContact" style="font-weight: 600; margin-bottom: 0.25rem; display: block;">Contact Number</label>
-						<input type="text" id="editContact" name="contact" style="width: 100%; padding: 0.5rem; border: 1px solid #d1d5db; border-radius: 6px;">
-					</div>
-					<div>
-						<label for="editCellphone" style="font-weight: 600; margin-bottom: 0.25rem; display: block;">Cellphone Number</label>
-						<input type="text" id="editCellphone" name="cellphone" style="width: 100%; padding: 0.5rem; border: 1px solid #d1d5db; border-radius: 6px;">
-					</div>
-				</div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                    <!-- Contact field removed per request -->
+                    <div>
+                        <label for="editCellphone" style="font-weight: 600; margin-bottom: 0.25rem; display: block;">Cellphone #</label>
+                        <input type="text" id="editCellphone" name="cellphone" style="width: 100%; padding: 0.5rem; border: 1px solid #d1d5db; border-radius: 6px;">
+                    </div>
+                </div>
 
 				<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
 					<div>
@@ -2025,8 +2009,8 @@ try {
 					document.getElementById('editAnnualIncome').value = senior.annual_income || '';
 					document.getElementById('editOtherSkills').value = senior.other_skills || '';
 					document.getElementById('editBarangay').value = senior.barangay;
-					document.getElementById('editContact').value = senior.contact || '';
-					document.getElementById('editCellphone').value = senior.cellphone || '';
+                    // contact field removed
+                    // cellphone field removed
 					document.getElementById('editOscaIdNo').value = senior.osca_id_no || '';
 					document.getElementById('editPurok').value = senior.purok || '';
 					document.getElementById('editHealthCondition').value = senior.health_condition || '';
