@@ -53,39 +53,81 @@ $seniors = $stmt->fetchAll();
 						<h2 class="card-title">Deceased Seniors List</h2>
 					</div>
 					<div class="card-body">
-						<table class="table">
-							<thead>
-								<tr>
-									<th>ID</th>
-									<th>Name</th>
-									<th>Age</th>
-									<th>Barangay</th>
-									<th>Validation Status</th>
-									<th>Actions</th>
-								</tr>
-							</thead>
-							<tbody>
-								<?php if (!empty($seniors)): ?>
-									<?php foreach ($seniors as $senior): ?>
-										<tr>
-											<td><?= htmlspecialchars($senior['id']) ?></td>
-											<td><?= htmlspecialchars($senior['first_name'] . ' ' . $senior['last_name']) ?></td>
-											<td><?= htmlspecialchars($senior['age']) ?></td>
-											<td><?= htmlspecialchars($senior['barangay']) ?></td>
-											<td><?= htmlspecialchars($senior['validation_status']) ?></td>
-											<td>
-												<!-- Add action buttons as needed -->
-												<button class="button secondary small" onclick="editSenior(<?= $senior['id'] ?>)">Edit</button>
-											</td>
-										</tr>
-									<?php endforeach; ?>
-								<?php else: ?>
+					<table class="table">
+						<thead>
+							<tr>
+								<th>LAST NAME</th>
+								<th>FIRST NAME</th>
+								<th>MIDDLE NAME</th>
+								<th>EXT</th>
+								<th>BARANGAY</th>
+								<th>AGE</th>
+								<th>SEX</th>
+								<th>CIVIL STATUS</th>
+								<th>BIRTHDATE</th>
+								<th>OSCA ID NO.</th>
+								<th>REMARKS</th>
+								<th>HEALTH CONDITION</th>
+								<th>PUROK</th>
+								<th>PLACE OF BIRTH</th>
+								<th>CELLPHONE #</th>
+								<th>LIFE STATUS</th>
+								<th>CATEGORY</th>
+								<th>VALIDATION STATUS</th>
+								<th>VALIDATED</th>
+								<th>ACTIONS</th>
+							</tr>
+						</thead>
+						<tbody>
+							<?php if (!empty($seniors)): ?>
+								<?php foreach ($seniors as $senior): ?>
 									<tr>
-										<td colspan="6" style="text-align: center;">No deceased seniors found.</td>
+										<td><?= htmlspecialchars($senior['last_name']) ?></td>
+										<td><?= htmlspecialchars($senior['first_name']) ?></td>
+										<td><?= htmlspecialchars($senior['middle_name'] ?: '') ?></td>
+										<td><?= isset($senior['ext_name']) ? htmlspecialchars($senior['ext_name']) : '' ?></td>
+										<td><?= htmlspecialchars($senior['barangay']) ?></td>
+										<td><?= (int)$senior['age'] ?></td>
+										<td>
+											<?php
+											switch ($senior['sex']) {
+												case 'male': echo 'Male'; break;
+												case 'female': echo 'Female'; break;
+												case 'lgbtq': echo 'LGBTQ+'; break;
+												default: echo 'Not specified';
+											}
+											?>
+										</td>
+										<td><?= htmlspecialchars($senior['civil_status'] ?: '') ?></td>
+										<td><?= $senior['date_of_birth'] ? date('M d, Y', strtotime($senior['date_of_birth'])) : '' ?></td>
+										<td><?= htmlspecialchars($senior['osca_id_no'] ?? '') ?></td>
+										<td><?= htmlspecialchars($senior['remarks'] ?? '') ?></td>
+										<td><?= htmlspecialchars($senior['health_condition'] ?? '') ?></td>
+										<td><?= htmlspecialchars($senior['purok'] ?? '') ?></td>
+										<td><?= htmlspecialchars($senior['place_of_birth'] ?: '') ?></td>
+										<td><?= htmlspecialchars($senior['cellphone'] ?? '') ?></td>
+										<td><span class="badge badge-danger">Deceased</span></td>
+										<td>
+											<span class="badge <?= $senior['category'] === 'local' ? 'badge-primary' : 'badge-info' ?>"><?= ucfirst($senior['category']) ?></span>
+										</td>
+										<td>
+											<span class="badge <?= ($senior['validation_status'] ?? '') === 'Validated' ? 'badge-success' : 'badge-warning' ?>">
+												<?= $senior['validation_status'] ?? 'Not Validated' ?>
+											</span>
+										</td>
+										<td><?= isset($senior['validation_date']) && $senior['validation_date'] ? date('M d, Y H:i', strtotime($senior['validation_date'])) : '-' ?></td>
+										<td>
+											<button class="button secondary small" onclick="editSenior(<?= $senior['id'] ?>)" title="Edit"><i class="fas fa-edit"></i></button>
+										</td>
 									</tr>
-								<?php endif; ?>
-							</tbody>
-						</table>
+								<?php endforeach; ?>
+							<?php else: ?>
+								<tr>
+									<td colspan="20" style="text-align: center;">No deceased seniors found.</td>
+								</tr>
+							<?php endif; ?>
+						</tbody>
+					</table>
 					</div>
 				</div>
 			</div>

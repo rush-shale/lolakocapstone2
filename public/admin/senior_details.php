@@ -363,9 +363,7 @@ $lastEvent = !empty($attendanceHistory) ? $attendanceHistory[0] : null;
                     <span class="badge <?= $senior['category'] === 'local' ? 'badge-primary' : 'badge-info' ?>">
                         <?= ucfirst($senior['category']) ?>
                     </span>
-                    <span class="badge <?= $senior['benefits_received'] ? 'badge-success' : 'badge-warning' ?>">
-                        <?= $senior['benefits_received'] ? 'Benefits Received' : 'Benefits Pending' ?>
-                    </span>
+                    
                 </div>
             </div>
             <div class="profile-actions">
@@ -574,6 +572,8 @@ function toggleCategory(id, to) {
             <input type="hidden" name="csrf" value="<?= generate_csrf_token() ?>">
             <input type="hidden" name="op" value="update">
             <input type="hidden" name="id" id="editSeniorId">
+            <!-- Preserve benefits_received without exposing checkbox -->
+            <input type="hidden" id="editBenefitsReceivedHidden" name="benefits_received" value="1">
 
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
                 <div>
@@ -696,10 +696,6 @@ function toggleCategory(id, to) {
             </div>
 
             <div style="display: flex; align-items: center; gap: 1rem;">
-                <label for="editBenefitsReceived" style="font-weight: 600; display: flex; align-items: center; gap: 0.5rem;">
-                    <input type="checkbox" id="editBenefitsReceived" name="benefits_received" style="width: auto;">
-                    Benefits Received
-                </label>
                 <label for="editLifeStatus" style="font-weight: 600; display: flex; align-items: center; gap: 0.5rem;">
                     Life Status:
                     <select id="editLifeStatus" name="life_status" style="padding: 0.25rem; border: 1px solid #d1d5db; border-radius: 6px;">
@@ -761,7 +757,9 @@ function openEditSeniorModal(id) {
             document.getElementById('editPurok').value = senior.purok || '';
             document.getElementById('editHealthCondition').value = senior.health_condition || '';
             document.getElementById('editRemarks').value = senior.remarks || '';
-            document.getElementById('editBenefitsReceived').checked = senior.benefits_received == 1;
+            // Keep hidden benefits value synced if needed (not editable)
+            const benefitsHidden = document.getElementById('editBenefitsReceivedHidden');
+            if (benefitsHidden) { benefitsHidden.value = senior.benefits_received ? '1' : '0'; }
             document.getElementById('editLifeStatus').value = senior.life_status;
             document.getElementById('editCategory').value = senior.category;
 

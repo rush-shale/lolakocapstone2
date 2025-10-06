@@ -52,7 +52,7 @@ $benefitsReceivedDeceased = (int)$pdo->query("SELECT COUNT(*) FROM seniors WHERE
 	<meta charset="utf-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1">
 	<title>Deceased Seniors | LoLaKo</title>
-	<link rel="stylesheet" href="<?= BASE_URL ?>/assets/styles.css">
+	<link rel="stylesheet" href="<?= BASE_URL ?>/assets/government-portal.css">
 </head>
 <body>
 	<?php include __DIR__ . '/../partials/sidebar_admin.php'; ?>
@@ -91,57 +91,90 @@ $benefitsReceivedDeceased = (int)$pdo->query("SELECT COUNT(*) FROM seniors WHERE
 				<p>Complete list of senior citizens who have passed away</p>
 			</div>
 			<div class="table-container">
-				<table>
+				<table class="table">
 					<thead>
 						<tr>
-							<th>Name</th>
-							<th>Age</th>
-							<th>Barangay</th>
-							<th>Category</th>
-							<th>Benefits Status</th>
-							<th>Date Added</th>
-							<th>Actions</th>
+							<th>LAST NAME</th>
+							<th>FIRST NAME</th>
+							<th>MIDDLE NAME</th>
+							<th>EXT</th>
+							<th>BARANGAY</th>
+							<th>AGE</th>
+							<th>SEX</th>
+							<th>CIVIL STATUS</th>
+							<th>BIRTHDATE</th>
+							<th>OSCA ID NO.</th>
+							<th>REMARKS</th>
+							<th>HEALTH CONDITION</th>
+							<th>PUROK</th>
+							<th>PLACE OF BIRTH</th>
+							<th>CELLPHONE #</th>
+							<th>LIFE STATUS</th>
+							<th>CATEGORY</th>
+							<th>VALIDATION STATUS</th>
+							<th>VALIDATED</th>
+							<th>ACTIONS</th>
 						</tr>
 					</thead>
 					<tbody>
 						<?php foreach ($deceasedSeniors as $s): ?>
 							<tr>
-								<td>
-									<strong><?= htmlspecialchars($s['last_name'] . ', ' . $s['first_name']) ?></strong>
-									<?php if ($s['middle_name']): ?>
-										<br><small><?= htmlspecialchars($s['middle_name']) ?></small>
-									<?php endif; ?>
-								</td>
-								<td><?= (int)$s['age'] ?></td>
+								<td><?= htmlspecialchars($s['last_name']) ?></td>
+								<td><?= htmlspecialchars($s['first_name']) ?></td>
+								<td><?= htmlspecialchars($s['middle_name'] ?: '') ?></td>
+								<td><?= isset($s['ext_name']) ? htmlspecialchars($s['ext_name']) : '' ?></td>
 								<td><?= htmlspecialchars($s['barangay']) ?></td>
+								<td><?= (int)$s['age'] ?></td>
 								<td>
-									<span class="badge <?= $s['category'] === 'local' ? 'badge-primary' : 'badge-warning' ?>">
-										<?= $s['category'] === 'local' ? 'Local' : 'National' ?>
+									<?php
+									switch ($s['sex']) {
+										case 'male': echo 'Male'; break;
+										case 'female': echo 'Female'; break;
+										case 'lgbtq': echo 'LGBTQ+'; break;
+										default: echo 'Not specified';
+									}
+									?>
+								</td>
+								<td><?= htmlspecialchars($s['civil_status'] ?: '') ?></td>
+								<td><?= $s['date_of_birth'] ? date('M d, Y', strtotime($s['date_of_birth'])) : '' ?></td>
+								<td><?= htmlspecialchars($s['osca_id_no'] ?? '') ?></td>
+								<td><?= htmlspecialchars($s['remarks'] ?? '') ?></td>
+								<td><?= htmlspecialchars($s['health_condition'] ?? '') ?></td>
+								<td><?= htmlspecialchars($s['purok'] ?? '') ?></td>
+								<td><?= htmlspecialchars($s['place_of_birth'] ?: '') ?></td>
+								<td><?= htmlspecialchars($s['cellphone'] ?? '') ?></td>
+								<td>
+									<span class="badge badge-danger">Deceased</span>
+								</td>
+								<td>
+									<span class="badge <?= $s['category'] === 'local' ? 'badge-primary' : 'badge-info' ?>">
+										<?= ucfirst($s['category']) ?>
 									</span>
 								</td>
 								<td>
-									<span class="badge <?= $s['benefits_received'] ? 'badge-success' : 'badge-warning' ?>">
-										<?= $s['benefits_received'] ? 'Received' : 'Not Received' ?>
+									<span class="badge <?= ($s['validation_status'] ?? '') === 'Validated' ? 'badge-success' : 'badge-warning' ?>">
+										<?= $s['validation_status'] ?? 'Not Validated' ?>
 									</span>
 								</td>
-								<td><?= date('M d, Y', strtotime($s['created_at'])) ?></td>
+								<td><?= isset($s['validation_date']) && $s['validation_date'] ? date('M d, Y H:i', strtotime($s['validation_date'])) : '-' ?></td>
 								<td>
-									<div style="display: flex; flex-direction: column; gap: 0.25rem;">
+									<div class="action-buttons">
 										<form method="post" style="display:inline">
 											<input type="hidden" name="csrf" value="<?= $csrf ?>">
 											<input type="hidden" name="op" value="toggle_life">
 											<input type="hidden" name="id" value="<?= (int)$s['id'] ?>">
 											<input type="hidden" name="to" value="living">
-											<button type="submit" class="small success" onclick="return confirm('Mark this senior as living? This will restore them to the active list.')">
-												👤 Mark as Living
+											<button type="submit" class="button small secondary" title="Mark as Living" onclick="return confirm('Mark this senior as living? This will restore them to the active list.')">
+												<i class="fas fa-user"></i>
 											</button>
 										</form>
-										
 										<form method="post" style="display:inline" onsubmit="return confirm('Are you sure you want to permanently delete this senior record? This action cannot be undone.')">
 											<input type="hidden" name="csrf" value="<?= $csrf ?>">
 											<input type="hidden" name="op" value="delete">
 											<input type="hidden" name="id" value="<?= (int)$s['id'] ?>">
-											<button type="submit" class="small danger">🗑️ Delete Record</button>
+											<button type="submit" class="button small danger" title="Delete">
+												<i class="fas fa-trash"></i>
+											</button>
 										</form>
 									</div>
 								</td>
@@ -149,7 +182,7 @@ $benefitsReceivedDeceased = (int)$pdo->query("SELECT COUNT(*) FROM seniors WHERE
 						<?php endforeach; ?>
 						<?php if (empty($deceasedSeniors)): ?>
 							<tr>
-								<td colspan="7" style="text-align: center; padding: 2rem; color: var(--muted);">
+								<td colspan="20" style="text-align: center; padding: 2rem; color: var(--muted);">
 									No deceased seniors found in the records.
 								</td>
 							</tr>

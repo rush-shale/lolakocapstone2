@@ -9,6 +9,8 @@ start_app_session();
 
 $message = '';
 
+// Success message is now set directly in the POST processing
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 	if (!validate_csrf_token($_POST['csrf'] ?? '')) {
 		$message = 'Invalid session token';
@@ -28,53 +30,79 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 		$educational_attainment = $_POST['educational_attainment'] ?? '';
 		$occupation = trim($_POST['occupation'] ?? '');
 		$annual_income = $_POST['annual_income'] ? (float)$_POST['annual_income'] : null;
-		$other_skills = trim($_POST['other_skills'] ?? '');
-		$barangay = trim($_POST['barangay'] ?? '');
-		$contact = trim($_POST['contact'] ?? '');
-		$osca_id_no = trim($_POST['osca_id_no'] ?? '');
-		$remarks = trim($_POST['remarks'] ?? '');
-		$health_condition = trim($_POST['health_condition'] ?? '');
-		$purok = trim($_POST['purok'] ?? '');
-		$cellphone = trim($_POST['cellphone'] ?? '');
+		$other_skills = trim($_POST['other_skills'] ?? '') ?: '';
+		$barangay = trim($_POST['barangay'] ?? '') ?: '';
+		$contact = trim($_POST['contact'] ?? '') ?: '';
+		$osca_id_no = trim($_POST['osca_id_no'] ?? '') ?: '';
+		$remarks = trim($_POST['remarks'] ?? '') ?: '';
+		$health_condition = trim($_POST['health_condition'] ?? '') ?: '';
+		$purok = trim($_POST['purok'] ?? '') ?: '';
+		$cellphone = trim($_POST['cellphone'] ?? '') ?: '';
 		$benefits_received = isset($_POST['benefits_received']) ? 1 : 0;
-		$life_status = ($_POST['life_status'] ?? '') === 'deceased' ? 'deceased' : 'living';
-		$category = $_POST['category'] === 'national' ? 'national' : 'local';
+        $life_status = ($_POST['life_status'] ?? '') === 'deceased' ? 'deceased' : 'living';
+        // Read category strictly; don't default to local if not chosen
+        $category_input = $_POST['category'] ?? '';
+        if ($category_input === 'local') {
+            $category = 'local';
+        } elseif ($category_input === 'national') {
+            $category = 'national';
+        } else {
+            $category = '';
+        }
 
 		// Check if waiting list checkbox is set
 		if (isset($_POST['waiting_list']) && $_POST['waiting_list'] === '1') {
 			$category = 'waiting';
 		}
 
-		// Set validation status and date based on category
-		$validation_status = $category === 'waiting' ? 'Not Validated' : 'Validated';
-		$validation_date = $category === 'waiting' ? null : date('Y-m-d H:i:s');
+        // Set validation status and date based on category
+        $validation_status = $category === 'waiting' ? 'Not Validated' : 'Validated';
+        $validation_date = $category === 'waiting' ? null : date('Y-m-d H:i:s');
 
-		if ($first_name && $last_name && $age && $barangay && $osca_id_no) {
+        // Require either a concrete category (local/national) or On Waiting List
+        if ($category === '') {
+            $message = 'Please select a category (Local or National) or mark On Waiting List.';
+        } elseif ($first_name && $last_name && $age && $barangay && $osca_id_no) {
 			try {
+				// Ensure we have a fresh connection
+				$pdo = get_db_connection();
 				$pdo->beginTransaction();
 
 				if ($op === 'create') {
-					$stmt = $pdo->prepare('INSERT INTO seniors (first_name, middle_name, last_name, ext_name, age, date_of_birth, sex, place_of_birth, civil_status, educational_attainment, occupation, annual_income, other_skills, barangay, contact, osca_id_no, remarks, health_condition, purok, cellphone, benefits_received, life_status, category, validation_status, validation_date) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)');
+					$stmt = $pdo->prepare('INSERT INTO seniors (first_name, middle_name, last_name, ext_name, age, date_of_birth, sex, place_of_birth, civil_status, educational_attainment, occupation, annual_income, other_skills, barangay, contact, osca_id_no, remarks, health_condition, purok, cellphone, benefits_received, life_status, category, validation_status, validation_date, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())');
 					$stmt->execute([
 						$first_name, $middle_name ?: null, $last_name, $ext_name ?: null, $age,
 						$date_of_birth ?: null, $sex ?: null, $place_of_birth ?: null,
 						$civil_status ?: '', $educational_attainment ?: '',
 						$occupation ?: null, $annual_income, $other_skills,
-						$barangay, $contact ?: null, $osca_id_no, $remarks ?: null,
-						$health_condition ?: null, $purok ?: null, $cellphone ?: null,
+						$barangay, $contact, $osca_id_no, $remarks,
+						$health_condition, $purok, $cellphone,
 						$benefits_received, $life_status, $category, $validation_status, $validation_date
 					]);
 					$senior_id = $pdo->lastInsertId();
 					$message = 'Senior added successfully';
 				} else {
+					// If the existing record is still in 'waiting', prevent changing category via generic update.
+					// Only the validate_waiting operation should move a senior out of waiting.
+					$existingCategory = null;
+					try {
+						$checkStmt = $pdo->prepare('SELECT category FROM seniors WHERE id = ?');
+						$checkStmt->execute([$id]);
+						$existingCategory = $checkStmt->fetchColumn();
+					} catch (Exception $ignore) {}
+					if ($existingCategory === 'waiting') {
+						$category = 'waiting';
+						$validation_status = 'Not Validated';
+						$validation_date = null;
+					}
 					$stmt = $pdo->prepare('UPDATE seniors SET first_name=?, middle_name=?, last_name=?, ext_name=?, age=?, date_of_birth=?, sex=?, place_of_birth=?, civil_status=?, educational_attainment=?, occupation=?, annual_income=?, other_skills=?, barangay=?, contact=?, osca_id_no=?, remarks=?, health_condition=?, purok=?, cellphone=?, benefits_received=?, life_status=?, category=?, validation_status=?, validation_date=? WHERE id=?');
 					$stmt->execute([
 						$first_name, $middle_name ?: null, $last_name, $ext_name ?: null, $age,
 						$date_of_birth ?: null, $sex ?: null, $place_of_birth ?: null,
 						$civil_status ?: '', $educational_attainment ?: '',
 						$occupation ?: null, $annual_income, $other_skills,
-						$barangay, $contact ?: null, $osca_id_no, $remarks ?: null,
-						$health_condition ?: null, $purok ?: null, $cellphone ?: null,
+						$barangay, $contact, $osca_id_no, $remarks,
+						$health_condition, $purok, $cellphone,
 						$benefits_received, $life_status, $category, $validation_status, $validation_date, $id
 					]);
 					$senior_id = $id;
@@ -132,64 +160,111 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 					}
 				}
 				
-				$pdo->commit();
+                $pdo->commit();
+                
+                // After write, force a full reload so the table reflects changes immediately
+                if ($op === 'create') {
+                    header('Location: ' . $_SERVER['PHP_SELF'] . '?success=1');
+                    exit;
+                }
+                if ($op === 'update') {
+                    header('Location: ' . $_SERVER['PHP_SELF'] . '?success=1');
+                    exit;
+                }
 			} catch (Exception $e) {
-				$pdo->rollback();
+				// Use safe rollback to handle connection issues
+				safe_rollback($pdo);
+				error_log("Senior operation failed: " . $e->getMessage());
 				$message = 'Error: ' . $e->getMessage();
 			}
 		}
+	}
 
 		// Handle validation of waiting seniors
 		if ($op === 'validate_waiting') {
 			$id = (int)($_POST['id'] ?? 0);
 			if ($id) {
-				// Update category from 'waiting' to 'local', set validation_status to 'Validated' and validation_date to now
-				$stmt = $pdo->prepare('UPDATE seniors SET category = ?, validation_status = ?, validation_date = NOW() WHERE id = ?');
-				$stmt->execute(['local', 'Validated', $id]);
-				$message = 'Senior validated successfully';
+				try {
+					$pdo = get_db_connection();
+					$stmt = $pdo->prepare('UPDATE seniors SET category = ?, validation_status = ?, validation_date = NOW() WHERE id = ?');
+					$stmt->execute(['local', 'Validated', $id]);
+					$message = 'Senior validated successfully';
+				} catch (Exception $e) {
+					error_log("Validation failed: " . $e->getMessage());
+					$message = 'Error validating senior: ' . $e->getMessage();
+				}
 			}
 		}
-	}
 		if ($op === 'toggle_benefits') {
 			$id = (int)($_POST['id'] ?? 0);
 			$to = isset($_POST['to']) && (int)$_POST['to'] === 1 ? 1 : 0;
 			if ($id) {
-				$stmt = $pdo->prepare('UPDATE seniors SET benefits_received=? WHERE id=?');
-				$stmt->execute([$to, $id]);
-				$message = 'Benefits status updated';
+				try {
+					$pdo = get_db_connection();
+					$stmt = $pdo->prepare('UPDATE seniors SET benefits_received=? WHERE id=?');
+					$stmt->execute([$to, $id]);
+					$message = 'Benefits status updated';
+				} catch (Exception $e) {
+					error_log("Benefits toggle failed: " . $e->getMessage());
+					$message = 'Error updating benefits status: ' . $e->getMessage();
+				}
 			}
 		}
 		if ($op === 'toggle_life') {
 			$id = (int)($_POST['id'] ?? 0);
 			$to = $_POST['to'] === 'deceased' ? 'deceased' : 'living';
 			if ($id) {
-				$stmt = $pdo->prepare('UPDATE seniors SET life_status=? WHERE id=?');
-				$stmt->execute([$to, $id]);
-				$message = 'Life status updated';
+				try {
+					$pdo = get_db_connection();
+					$stmt = $pdo->prepare('UPDATE seniors SET life_status=? WHERE id=?');
+					$stmt->execute([$to, $id]);
+					$message = 'Life status updated';
+				} catch (Exception $e) {
+					error_log("Life status toggle failed: " . $e->getMessage());
+					$message = 'Error updating life status: ' . $e->getMessage();
+				}
 			}
 		}
 		if ($op === 'delete') {
 			$id = (int)($_POST['id'] ?? 0);
 			if ($id) {
-				$stmt = $pdo->prepare('DELETE FROM seniors WHERE id=?');
-				$stmt->execute([$id]);
-				$message = 'Senior deleted successfully';
+				try {
+					$pdo = get_db_connection();
+					$stmt = $pdo->prepare('DELETE FROM seniors WHERE id=?');
+					$stmt->execute([$id]);
+					$message = 'Senior deleted successfully';
+				} catch (Exception $e) {
+					error_log("Delete failed: " . $e->getMessage());
+					$message = 'Error deleting senior: ' . $e->getMessage();
+				}
 			}
 		}
 		if ($op === 'transfer') {
 			$id = (int)($_POST['id'] ?? 0);
 			$to = $_POST['to'] === 'national' ? 'national' : 'local';
 			if ($id) {
-				$stmt = $pdo->prepare("UPDATE seniors SET category=? WHERE id=?");
-				$stmt->execute([$to,$id]);
-				$message = 'Transfer updated';
+				try {
+					$pdo = get_db_connection();
+					$stmt = $pdo->prepare("UPDATE seniors SET category=? WHERE id=?");
+					$stmt->execute([$to,$id]);
+					$message = 'Transfer updated';
+				} catch (Exception $e) {
+					error_log("Transfer failed: " . $e->getMessage());
+					$message = 'Error updating transfer: ' . $e->getMessage();
+				}
 			}
 		}
 	}
 }
 
 $csrf = generate_csrf_token();
-$barangays = $pdo->query('SELECT name FROM barangays ORDER BY name')->fetchAll();
+try {
+	$pdo = get_db_connection();
+	$barangays = $pdo->query('SELECT name FROM barangays ORDER BY name')->fetchAll();
+} catch (Exception $e) {
+	error_log("Failed to load barangays: " . $e->getMessage());
+	$barangays = [];
+}
 
 // Get status from URL parameter
 $status = $_GET['status'] ?? 'all';
@@ -210,61 +285,69 @@ $where = [];
 $params = [];
 
 // Handle different status views
-if ($status === 'active') {
-    // Active seniors: those who have attended events
-    $sql = 'SELECT DISTINCT s.*, validation_status, validation_date, COUNT(a.id) as event_count, GROUP_CONCAT(e.title SEPARATOR ", ") as events_attended
-            FROM seniors s
-            LEFT JOIN attendance a ON s.id = a.senior_id
-            LEFT JOIN events e ON a.event_id = e.id
-            WHERE s.life_status = "living"
-            GROUP BY s.id
-            HAVING event_count > 0
-            ORDER BY event_count DESC, s.created_at DESC';
-    $stmtAll = $pdo->prepare($sql);
-    $stmtAll->execute();
-    $seniors = $stmtAll->fetchAll();
-} elseif ($status === 'inactive') {
-    // Inactive seniors: those who have not attended any events
-    $sql = 'SELECT s.*, validation_status, validation_date, 0 as event_count, "" as events_attended
-            FROM seniors s
-            LEFT JOIN attendance a ON s.id = a.senior_id
-            WHERE s.life_status = "living" AND a.id IS NULL
-            ORDER BY s.created_at DESC';
-    $stmtAll = $pdo->prepare($sql);
-    $stmtAll->execute();
-    $seniors = $stmtAll->fetchAll();
-} elseif ($status === 'transferred') {
-    // Transferred seniors: those who have moved to another barangay
-    $sql = 'SELECT s.*, validation_status, validation_date, 0 as event_count, "" as events_attended
-            FROM seniors s
-            WHERE s.life_status = "living" AND s.category = "national"
-            ORDER BY s.created_at DESC';
-    $stmtAll = $pdo->prepare($sql);
-    $stmtAll->execute();
-    $seniors = $stmtAll->fetchAll();
-} elseif ($status === 'waiting') {
-    // Waiting seniors: example filter, adjust as needed
-    $sql = 'SELECT s.*, validation_status, validation_date, 0 as event_count, "" as events_attended
-            FROM seniors s
-            WHERE s.life_status = "living" AND s.category = "waiting"
-            ORDER BY s.created_at DESC';
-    $stmtAll = $pdo->prepare($sql);
-    $stmtAll->execute();
-    $seniors = $stmtAll->fetchAll();
-} else {
-    // All seniors with regular filters
-    if ($life === 'living' || $life === 'deceased') { $where[] = 'life_status = ?'; $params[] = $life; }
-    if ($benefits === 'received') { $where[] = 'benefits_received = 1'; }
-    if ($benefits === 'notyet') { $where[] = 'benefits_received = 0'; }
-    if ($category === 'local' || $category === 'national') { $where[] = 'category = ?'; $params[] = $category; }
+try {
+	$pdo = get_db_connection();
+	
+	if ($status === 'active') {
+		// Active seniors: those who have attended events
+		$sql = 'SELECT DISTINCT s.*, validation_status, validation_date, COUNT(a.id) as event_count, GROUP_CONCAT(e.title SEPARATOR ", ") as events_attended
+				FROM seniors s
+				LEFT JOIN attendance a ON s.id = a.senior_id
+				LEFT JOIN events e ON a.event_id = e.id
+				WHERE s.life_status = "living"
+				GROUP BY s.id
+				HAVING event_count > 0
+				ORDER BY event_count DESC, s.created_at DESC';
+		$stmtAll = $pdo->prepare($sql);
+		$stmtAll->execute();
+		$seniors = $stmtAll->fetchAll();
+	} elseif ($status === 'inactive') {
+		// Inactive seniors: those who have not attended any events
+		$sql = 'SELECT s.*, validation_status, validation_date, 0 as event_count, "" as events_attended
+				FROM seniors s
+				LEFT JOIN attendance a ON s.id = a.senior_id
+				WHERE s.life_status = "living" AND a.id IS NULL
+				ORDER BY s.created_at DESC';
+		$stmtAll = $pdo->prepare($sql);
+		$stmtAll->execute();
+		$seniors = $stmtAll->fetchAll();
+	} elseif ($status === 'transferred') {
+		// Transferred seniors: those who have moved to another barangay
+		$sql = 'SELECT s.*, validation_status, validation_date, 0 as event_count, "" as events_attended
+				FROM seniors s
+				WHERE s.life_status = "living" AND s.category = "national"
+				ORDER BY s.created_at DESC';
+		$stmtAll = $pdo->prepare($sql);
+		$stmtAll->execute();
+		$seniors = $stmtAll->fetchAll();
+	} elseif ($status === 'waiting') {
+		// Waiting seniors: example filter, adjust as needed
+		$sql = 'SELECT s.*, validation_status, validation_date, 0 as event_count, "" as events_attended
+				FROM seniors s
+				WHERE s.life_status = "living" AND s.category = "waiting"
+				ORDER BY s.created_at DESC';
+		$stmtAll = $pdo->prepare($sql);
+		$stmtAll->execute();
+		$seniors = $stmtAll->fetchAll();
+	} else {
+		// All seniors with regular filters
+		if ($life === 'living' || $life === 'deceased') { $where[] = 'life_status = ?'; $params[] = $life; }
+		if ($benefits === 'received') { $where[] = 'benefits_received = 1'; }
+		if ($benefits === 'notyet') { $where[] = 'benefits_received = 0'; }
+		if ($category === 'local' || $category === 'national') { $where[] = 'category = ?'; $params[] = $category; }
 
-    $sql = 'SELECT *, validation_status, validation_date, 0 as event_count, "" as events_attended FROM seniors';
-    if (!empty($where)) { $sql .= ' WHERE ' . implode(' AND ', $where); }
-    $sql .= ' ORDER BY created_at DESC';
-    $stmtAll = $pdo->prepare($sql);
-    $stmtAll->execute($params);
-    $seniors = $stmtAll->fetchAll();
+		$sql = 'SELECT *, validation_status, validation_date, 0 as event_count, "" as events_attended FROM seniors';
+		if (!empty($where)) { $sql .= ' WHERE ' . implode(' AND ', $where); }
+		$sql .= ' ORDER BY created_at DESC';
+		$stmtAll = $pdo->prepare($sql);
+		$stmtAll->execute($params);
+		$seniors = $stmtAll->fetchAll();
+	}
+} catch (Exception $e) {
+	error_log("Failed to load seniors: " . $e->getMessage());
+	$seniors = [];
 }
+
 
 $grouped = [];
 foreach ($seniors as $senior) {
@@ -279,10 +362,20 @@ foreach ($grouped as $barangay => &$seniors_in_barangay) {
         return $cmp;
     });
 }
+// Important: break the reference created by foreach to avoid accidental cross-group aliasing
+unset($seniors_in_barangay);
 
-$livingCount = (int)$pdo->query("SELECT COUNT(*) FROM seniors WHERE life_status='living'")->fetchColumn();
-$deceasedCount = (int)$pdo->query("SELECT COUNT(*) FROM seniors WHERE life_status='deceased'")->fetchColumn();
-$waitingCount = (int)$pdo->query("SELECT COUNT(*) FROM seniors WHERE life_status='living' AND category='waiting'")->fetchColumn();
+try {
+	$pdo = get_db_connection();
+	$livingCount = (int)$pdo->query("SELECT COUNT(*) FROM seniors WHERE life_status='living'")->fetchColumn();
+	$deceasedCount = (int)$pdo->query("SELECT COUNT(*) FROM seniors WHERE life_status='deceased'")->fetchColumn();
+	$waitingCount = (int)$pdo->query("SELECT COUNT(*) FROM seniors WHERE life_status='living' AND category='waiting'")->fetchColumn();
+} catch (Exception $e) {
+	error_log("Failed to load counts: " . $e->getMessage());
+	$livingCount = 0;
+	$deceasedCount = 0;
+	$waitingCount = 0;
+}
 
 ?>
 <!doctype html>
@@ -663,6 +756,7 @@ $waitingCount = (int)$pdo->query("SELECT COUNT(*) FROM seniors WHERE life_status
 
 
 
+
 		<!-- Seniors List -->
 				<div class="card" style="background: #fff; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); border: none; overflow: hidden;">
 					<div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
@@ -699,15 +793,17 @@ $waitingCount = (int)$pdo->query("SELECT COUNT(*) FROM seniors WHERE life_status
 										<th>PUROK</th>
 										<th>PLACE OF BIRTH</th>
 										<th>CELLPHONE #</th>
+										<th>LIFE STATUS</th>
 										<th>CATEGORY</th>
 										<th>VALIDATION STATUS</th>
 										<th>VALIDATED</th>
+										<th>ACTIONS</th>
 									</tr>
 								</thead>
 								<tbody id="seniorsTableBody">
 									<?php if (!empty($grouped)): ?>
 									<?php foreach ($grouped as $barangay => $seniors_in_barangay): ?>
-									<tr class="barangay-header"><td colspan="18" style="background: #f9fafb; font-weight: bold; padding: 1rem;">Barangay <?= htmlspecialchars($barangay) ?></td></tr>
+									<tr class="barangay-header"><td colspan="20" style="background: #f9fafb; font-weight: bold; padding: 1rem;">Barangay <?= htmlspecialchars($barangay) ?></td></tr>
 									<?php foreach ($seniors_in_barangay as $senior): ?>
 									<tr onclick="viewSeniorDetails(<?= $senior['id'] ?>)" style="cursor: pointer;">
 										<td><?= htmlspecialchars($senior['last_name']) ?></td>
@@ -735,24 +831,55 @@ $waitingCount = (int)$pdo->query("SELECT COUNT(*) FROM seniors WHERE life_status
 										<td><?= htmlspecialchars($senior['place_of_birth'] ?: '') ?></td>
 										<td><?= htmlspecialchars($senior['cellphone'] ?? '') ?></td>
 										<td>
+											<span class="badge <?= $senior['life_status'] === 'living' ? 'badge-success' : 'badge-danger' ?>">
+												<?= ucfirst($senior['life_status']) ?>
+											</span>
+										</td>
+										<td>
 											<span class="badge <?= $senior['category'] === 'local' ? 'badge-primary' : 'badge-info' ?>">
 												<?= ucfirst($senior['category']) ?>
 											</span>
 										</td>
 										<td>
-											<span class="badge <?= $senior['validation_status'] === 'Validated' ? 'badge-success' : 'badge-warning' ?>">
-												<?= $senior['validation_status'] ?>
-											</span>
+							<span class="badge <?= $senior['validation_status'] === 'Validated' ? 'badge-success' : 'badge-warning' ?>">
+								<?= $senior['validation_status'] ?>
+							</span>
+							<?php if (($senior['validation_status'] ?? '') === 'Validated' && !empty($senior['validation_date'])): ?>
+								<br><small style="color: #6b7280;"><?= date('M d, Y H:i', strtotime($senior['validation_date'])) ?></small>
+							<?php endif; ?>
 										</td>
 										<td>
 											<?= $senior['validation_date'] ? date('M d, Y H:i', strtotime($senior['validation_date'])) : '-' ?>
+										</td>
+										<td>
+											<div class="action-buttons">
+								<?php if (($senior['category'] ?? '') === 'waiting'): ?>
+									<form method="post" style="display:inline" onsubmit="event.stopPropagation();">
+										<input type="hidden" name="csrf" value="<?= $csrf ?>">
+										<input type="hidden" name="op" value="validate_waiting">
+										<input type="hidden" name="id" value="<?= (int)$senior['id'] ?>">
+										<button type="submit" class="button small primary" title="Validate Senior">
+											<i class="fas fa-check"></i>
+										</button>
+									</form>
+								<?php endif; ?>
+												<button class="button small primary" onclick="event.stopPropagation(); editSenior(<?= $senior['id'] ?>)" title="Edit Senior">
+													<i class="fas fa-edit"></i>
+												</button>
+												<button class="button small secondary" onclick="event.stopPropagation(); viewSeniorDetails(<?= $senior['id'] ?>)" title="View Details">
+													<i class="fas fa-eye"></i>
+												</button>
+												<button class="button small danger" onclick="event.stopPropagation(); deleteSenior(<?= $senior['id'] ?>, '<?= htmlspecialchars($senior['first_name'] . ' ' . $senior['last_name']) ?>')" title="Delete Senior">
+													<i class="fas fa-trash"></i>
+												</button>
+											</div>
 										</td>
 									</tr>
 									<?php endforeach; ?>
 									<?php endforeach; ?>
 									<?php else: ?>
 									<tr class="no-data">
-										<td colspan="18" style="text-align: center; padding: 2rem; color: var(--gov-text-muted);">
+										<td colspan="20" style="text-align: center; padding: 2rem; color: var(--gov-text-muted);">
 											No seniors found. Click "Add New Senior" to get started.
 										</td>
 									</tr>
@@ -1385,35 +1512,45 @@ $waitingCount = (int)$pdo->query("SELECT COUNT(*) FROM seniors WHERE life_status
 						></textarea>
 					</div>
 
-					<!-- Hidden fields for existing functionality -->
-					<div class="form-row hidden-fields">
-						<div class="form-group">
+					<!-- Status and Category Section -->
+					<div class="form-section">
+						<h3 class="section-title">Status & Category</h3>
+						<div class="form-row">
+							<div class="form-group">
+								<label for="life_status" class="form-label">
+									<span class="label-text">Life Status</span>
+								</label>
+								<select name="life_status" id="life_status" class="form-input" required>
+									<option value="living">Living</option>
+									<option value="deceased">Deceased</option>
+								</select>
+							</div>
+
+							<div class="form-group">
+								<label for="category" class="form-label">
+									<span class="label-text">Category</span>
+								</label>
+								<select name="category" id="category" class="form-input">
+									<option value="local">Local</option>
+									<option value="national">National</option>
+								</select>
+							</div>
+
+							<div class="form-group checkbox-group">
+								<label class="checkbox-label">
+									<input
+										type="checkbox"
+										name="waiting_list"
+										id="waiting_list"
+										class="checkbox-input"
+										value="1"
+									>
+									<span class="checkbox-custom"></span>
+									On Waiting List
+								</label>
+							</div>
 						</div>
-
-						<div class="form-group">
-							<label for="category" class="form-label">
-								<span class="label-text">Category</span>
-							</label>
-					<select name="category" id="category" class="form-input">
-						<option value="local">Local</option>
-						<option value="national">National</option>
-					</select>
-				</div>
-
-				<div class="form-group checkbox-group">
-					<label class="checkbox-label">
-						<input
-							type="checkbox"
-							name="waiting_list"
-							id="waiting_list"
-							class="checkbox-input"
-							value="1"
-						>
-						<span class="checkbox-custom"></span>
-						On Waiting List
-					</label>
-				</div>
-			</div>
+					</div>
 
 					<!-- Family Composition Section -->
 					<div class="form-section">
@@ -1781,9 +1918,36 @@ $waitingCount = (int)$pdo->query("SELECT COUNT(*) FROM seniors WHERE life_status
 					</select>
 				</div>
 
+				<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+					<div>
+						<label for="editContact" style="font-weight: 600; margin-bottom: 0.25rem; display: block;">Contact Number</label>
+						<input type="text" id="editContact" name="contact" style="width: 100%; padding: 0.5rem; border: 1px solid #d1d5db; border-radius: 6px;">
+					</div>
+					<div>
+						<label for="editCellphone" style="font-weight: 600; margin-bottom: 0.25rem; display: block;">Cellphone Number</label>
+						<input type="text" id="editCellphone" name="cellphone" style="width: 100%; padding: 0.5rem; border: 1px solid #d1d5db; border-radius: 6px;">
+					</div>
+				</div>
+
+				<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+					<div>
+						<label for="editOscaIdNo" style="font-weight: 600; margin-bottom: 0.25rem; display: block;">OSCA ID Number *</label>
+						<input type="text" id="editOscaIdNo" name="osca_id_no" required style="width: 100%; padding: 0.5rem; border: 1px solid #d1d5db; border-radius: 6px;">
+					</div>
+					<div>
+						<label for="editPurok" style="font-weight: 600; margin-bottom: 0.25rem; display: block;">Purok</label>
+						<input type="text" id="editPurok" name="purok" style="width: 100%; padding: 0.5rem; border: 1px solid #d1d5db; border-radius: 6px;">
+					</div>
+				</div>
+
 				<div>
-					<label for="editContact" style="font-weight: 600; margin-bottom: 0.25rem; display: block;">Contact Number</label>
-					<input type="text" id="editContact" name="contact" style="width: 100%; padding: 0.5rem; border: 1px solid #d1d5db; border-radius: 6px;">
+					<label for="editHealthCondition" style="font-weight: 600; margin-bottom: 0.25rem; display: block;">Health Condition</label>
+					<input type="text" id="editHealthCondition" name="health_condition" style="width: 100%; padding: 0.5rem; border: 1px solid #d1d5db; border-radius: 6px;">
+				</div>
+
+				<div>
+					<label for="editRemarks" style="font-weight: 600; margin-bottom: 0.25rem; display: block;">Remarks</label>
+					<textarea id="editRemarks" name="remarks" rows="3" style="width: 100%; padding: 0.5rem; border: 1px solid #d1d5db; border-radius: 6px;"></textarea>
 				</div>
 
 				<div style="display: flex; align-items: center; gap: 1rem;">
@@ -1862,6 +2026,11 @@ $waitingCount = (int)$pdo->query("SELECT COUNT(*) FROM seniors WHERE life_status
 					document.getElementById('editOtherSkills').value = senior.other_skills || '';
 					document.getElementById('editBarangay').value = senior.barangay;
 					document.getElementById('editContact').value = senior.contact || '';
+					document.getElementById('editCellphone').value = senior.cellphone || '';
+					document.getElementById('editOscaIdNo').value = senior.osca_id_no || '';
+					document.getElementById('editPurok').value = senior.purok || '';
+					document.getElementById('editHealthCondition').value = senior.health_condition || '';
+					document.getElementById('editRemarks').value = senior.remarks || '';
 					document.getElementById('editBenefitsReceived').checked = senior.benefits_received == 1;
 					document.getElementById('editLifeStatus').value = senior.life_status;
 					document.getElementById('editCategory').value = senior.category;

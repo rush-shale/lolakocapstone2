@@ -6,8 +6,8 @@ require_role('user');
 $pdo = get_db_connection();
 $user = current_user();
 
-// Seniors in my barangay (living only)
-$seniorsStmt = $pdo->prepare("SELECT id, first_name, last_name, age, benefits_received FROM seniors WHERE barangay=? AND life_status='living' ORDER BY last_name, first_name");
+// Seniors in my barangay (all life statuses)
+$seniorsStmt = $pdo->prepare("SELECT id, first_name, last_name, age, life_status, benefits_received FROM seniors WHERE barangay=? ORDER BY last_name, first_name");
 $seniorsStmt->execute([$user['barangay']]);
 $seniors = $seniorsStmt->fetchAll();
 
@@ -47,7 +47,7 @@ $active = $activeStmt->fetchAll();
 					<div class="card-header">
 						<h2 class="card-title">
 							<i class="fas fa-users"></i>
-							All Living Seniors
+							All Seniors
 						</h2>
 						<p class="card-subtitle">Complete list of senior citizens in your barangay</p>
 					</div>
@@ -59,6 +59,7 @@ $active = $activeStmt->fetchAll();
 									<tr>
 										<th>Name</th>
 										<th>Age</th>
+										<th>Life Status</th>
 										<th>Benefits Status</th>
 									</tr>
 								</thead>
@@ -77,6 +78,11 @@ $active = $activeStmt->fetchAll();
 										</td>
 										<td>
 											<span class="age-badge"><?= (int)$s['age'] ?> years</span>
+										</td>
+										<td>
+											<span class="badge <?= $s['life_status'] === 'living' ? 'badge-success' : 'badge-danger' ?>">
+												<?= ucfirst($s['life_status']) ?>
+											</span>
 										</td>
 										<td>
 											<span class="badge <?= $s['benefits_received'] ? 'badge-success' : 'badge-warning' ?>">
