@@ -163,7 +163,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $pdo->commit();
                 
                 // After write, force a full reload so the table reflects changes immediately
-                if ($op === 'create') {
+        if ($op === 'create') {
                     header('Location: ' . $_SERVER['PHP_SELF'] . '?success=1');
                     exit;
                 }
@@ -742,7 +742,13 @@ try {
 
 
 		<!-- Alert Messages -->
-		<?php if ($message): ?>
+        <?php
+        // Normalize success message based on query param from mark_deceased
+        if (isset($_GET['success']) && $_GET['success'] === 'deceased_marked') {
+            $message = 'Marked as deceased successfully';
+        }
+        ?>
+        <?php if ($message): ?>
 		<div class="alert alert-success">
 			<div class="alert-icon">
 				<i class="fas fa-check-circle"></i>

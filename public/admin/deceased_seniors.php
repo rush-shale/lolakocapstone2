@@ -80,10 +80,10 @@ $seniors = $stmt->fetchAll();
 						</thead>
 						<tbody>
 							<?php if (!empty($seniors)): ?>
-								<?php foreach ($seniors as $senior): ?>
-									<tr>
-										<td><?= htmlspecialchars($senior['last_name']) ?></td>
-										<td><?= htmlspecialchars($senior['first_name']) ?></td>
+                                <?php foreach ($seniors as $senior): ?>
+                                    <tr class="clickable-row" onclick="window.location.href='death_details.php?id=<?= (int)$senior['id'] ?>'" style="cursor:pointer;">
+                                        <td><?= htmlspecialchars(ucfirst(strtolower($senior['last_name']))) ?></td>
+                                        <td><?= htmlspecialchars(ucfirst(strtolower($senior['first_name']))) ?></td>
 										<td><?= htmlspecialchars($senior['middle_name'] ?: '') ?></td>
 										<td><?= isset($senior['ext_name']) ? htmlspecialchars($senior['ext_name']) : '' ?></td>
 										<td><?= htmlspecialchars($senior['barangay']) ?></td>
@@ -106,7 +106,7 @@ $seniors = $stmt->fetchAll();
 										<td><?= htmlspecialchars($senior['purok'] ?? '') ?></td>
 										<td><?= htmlspecialchars($senior['place_of_birth'] ?: '') ?></td>
 										<td><?= htmlspecialchars($senior['cellphone'] ?? '') ?></td>
-										<td><span class="badge badge-danger">Deceased</span></td>
+                                        <td><span class="badge badge-danger">Deceased</span></td>
 										<td>
 											<span class="badge <?= $senior['category'] === 'local' ? 'badge-primary' : 'badge-info' ?>"><?= ucfirst($senior['category']) ?></span>
 										</td>
@@ -116,9 +116,13 @@ $seniors = $stmt->fetchAll();
 											</span>
 										</td>
 										<td><?= isset($senior['validation_date']) && $senior['validation_date'] ? date('M d, Y H:i', strtotime($senior['validation_date'])) : '-' ?></td>
-										<td>
-											<button class="button secondary small" onclick="editSenior(<?= $senior['id'] ?>)" title="Edit"><i class="fas fa-edit"></i></button>
-										</td>
+                                        <td>
+                                            <div class="action-buttons">
+                                                <a class="button small" href="death_details.php?id=<?= (int)$senior['id'] ?>" title="View Death Info" onclick="event.stopPropagation();">
+                                                    <i class="fas fa-eye"></i>
+                                                </a>
+                                            </div>
+                                        </td>
 									</tr>
 								<?php endforeach; ?>
 							<?php else: ?>

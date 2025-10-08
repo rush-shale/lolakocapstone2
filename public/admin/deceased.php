@@ -117,10 +117,10 @@ $benefitsReceivedDeceased = (int)$pdo->query("SELECT COUNT(*) FROM seniors WHERE
 						</tr>
 					</thead>
 					<tbody>
-						<?php foreach ($deceasedSeniors as $s): ?>
-							<tr>
-								<td><?= htmlspecialchars($s['last_name']) ?></td>
-								<td><?= htmlspecialchars($s['first_name']) ?></td>
+                        <?php foreach ($deceasedSeniors as $s): ?>
+                            <tr class="clickable-row" onclick="window.location.href='death_details.php?id=<?= (int)$s['id'] ?>'" style="cursor:pointer;">
+                                <td><?= htmlspecialchars(ucfirst(strtolower($s['last_name']))) ?></td>
+                                <td><?= htmlspecialchars(ucfirst(strtolower($s['first_name']))) ?></td>
 								<td><?= htmlspecialchars($s['middle_name'] ?: '') ?></td>
 								<td><?= isset($s['ext_name']) ? htmlspecialchars($s['ext_name']) : '' ?></td>
 								<td><?= htmlspecialchars($s['barangay']) ?></td>
@@ -157,27 +157,30 @@ $benefitsReceivedDeceased = (int)$pdo->query("SELECT COUNT(*) FROM seniors WHERE
 									</span>
 								</td>
 								<td><?= isset($s['validation_date']) && $s['validation_date'] ? date('M d, Y H:i', strtotime($s['validation_date'])) : '-' ?></td>
-								<td>
-									<div class="action-buttons">
-										<form method="post" style="display:inline">
-											<input type="hidden" name="csrf" value="<?= $csrf ?>">
-											<input type="hidden" name="op" value="toggle_life">
-											<input type="hidden" name="id" value="<?= (int)$s['id'] ?>">
-											<input type="hidden" name="to" value="living">
-											<button type="submit" class="button small secondary" title="Mark as Living" onclick="return confirm('Mark this senior as living? This will restore them to the active list.')">
-												<i class="fas fa-user"></i>
-											</button>
-										</form>
-										<form method="post" style="display:inline" onsubmit="return confirm('Are you sure you want to permanently delete this senior record? This action cannot be undone.')">
-											<input type="hidden" name="csrf" value="<?= $csrf ?>">
-											<input type="hidden" name="op" value="delete">
-											<input type="hidden" name="id" value="<?= (int)$s['id'] ?>">
-											<button type="submit" class="button small danger" title="Delete">
-												<i class="fas fa-trash"></i>
-											</button>
-										</form>
-									</div>
-								</td>
+                                <td>
+                                    <div class="action-buttons">
+                                        <a class="button small" href="death_details.php?id=<?= (int)$s['id'] ?>" title="View Death Info" onclick="event.stopPropagation();">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                        <form method="post" style="display:inline" onclick="event.stopPropagation();">
+                                            <input type="hidden" name="csrf" value="<?= $csrf ?>">
+                                            <input type="hidden" name="op" value="toggle_life">
+                                            <input type="hidden" name="id" value="<?= (int)$s['id'] ?>">
+                                            <input type="hidden" name="to" value="living">
+                                            <button type="submit" class="button small secondary" title="Mark as Living" onclick="return confirm('Mark this senior as living? This will restore them to the active list.')">
+                                                <i class="fas fa-user"></i>
+                                            </button>
+                                        </form>
+                                        <form method="post" style="display:inline" onsubmit="return confirm('Are you sure you want to permanently delete this senior record? This action cannot be undone.')" onclick="event.stopPropagation();">
+                                            <input type="hidden" name="csrf" value="<?= $csrf ?>">
+                                            <input type="hidden" name="op" value="delete">
+                                            <input type="hidden" name="id" value="<?= (int)$s['id'] ?>">
+                                            <button type="submit" class="button small danger" title="Delete">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </form>
+                                    </div>
+                                </td>
 							</tr>
 						<?php endforeach; ?>
 						<?php if (empty($deceasedSeniors)): ?>

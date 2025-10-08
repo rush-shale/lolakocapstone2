@@ -700,9 +700,11 @@ function toggleCategory(id, to) {
                     Life Status:
                     <select id="editLifeStatus" name="life_status" style="padding: 0.25rem; border: 1px solid #d1d5db; border-radius: 6px;">
                         <option value="living">Living</option>
-                        <option value="deceased">Deceased</option>
                     </select>
                 </label>
+                <button type="button" onclick="window.location.href='mark_deceased.php?id=<?= (int)$senior['id'] ?>'" class="button secondary" style="display:inline-flex; align-items:center; gap:.5rem;">
+                    <i class="fas fa-skull"></i> Deceased
+                </button>
                 <label for="editCategory" style="font-weight: 600; display: flex; align-items: center; gap: 0.5rem;">
                     Category:
                     <select id="editCategory" name="category" style="padding: 0.25rem; border: 1px solid #d1d5db; border-radius: 6px;">
@@ -776,4 +778,5 @@ function closeEditSeniorModal() {
     document.getElementById('editSeniorModal').style.display = 'none';
     document.body.style.overflow = '';
 }
+
 </script>
