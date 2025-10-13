@@ -42,4 +42,37 @@ document.addEventListener('DOMContentLoaded', function () {
       });
     }
   });
+
+  // Floating burger: hide/show sidebar
+  function ensureBurger() {
+    if (!document.getElementById('floating-burger')) {
+      const btn = document.createElement('button');
+      btn.id = 'floating-burger';
+      btn.className = 'floating-burger';
+      btn.type = 'button';
+      btn.setAttribute('aria-label', 'Toggle sidebar');
+      const bar = document.createElement('span');
+      btn.appendChild(bar);
+      document.body.appendChild(btn);
+      btn.addEventListener('click', toggleSidebarVisibility);
+    }
+  }
+
+  function toggleSidebarVisibility() {
+    const sidebar = document.querySelector('.sidebar');
+    if (!sidebar) return;
+    const collapsed = sidebar.classList.toggle('sidebar-collapsed');
+    document.body.classList.toggle('sidebar-hidden', collapsed);
+  }
+
+  ensureBurger();
+
+  // Default neutral state: hide the sidebar on load
+  (function setDefaultHidden(){
+    const sidebar = document.querySelector('.sidebar');
+    if (sidebar) {
+      sidebar.classList.add('sidebar-collapsed');
+      document.body.classList.add('sidebar-hidden');
+    }
+  })();
 });

@@ -503,6 +503,7 @@ a:hover {
     display: flex;
     flex-direction: column;
     overflow-y: auto;
+    transition: transform 0.3s ease; /* allow slide in/out */
 }
 
 .sidebar-header {
@@ -723,6 +724,55 @@ a:hover {
     background: none;
     pointer-events: none;
     z-index: -1;
+}
+
+/* Floating burger button */
+.floating-burger {
+    position: fixed;
+    left: 300px; /* just outside sidebar when visible */
+    top: 16px;
+    width: 44px;
+    height: 44px;
+    border-radius: 10px;
+    background: linear-gradient(135deg, var(--gov-primary) 0%, var(--gov-primary-dark) 100%);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 6px 16px rgba(0,0,0,0.2);
+    z-index: 1200;
+}
+
+.floating-burger span {
+    display: block;
+    width: 22px;
+    height: 2px;
+    background: #fff;
+    position: relative;
+}
+
+.floating-burger span::before,
+.floating-burger span::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    width: 22px;
+    height: 2px;
+    background: #fff;
+}
+
+.floating-burger span::before { top: -6px; }
+.floating-burger span::after { top: 6px; }
+
+/* When sidebar is hidden, pull content full width */
+.sidebar-hidden .content { margin-left: 0 !important; }
+.sidebar-hidden .content::before { left: 0 !important; }
+.sidebar.sidebar-collapsed { transform: translateX(-100%); }
+.sidebar-hidden .floating-burger { left: 16px; }
+
+@media (max-width: 1024px) {
+    .floating-burger { left: 16px; }
 }
 
 /* Page Header */
