@@ -1376,16 +1376,17 @@ tr:hover {
 
 .content .dashboard-grid .dash-upcoming {
     grid-column: 9 / span 4 !important;
-    grid-row: 3 / span 6 !important; /* spans next to tiles and calendar */
+    grid-row: 3 / span 5 !important; /* reduced height */
 	display: flex;
 	flex-direction: column;
 	overflow: hidden;
+    margin-top: 0px; /* nudge down slightly */
 }
 
 .dash-upcoming .card-body {
 	padding: var(--space-4);
 	overflow: auto;
-	max-height: 100%;
+    max-height: calc(100% - 8px); /* leave small space at bottom */
 }
 
 .upcoming-list {

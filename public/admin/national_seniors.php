@@ -49,8 +49,11 @@ $seniors = $stmt->fetchAll();
 			<!-- Example table listing national seniors -->
 			<div class="main-content-area">
 				<div class="card">
-					<div class="card-header">
+					<div class="card-header" style="display:flex; justify-content: space-between; align-items:center;">
 						<h2 class="card-title">National Seniors List</h2>
+						<div>
+							<button class="button secondary" onclick="handleCancel()">Close</button>
+						</div>
 					</div>
 					<div class="card-body">
 						<table class="table">
@@ -93,6 +96,13 @@ $seniors = $stmt->fetchAll();
 	</main>
 
 	<script>
+		function handleCancel(){
+			if (window.history.length > 1) {
+				window.history.back();
+			} else {
+				window.location.href = '<?= BASE_URL ?>/admin/dashboard.php';
+			}
+		}
 		function editSenior(id) {
 			// Implement edit functionality or open modal
 			alert('Edit senior with ID: ' + id);
