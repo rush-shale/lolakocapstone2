@@ -66,111 +66,104 @@ $user = current_user();
 <body>
 	<?php include __DIR__ . '/../partials/sidebar_admin.php'; ?>
 	<main class="content">
-		<!-- Graph Card -->
-		<div class="card" style="margin: 1.5rem;">
-			<div class="card-body">
-				<h2 class="card-title" style="margin:0 0 .5rem;">Seniors Registered in <?= $year ?> (<?= $thisMonthPct ?>% this month)</h2>
-				<canvas id="registrationsChart" height="110"></canvas>
+		<div class="dashboard-grid">
+			<!-- Graph -->
+			<div class="card dash-graph">
+				<div class="card-body">
+					<h2 class="card-title" style="margin:0 0 .25rem;">Seniors Registered in <?= $year ?> (<?= $thisMonthPct ?>% this month)</h2>
+					<div class="chart-wrap"><canvas id="registrationsChart"></canvas></div>
+				</div>
 			</div>
-		</div>
 
-		<!-- Stats and Upcoming -->
-		<div class="grid grid-2 animate-fade-in" style="margin: 0 1.5rem;">
-			<!-- Local Seniors Card -->
-			<a href="<?= BASE_URL ?>/admin/local_seniors.php" style="text-decoration: none; color: inherit;">
-				<div class="card" style="background: white; border-radius: 12px; box-shadow: 0 3px 5px rgba(0,0,0,0.08); transition: transform 0.2s, box-shadow 0.2s; cursor: pointer; margin-bottom: 2.5rem; margin-top: 1.5rem;" onmouseover="this.style.transform='translateY(-1px)'; this.style.boxShadow='0 5px 10px rgba(0,0,0,0.12)';" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 3px 5px rgba(0,0,0,0.08)';">
-					<div class="card-header" style="border-bottom: 1px solid #eee; padding: 1rem;">
-						<h2 style="margin: 0; color: #333; font-size: 1.2rem; display: flex; align-items: center;">
-							<span style="font-size: 1.5rem; margin-right: 0.5rem;">🏘️</span>
-							Local Seniors
-						</h2>
-						<p style="margin: 0.3rem 0 0; color: #666; font-size: 0.85rem;">Click to view detailed list</p>
-					</div>
-					<div class="card-body" style="padding: 1rem; text-align: center;">
-						<div style="font-size: 2rem; font-weight: 700; color: #28a745; margin-bottom: 0.3rem;"><?= $localSeniors ?></div>
-						<p style="margin: 0; color: #666; font-weight: 500; font-size: 0.9rem;">Registered Local Seniors</p>
-					</div>
-				</div>
-			</a>
-
-			<!-- National Seniors Card -->
-			<a href="<?= BASE_URL ?>/admin/national_seniors.php" style="text-decoration: none; color: inherit;">
-				<div class="card" style="background: white; border-radius: 12px; box-shadow: 0 3px 5px rgba(0,0,0,0.08); transition: transform 0.2s, box-shadow 0.2s; cursor: pointer; margin-top: 1.5rem;" onmouseover="this.style.transform='translateY(-1px)'; this.style.boxShadow='0 5px 10px rgba(0,0,0,0.12)';" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 3px 5px rgba(0,0,0,0.08)';">
-					<div class="card-header" style="border-bottom: 1px solid #eee; padding: 1rem;">
-						<h2 style="margin: 0; color: #333; font-size: 1.2rem; display: flex; align-items: center;">
-							<span style="font-size: 1.5rem; margin-right: 0.5rem;">🇵🇭</span>
-							National Seniors
-						</h2>
-						<p style="margin: 0.3rem 0 0; color: #666; font-size: 0.85rem;">Click to view detailed list</p>
-					</div>
-					<div class="card-body" style="padding: 1rem; text-align: center;">
-						<div style="font-size: 2rem; font-weight: 700; color: #007bff; margin-bottom: 0.3rem;"><?= $nationalSeniors ?></div>
-						<p style="margin: 0; color: #666; font-weight: 500; font-size: 0.9rem;">Registered National Seniors</p>
-					</div>
-				</div>
-			</a>
-
-			<!-- Upcoming Events -->
-			<div class="card" style="background: white; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); grid-column: span 2;">
-				<div class="card-header" style="border-bottom: 1px solid #eee; padding: 1.5rem;">
-					<h2 style="margin: 0; color: #333; font-size: 1.5rem; display: flex; align-items: center;">
-						<span style="font-size: 2rem; margin-right: 0.5rem;">📅</span>
-						Upcoming Events
-					</h2>
-					<p style="margin: 0.5rem 0 0; color: #666;">OSCA Head scheduled events</p>
-				</div>
-				<div class="card-body" style="padding: 1.5rem;">
-					<?php if (!empty($upcomingEventsList)): ?>
-					<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1rem;">
-						<?php foreach ($upcomingEventsList as $event): ?>
-						<div style="background: #f8f9fa; padding: 1rem; border-radius: 8px; border-left: 4px solid #667eea;">
-							<h4 style="margin: 0 0 0.5rem; color: #333; font-size: 1.1rem;"><?= htmlspecialchars($event['title']) ?></h4>
-							<p style="margin: 0 0 0.25rem; font-size: 0.9rem; color: #666;">📅 <?= date('M d, Y', strtotime($event['event_date'])) ?></p>
-							<p style="margin: 0 0 0.25rem; font-size: 0.9rem; color: #444;">👤 <?= htmlspecialchars($event['organizer_name'] ?: 'Unknown') ?></p>
-							<?php if ($event['description']): ?>
-							<p style="margin: 0; font-size: 0.9rem; color: #555;">
-								<?= htmlspecialchars(substr($event['description'], 0, 120)) ?><?= strlen($event['description']) > 120 ? '...' : '' ?>
-							</p>
-							<?php endif; ?>
+			<!-- Second row: Local -->
+			<a href="<?= BASE_URL ?>/admin/local_seniors.php" class="dash-local" style="text-decoration: none; color: inherit;">
+				<div class="card dash-mini">
+						<div class="card-header" style="padding: .75rem 1rem;">
+							<h2 style="margin: 0; color: #333; font-size: 1rem; display: flex; align-items: center; gap:.5rem;">
+								<span class="badge-box"></span>
+								Local Seniors
+							</h2>
 						</div>
-						<?php endforeach; ?>
-					</div>
-					<?php else: ?>
-					<div style="text-align: center; padding: 2rem; color: #666;">
-						<p style="margin: 0 0 1rem; font-size: 1.1rem;">No upcoming events scheduled</p>
-						<a href="<?= BASE_URL ?>/admin/events.php" class="button" style="background: #667eea; color: white; padding: 0.75rem 1.5rem; border-radius: 6px; text-decoration: none; font-weight: 500;">Create Event</a>
-					</div>
-					<?php endif; ?>
+						<div class="card-body" style="padding: .75rem 1rem; text-align: center;">
+							<div style="font-size: 1.5rem; font-weight: 700; color: #28a745; margin-bottom: 0.2rem;"><?= $localSeniors ?></div>
+							<p style="margin: 0; color: #666; font-weight: 500; font-size: 0.8rem;">Registered Local Seniors</p>
+						</div>
 				</div>
-			</div>
-		</div>
+			</a>
 
-		<!-- Calendar -->
-		<div class="card" style="margin: 1.5rem;">
-			<div class="card-header">
-				<h2 style="margin:0; display:flex; align-items:center; gap:.5rem;">
-					<span>🗓️</span> <?= date('F Y') ?>
-				</h2>
-			</div>
-			<div class="card-body">
-				<div style="display:grid; grid-template-columns: repeat(7, 1fr); gap:.5rem;">
-					<?php
-						$startWeekday = (int)date('N', strtotime($firstDay));
-						for ($i=1;$i<$startWeekday;$i++) echo '<div></div>';
-						$daysInMonth = (int)date('t');
-						for ($day=1;$day<=$daysInMonth;$day++):
-							$events = $calEvents[$day] ?? [];
-					?>
-					<div style="border:1px solid var(--border-light); border-radius:8px; min-height:90px; padding:.5rem; background:#fff;">
-						<div style="font-weight:700; color:#374151; margin-bottom:.25rem;"><?= $day ?></div>
-						<?php foreach ($events as $e): ?>
-							<div style="font-size:.75rem; color:#111827; line-height:1.2; margin-bottom:.25rem;">
-								<strong><?= htmlspecialchars($e['organizer_name'] ?: 'Unknown') ?></strong><br>
-								<?= htmlspecialchars($e['title'] ?: 'Event') ?>
-							</div>
-						<?php endforeach; ?>
+			<!-- Second row: National -->
+			<a href="<?= BASE_URL ?>/admin/national_seniors.php" class="dash-national" style="text-decoration: none; color: inherit;">
+				<div class="card dash-mini">
+						<div class="card-header" style="padding: .75rem 1rem;">
+							<h2 style="margin: 0; color: #333; font-size: 1rem; display: flex; align-items: center; gap:.5rem;">
+								<span class="badge-box badge-ph">PH</span>
+								National Seniors
+							</h2>
+						</div>
+						<div class="card-body" style="padding: .75rem 1rem; text-align: center;">
+							<div style="font-size: 1.5rem; font-weight: 700; color: #007bff; margin-bottom: 0.2rem;"><?= $nationalSeniors ?></div>
+							<p style="margin: 0; color: #666; font-weight: 500; font-size: 0.8rem;">Registered National Seniors</p>
+						</div>
+				</div>
+			</a>
+
+			<!-- Right column: Upcoming spans rows 2-3 -->
+			<div class="card dash-upcoming">
+					<div class="card-header" style="padding: .9rem 1rem;">
+						<h2 style="margin: 0; color: #333; font-size: 1.1rem; display: flex; align-items: center; gap:.5rem;">
+							<span class="badge-box"></span>
+							Upcoming Events
+						</h2>
 					</div>
-					<?php endfor; ?>
+				<div class="card-body">
+						<?php if (!empty($upcomingEventsList)): ?>
+							<div class="upcoming-list">
+								<?php foreach ($upcomingEventsList as $event): ?>
+									<div class="upcoming-item">
+										<div class="up-title"><?= htmlspecialchars($event['title']) ?></div>
+										<div class="up-meta"><?= date('M d, Y', strtotime($event['event_date'])) ?> • <?= htmlspecialchars($event['organizer_name'] ?: 'Unknown') ?></div>
+									</div>
+								<?php endforeach; ?>
+							</div>
+						<?php else: ?>
+							<div style="text-align: center; padding: .75rem; color: #666;">
+								<p style="margin: 0 0 .5rem; font-size: .95rem;">No upcoming events scheduled</p>
+								<a href="<?= BASE_URL ?>/admin/events.php" class="button" style="background: #667eea; color: white; padding: 0.5rem .75rem; border-radius: 6px; text-decoration: none; font-weight: 500;">Create Event</a>
+							</div>
+						<?php endif; ?>
+					</div>
+			</div>
+
+			<!-- Calendar -->
+			<div class="card dash-calendar">
+				<div class="card-header">
+					<h2 style="margin:0; display:flex; align-items:center; gap:.5rem;">
+						<span>🗓️</span> <?= date('F Y') ?>
+					</h2>
+				</div>
+				<div class="card-body">
+					<div class="calendar-dow">
+						<div>SUN</div><div>MON</div><div>TUE</div><div>WED</div><div>THUR</div><div>FRI</div><div>SAT</div>
+					</div>
+					<div class="calendar-grid">
+						<?php
+							$startWeekday = (int)date('N', strtotime($firstDay));
+							for ($i=1;$i<$startWeekday;$i++) echo '<div></div>';
+							$daysInMonth = (int)date('t');
+							for ($day=1;$day<=$daysInMonth;$day++):
+								$events = $calEvents[$day] ?? [];
+						?>
+						<div class="cal-day">
+							<div class="cal-day-num"><?= $day ?></div>
+							<?php foreach ($events as $e): ?>
+								<div class="cal-evt">
+									<strong><?= htmlspecialchars($e['organizer_name'] ?: 'Unknown') ?></strong><br>
+									<?= htmlspecialchars($e['title'] ?: 'Event') ?>
+								</div>
+							<?php endforeach; ?>
+						</div>
+						<?php endfor; ?>
+					</div>
 				</div>
 			</div>
 		</div>
@@ -197,7 +190,8 @@ $user = current_user();
 				},
 				options: {
 					plugins: { legend: { display: false } },
-					scales: { y: { beginAtZero: true } }
+					maintainAspectRatio: false,
+					scales: { y: { beginAtZero: true, ticks: { precision:0 } } }
 				}
 			});
 		}

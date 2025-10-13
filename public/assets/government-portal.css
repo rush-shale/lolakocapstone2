@@ -1325,6 +1325,187 @@ tr:hover {
     }
 }
 
+/* Admin Dashboard one-screen layout */
+.dashboard-grid { display: grid !important; }
+.content .dashboard-grid {
+	display: grid;
+	/* Explicit grid areas to lock layout */
+    grid-template-columns: repeat(12, 1fr) !important; /* bento grid */
+    grid-auto-rows: 120px; /* base row height for bento */
+    gap: var(--space-3) !important;
+	padding: var(--space-6) var(--space-6) var(--space-4) !important;
+	height: calc(100vh - 0px) !important;
+	overflow: hidden !important;
+	max-width: 1200px;
+	margin: 0 auto;
+}
+
+.content .dashboard-grid .dash-graph {
+    grid-column: 1 / span 12 !important; /* full width */
+    grid-row: span 2; /* taller */
+	height: 100%;
+	display: flex;
+	flex-direction: column;
+}
+
+/* Second row tiles */
+.content .dashboard-grid .dash-local { grid-column: 1 / span 4 !important; grid-row: 3 / span 1 !important; }
+.content .dashboard-grid .dash-national { grid-column: 5 / span 4 !important; grid-row: 3 / span 1 !important; }
+
+.dash-mini {
+	border-radius: var(--radius-xl);
+	min-height: 170px;
+}
+
+.badge-box {
+	width: 28px;
+	height: 22px;
+	background: #e5e7eb;
+	border: 2px solid #c7cbd1;
+	border-radius: 4px;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	font-weight: 700;
+	font-size: .8rem;
+	color: #111827;
+}
+.badge-ph { background: #eef2ff; border-color: #c7d2fe; color: #1e40af; }
+
+
+
+.content .dashboard-grid .dash-upcoming {
+    grid-column: 9 / span 4 !important;
+    grid-row: 3 / span 6 !important; /* spans next to tiles and calendar */
+	display: flex;
+	flex-direction: column;
+	overflow: hidden;
+}
+
+.dash-upcoming .card-body {
+	padding: var(--space-4);
+	overflow: auto;
+	max-height: 100%;
+}
+
+.upcoming-list {
+	display: flex;
+	flex-direction: column;
+	gap: .5rem;
+}
+
+.upcoming-item {
+	background: var(--bg-secondary);
+	border-radius: 8px;
+	padding: .5rem .75rem;
+	border-left: 3px solid #667eea;
+}
+
+.up-title { font-weight: 700; color: #111827; font-size: .95rem; }
+.up-meta { color: #6b7280; font-size: .8rem; }
+
+
+.content .dashboard-grid .dash-calendar {
+    grid-column: 1 / span 8 !important;
+    grid-row: 4 / span 4 !important; /* moved up closer to tiles */
+	display: flex;
+	flex-direction: column;
+	overflow: hidden;
+    margin-top: 50px; /* increased space from tiles */
+}
+
+.dash-calendar .card-body {
+	padding: var(--space-4);
+	overflow: auto;
+}
+
+.dash-calendar .card-header {
+	background: #e5e7eb; /* subtle band like screenshot */
+	border-bottom: 2px solid #9ca3af;
+}
+
+.calendar-grid {
+	display: grid;
+	grid-template-columns: repeat(7, 1fr) !important;
+	gap: .4rem;
+}
+
+.calendar-dow {
+	display: grid;
+	grid-template-columns: repeat(7, 1fr);
+	gap: .4rem;
+	font-size: .75rem;
+	color: #374151;
+	margin-bottom: .25rem;
+}
+.calendar-dow > div {
+	text-align: center;
+	font-weight: 700;
+	border-top: 2px solid #9ca3af;
+	padding-top: .35rem;
+}
+
+.cal-day {
+	border: 1px solid var(--border-light);
+	border-radius: 6px;
+	min-height: 70px;
+	padding: .35rem;
+	background: #fff;
+	overflow: hidden;
+}
+
+.cal-day-num {
+	font-weight: 700;
+	color: #374151;
+	margin-bottom: .2rem;
+	font-size: .875rem;
+}
+
+.cal-evt {
+	font-size: .7rem;
+	color: #111827;
+	line-height: 1.15;
+	margin-bottom: .15rem;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+/* Chart container fit */
+.dash-graph .card-body {
+	height: 100%;
+	display: flex;
+	flex-direction: column;
+}
+
+.dash-graph .chart-wrap {
+    height: 100%; /* fill bento row height */
+	position: relative;
+}
+
+.dash-graph .chart-wrap canvas {
+	position: absolute;
+	inset: 0;
+}
+
+@media (max-width: 1280px) {
+    .content .dashboard-grid { grid-template-columns: repeat(8, 1fr) !important; grid-auto-rows: 140px; }
+    .content .dashboard-grid .dash-graph { grid-column: 1 / span 8 !important; grid-row: span 2; }
+    .content .dashboard-grid .dash-local { grid-column: 1 / span 4 !important; }
+    .content .dashboard-grid .dash-national { grid-column: 5 / span 4 !important; }
+    .content .dashboard-grid .dash-calendar { grid-column: 1 / span 5 !important; grid-row: span 4; }
+    .content .dashboard-grid .dash-upcoming { grid-column: 6 / span 3 !important; grid-row: span 4; }
+}
+
+@media (max-width: 1024px) {
+	.dashboard-grid {
+		display: block;
+		height: auto;
+	}
+	.dash-right { grid-row: auto; height: auto; }
+	.dash-graph canvas { max-height: 180px; }
+}
+
 @keyframes slideIn {
     from {
         opacity: 0;
