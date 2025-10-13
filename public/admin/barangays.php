@@ -57,6 +57,7 @@ $barangays = $pdo->query('SELECT * FROM barangays ORDER BY name ASC')->fetchAll(
 		.modal-overlay.active {
 			display: flex;
 			backdrop-filter: blur(5px);
+			-\webkit-backdrop-filter: blur(5px);
 		}
 		.modal {
 			background: white;

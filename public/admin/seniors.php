@@ -7,6 +7,27 @@ require_role('admin');
 $pdo = get_db_connection();
 start_app_session();
 
+// Handle AJAX requests for getting senior data
+if (isset($_GET['action']) && $_GET['action'] === 'get_senior') {
+    $id = (int)($_GET['id'] ?? 0);
+    if (!$id) {
+        echo json_encode(['success' => false, 'message' => 'Invalid senior ID']);
+        exit;
+    }
+    
+    $stmt = $pdo->prepare('SELECT * FROM seniors WHERE id = ?');
+    $stmt->execute([$id]);
+    $senior = $stmt->fetch(PDO::FETCH_ASSOC);
+    
+    if (!$senior) {
+        echo json_encode(['success' => false, 'message' => 'Senior not found']);
+        exit;
+    }
+    
+    echo json_encode(['success' => true, 'senior' => $senior]);
+    exit;
+}
+
 $message = '';
 
 // Success message is now set directly in the POST processing
@@ -225,6 +246,163 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 				}
 			}
 		}
+		if ($op === 'mark_deceased') {
+			$id = (int)($_POST['id'] ?? 0);
+			$death_date = $_POST['death_date'] ?? '';
+			$death_time = $_POST['death_time'] ?? '';
+			$death_place = trim($_POST['death_place'] ?? '');
+			$death_cause = trim($_POST['death_cause'] ?? '');
+			
+			if ($id && $death_date && $death_place && $death_cause) {
+				try {
+					$pdo = get_db_connection();
+					
+					// Create senior_deaths table if it doesn't exist
+					$pdo->exec("CREATE TABLE IF NOT EXISTS senior_deaths (
+						id INT AUTO_INCREMENT PRIMARY KEY,
+						senior_id INT NOT NULL,
+						date_of_death DATE NULL,
+						time_of_death TIME NULL,
+						place_of_death VARCHAR(255) NULL,
+						cause_of_death VARCHAR(255) NULL,
+						created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+						CONSTRAINT fk_senior_deaths_senior FOREIGN KEY (senior_id) REFERENCES seniors(id) ON DELETE CASCADE
+					) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci");
+					
+					// Update life status to deceased
+					$stmt = $pdo->prepare('UPDATE seniors SET life_status = ? WHERE id = ?');
+					$stmt->execute(['deceased', $id]);
+					
+					// Insert death information into senior_deaths table
+					$stmt = $pdo->prepare('INSERT INTO senior_deaths (senior_id, date_of_death, time_of_death, place_of_death, cause_of_death) VALUES (?, ?, ?, ?, ?)');
+					$stmt->execute([$id, $death_date, $death_time ?: null, $death_place, $death_cause]);
+					
+					// Remove any existing death information from remarks
+					$stmt = $pdo->prepare('SELECT remarks FROM seniors WHERE id = ?');
+					$stmt->execute([$id]);
+					$current_remarks = $stmt->fetchColumn();
+					
+					if ($current_remarks) {
+						// Remove death information section from remarks
+						$clean_remarks = preg_replace('/\n\n--- DEATH INFORMATION ---.*$/s', '', $current_remarks);
+						$clean_remarks = trim($clean_remarks);
+						
+						$stmt = $pdo->prepare('UPDATE seniors SET remarks = ? WHERE id = ?');
+						$stmt->execute([$clean_remarks, $id]);
+					}
+					
+					$message = 'Senior marked as deceased successfully.';
+				} catch (Exception $e) {
+					error_log("Mark deceased failed: " . $e->getMessage());
+					$message = 'Error marking as deceased: ' . $e->getMessage();
+				}
+			} else {
+				$message = 'Please fill in all required death information fields.';
+			}
+		}
+		if ($op === 'transfer_details') {
+			$id = (int)($_POST['id'] ?? 0);
+			$transfer_reason = $_POST['transfer_reason'] ?? '';
+			$transfer_reason_other = trim($_POST['transfer_reason_other'] ?? '');
+			$new_address = trim($_POST['new_address'] ?? '');
+			$effective_date = $_POST['effective_date'] ?? '';
+			
+			// Validate required fields
+			$valid = $id && $transfer_reason && $new_address && $effective_date;
+			
+			// If reason is 'other', validate that other reason is provided
+			if ($transfer_reason === 'other' && empty($transfer_reason_other)) {
+				$valid = false;
+			}
+			
+			if ($valid) {
+				try {
+					$pdo = get_db_connection();
+					
+					// Create senior_transfers table if it doesn't exist
+					$pdo->exec("CREATE TABLE IF NOT EXISTS senior_transfers (
+						id INT AUTO_INCREMENT PRIMARY KEY,
+						senior_id INT NOT NULL,
+						senior_name VARCHAR(255) NULL,
+						transfer_reason VARCHAR(255) NOT NULL,
+						new_address VARCHAR(255) NOT NULL,
+						effective_date DATE NOT NULL,
+						created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+						CONSTRAINT fk_senior_transfers_senior FOREIGN KEY (senior_id) REFERENCES seniors(id) ON DELETE CASCADE
+					) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci");
+
+					// Ensure senior_name column exists (for older tables)
+					try { $pdo->exec("ALTER TABLE senior_transfers ADD COLUMN senior_name VARCHAR(255) NULL"); } catch (Exception $ignore) {}
+					
+					// Update senior category to transferred
+					$stmt = $pdo->prepare('UPDATE seniors SET category = ? WHERE id = ?');
+					$result1 = $stmt->execute(['transferred', $id]);
+					error_log("Transfer debug - Update category result: " . ($result1 ? 'success' : 'failed'));
+					
+					// Do NOT overwrite original barangay; store new address only in senior_transfers
+					$result2 = true;
+
+					// Clean any previously appended transfer notes from remarks
+					try {
+						$get = $pdo->prepare('SELECT remarks FROM seniors WHERE id = ?');
+						$get->execute([$id]);
+						$cur = (string)$get->fetchColumn();
+						if ($cur !== '') {
+							$clean = preg_replace('/(\r?\n)?Transfer Details\s*-.*$|(\r?\n)?---\s*TRANSFER INFORMATION\s*---[\s\S]*$/ims', '', $cur);
+							if ($clean !== $cur) {
+								$upd = $pdo->prepare('UPDATE seniors SET remarks = ? WHERE id = ?');
+								$upd->execute([trim($clean), $id]);
+							}
+						}
+					} catch (Exception $ignore) {}
+					error_log("Transfer debug - Update barangay result: " . ($result2 ? 'success' : 'failed'));
+					
+					// Fetch senior's current name for snapshot
+					$seniorName = '';
+					try {
+						$nm = $pdo->prepare('SELECT first_name, middle_name, last_name, ext_name FROM seniors WHERE id = ?');
+						$nm->execute([$id]);
+						$row = $nm->fetch(PDO::FETCH_ASSOC);
+						if ($row) {
+							$parts = array_filter([
+								$row['first_name'] ?? '',
+								$row['middle_name'] ?? '',
+								$row['last_name'] ?? '',
+								$row['ext_name'] ?? ''
+							]);
+							$seniorName = trim(implode(' ', $parts));
+						}
+					} catch (Exception $ignore) {}
+
+					// Store transfer details in senior_transfers table
+					$final_reason = $transfer_reason === 'other' ? $transfer_reason_other : ucfirst(str_replace('_', ' ', $transfer_reason));
+					$stmt = $pdo->prepare('INSERT INTO senior_transfers (senior_id, senior_name, transfer_reason, new_address, effective_date) VALUES (?, ?, ?, ?, ?)');
+					$result3 = $stmt->execute([$id, $seniorName ?: null, $final_reason, $new_address, $effective_date]);
+					error_log("Transfer debug - Insert transfer record result: " . ($result3 ? 'success' : 'failed'));
+					
+					// Debug: Check if the update was successful
+					$checkStmt = $pdo->prepare('SELECT category FROM seniors WHERE id = ?');
+					$checkStmt->execute([$id]);
+					$result = $checkStmt->fetchColumn();
+					error_log("Transfer debug - Senior ID: $id, Category after update: $result");
+					
+					// Set success message
+					$message = 'Senior has been successfully transferred!';
+					error_log("Transfer completed successfully for senior ID: $id");
+					
+					// Redirect to transferred seniors page with success message
+					header("Location: transferred_seniors.php?transfer_success=1");
+					exit;
+				} catch (Exception $e) {
+					error_log("Transfer failed: " . $e->getMessage());
+					error_log("Transfer error details: " . print_r($e, true));
+					$message = 'Error processing transfer: ' . $e->getMessage();
+				}
+			} else {
+				$message = 'Please fill in all required transfer information fields.';
+				error_log("Transfer validation failed - ID: $id, Reason: $transfer_reason, Address: $new_address, Date: $effective_date");
+			}
+		}
 		if ($op === 'delete') {
 			$id = (int)($_POST['id'] ?? 0);
 			if ($id) {
@@ -312,10 +490,10 @@ try {
 		$stmtAll->execute();
 		$seniors = $stmtAll->fetchAll();
 	} elseif ($status === 'transferred') {
-		// Transferred seniors: those who have moved to another barangay
+		// Transferred seniors: moved out; use explicit transferred category
 		$sql = 'SELECT s.*, validation_status, validation_date, 0 as event_count, "" as events_attended
 				FROM seniors s
-				WHERE s.life_status = "living" AND s.category = "national"
+				WHERE s.life_status = "living" AND s.category = "transferred"
 				ORDER BY s.created_at DESC';
 		$stmtAll = $pdo->prepare($sql);
 		$stmtAll->execute();
@@ -613,14 +791,297 @@ try {
 			width: 100%;
 			height: 100%;
 			background: rgba(0,0,0,0.5);
+			backdrop-filter: blur(5px);
+			-webkit-backdrop-filter: blur(5px);
 			z-index: 1000;
 			display: none;
+			opacity: 0;
+			transition: opacity 0.3s ease;
 		}
 
 		.modal-overlay.active {
 			display: flex;
 			align-items: center;
 			justify-content: center;
+			opacity: 1;
+			animation: fadeInBlur 0.3s ease forwards;
+		}
+
+		.modal-overlay .modal {
+			transform: scale(0.7);
+			animation: zoomInModal 0.3s ease forwards;
+		}
+
+		@keyframes fadeInBlur {
+			from { 
+				opacity: 0;
+				backdrop-filter: blur(0px);
+				-\webkit-backdrop-filter: blur(0px);
+			}
+			to { 
+				opacity: 1;
+				backdrop-filter: blur(5px);
+				-\webkit-backdrop-filter: blur(5px);
+			}
+		}
+
+		@keyframes zoomInModal {
+			from {
+				transform: scale(0.7);
+				opacity: 0;
+			}
+			to {
+				transform: scale(1);
+				opacity: 1;
+			}
+		}
+
+		/* Senior Profile Styles for Modal */
+		.senior-profile {
+			font-family: 'Inter', sans-serif;
+			max-width: 480px;
+			margin: 0 auto;
+			padding: 1rem;
+			background: #fff;
+			border-radius: 12px;
+			box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+			color: #1f2937;
+			font-size: 0.875rem;
+			line-height: 1.4;
+		}
+		.profile-section {
+			margin-bottom: 1rem;
+		}
+		.profile-header {
+			display: flex;
+			align-items: center;
+			gap: 1rem;
+			margin-bottom: 1rem;
+		}
+		.profile-avatar {
+			font-size: 3rem;
+			color: #6b7280;
+		}
+		.profile-info h2 {
+			margin: 0 0 0.25rem 0;
+			font-size: 1.25rem;
+			font-weight: 700;
+			color: #111827;
+		}
+		.profile-middle {
+			margin: 0 0 0.5rem 0;
+			font-size: 0.875rem;
+			color: #6b7280;
+		}
+		.profile-badges {
+			display: flex;
+			gap: 0.5rem;
+			flex-wrap: wrap;
+		}
+		.badge {
+			padding: 0.25rem 0.5rem;
+			border-radius: 4px;
+			font-size: 0.75rem;
+			font-weight: 500;
+		}
+		.badge-success {
+			background-color: #d1fae5;
+			color: #065f46;
+		}
+		.badge-danger {
+			background-color: #fee2e2;
+			color: #991b1b;
+		}
+		.badge-primary {
+			background-color: #dbeafe;
+			color: #1e40af;
+		}
+		.badge-info {
+			background-color: #dbeafe;
+			color: #1e40af;
+		}
+		.badge-warning {
+			background-color: #fef3c7;
+			color: #92400e;
+		}
+		.profile-actions {
+			margin-left: auto;
+		}
+		.button {
+			font-size: 0.875rem;
+			padding: 0.375rem 0.75rem;
+			border-radius: 6px;
+			border: none;
+			cursor: pointer;
+			display: flex;
+			align-items: center;
+			gap: 0.5rem;
+			text-decoration: none;
+			pointer-events: auto !important;
+			z-index: 10 !important;
+			position: relative !important;
+		}
+		.button.primary {
+			background-color: #2563eb;
+			color: white;
+		}
+		.button.primary:hover {
+			background-color: #1d4ed8;
+		}
+		.profile-stats {
+			display: flex;
+			gap: 1rem;
+			flex-wrap: wrap;
+			justify-content: space-between;
+			margin-bottom: 1.5rem;
+		}
+		.stat-card {
+			flex: 1;
+			min-width: 120px;
+			background: #f9fafb;
+			border-radius: 8px;
+			padding: 1rem;
+			display: flex;
+			align-items: center;
+			gap: 0.75rem;
+		}
+		.stat-icon {
+			font-size: 1.5rem;
+			color: #2563eb;
+		}
+		.stat-content h3 {
+			margin: 0 0 0.25rem 0;
+			font-size: 0.75rem;
+			font-weight: 500;
+			color: #6b7280;
+			text-transform: uppercase;
+			letter-spacing: 0.05em;
+		}
+		.stat-content .number {
+			margin: 0;
+			font-size: 1.125rem;
+			font-weight: 700;
+			color: #111827;
+		}
+		.stat-content .text {
+			margin: 0;
+			font-size: 0.875rem;
+			font-weight: 500;
+			color: #374151;
+		}
+		.profile-details {
+			margin-bottom: 1.5rem;
+		}
+		.detail-section {
+			margin-bottom: 1.5rem;
+		}
+		.detail-section h3 {
+			margin: 0 0 1rem 0;
+			font-size: 1rem;
+			font-weight: 600;
+			color: #111827;
+			display: flex;
+			align-items: center;
+			gap: 0.5rem;
+		}
+		.detail-section h3 i {
+			color: #2563eb;
+		}
+		.detail-grid {
+			display: grid;
+			grid-template-columns: 1fr;
+			gap: 0.75rem;
+		}
+		.detail-item {
+			display: flex;
+			justify-content: space-between;
+			align-items: center;
+			padding: 0.5rem 0;
+			border-bottom: 1px solid #f3f4f6;
+		}
+		.detail-item:last-child {
+			border-bottom: none;
+		}
+		.detail-item .label {
+			font-weight: 500;
+			color: #6b7280;
+			flex: 1;
+		}
+		.detail-item .value {
+			font-weight: 400;
+			color: #111827;
+			text-align: right;
+			flex: 1;
+		}
+		.remarks-content {
+			background: #f9fafb;
+			border-radius: 6px;
+			padding: 1rem;
+		}
+		.remarks-content p {
+			margin: 0;
+			line-height: 1.5;
+		}
+		.attendance-list {
+			display: flex;
+			flex-direction: column;
+			gap: 0.75rem;
+		}
+		.attendance-item {
+			display: flex;
+			justify-content: space-between;
+			align-items: center;
+			padding: 0.75rem;
+			background: #f9fafb;
+			border-radius: 6px;
+		}
+		.event-info h4 {
+			margin: 0 0 0.25rem 0;
+			font-size: 0.875rem;
+			font-weight: 600;
+			color: #111827;
+		}
+		.event-date {
+			margin: 0;
+			font-size: 0.75rem;
+			color: #6b7280;
+		}
+		.status-badge {
+			padding: 0.25rem 0.5rem;
+			border-radius: 4px;
+			font-size: 0.75rem;
+			font-weight: 500;
+			display: flex;
+			align-items: center;
+			gap: 0.25rem;
+		}
+		.status-badge.attended {
+			background-color: #d1fae5;
+			color: #065f46;
+		}
+		.status-badge.not-attended {
+			background-color: #fee2e2;
+			color: #991b1b;
+		}
+		.no-attendance {
+			text-align: center;
+			padding: 2rem;
+			color: #6b7280;
+		}
+		.no-attendance-icon {
+			font-size: 2rem;
+			margin-bottom: 0.5rem;
+			color: #2563eb;
+		}
+		.no-attendance h4 {
+			margin: 0.5rem 0;
+			font-size: 1rem;
+			font-weight: 600;
+			color: #111827;
+		}
+		.no-attendance p {
+			margin: 0;
+			font-size: 0.875rem;
 		}
 
 		.modal {
@@ -907,7 +1368,7 @@ try {
 					<i class="fas fa-exclamation-triangle"></i>
 					Confirm Delete
 				</h2>
-				<button class="modal-close" onclick="closeDeleteModal()">&times;</button>
+				<button class="modal-close" onclick="closeDeleteModal()" aria-label="Close delete confirmation">&times;</button>
 			</div>
 			<div class="modal-body">
 				<div class="delete-warning">
@@ -945,7 +1406,7 @@ try {
 					<i class="fas fa-user"></i>
 					Senior Details
 				</h2>
-				<button class="modal-close" onclick="closeSeniorDetailsModal()">&times;</button>
+				<button class="modal-close" onclick="closeSeniorDetailsModal()" aria-label="Close senior details">&times;</button>
 			</div>
 			<div class="modal-body" id="seniorDetailsContent">
 				<!-- Content will be loaded via AJAX -->
@@ -972,18 +1433,52 @@ try {
 		}
 
 		function viewSeniorDetails(id) {
-			document.getElementById('seniorDetailsModal').classList.add('active');
+			// Show the modal with loading state
+			const modal = document.getElementById('seniorDetailsModal');
+			const content = document.getElementById('seniorDetailsContent');
+			
+			// Show loading state
+			content.innerHTML = `
+				<div class="loading-state">
+					<div class="loading-spinner"></div>
+					<p>Loading senior details...</p>
+				</div>
+			`;
+			
+			// Show modal with blur and zoom animation
+			modal.classList.add('active');
 			document.body.style.overflow = 'hidden';
 			
 			// Load senior details via AJAX
-			fetch(`senior_details.php?id=${id}`)
+			fetch(`senior_details.php?id=${id}&ajax=1`)
 				.then(response => response.text())
 				.then(html => {
-					document.getElementById('seniorDetailsContent').innerHTML = html;
+					// Extract only the senior profile content from the response
+					const parser = new DOMParser();
+					const doc = parser.parseFromString(html, 'text/html');
+					const seniorProfile = doc.querySelector('.senior-profile');
+					
+					if (seniorProfile) {
+						content.innerHTML = seniorProfile.outerHTML;
+						
+						// Add event listener to Edit Profile button
+						const editButton = content.querySelector('.button.primary');
+						if (editButton) {
+							editButton.addEventListener('click', function(e) {
+								e.preventDefault();
+								// Close senior details modal first
+								closeSeniorDetailsModal();
+								// Then open edit modal
+								openEditSeniorModal(id);
+							});
+						}
+					} else {
+						content.innerHTML = '<p>Error loading senior details.</p>';
+					}
 				})
 				.catch(error => {
-					document.getElementById('seniorDetailsContent').innerHTML = 
-						'<div class="error-state"><p>Error loading senior details. Please try again.</p></div>';
+					console.error('Error loading senior details:', error);
+					content.innerHTML = '<p>Error loading senior details. Please try again.</p>';
 				});
 		}
 
@@ -998,8 +1493,78 @@ try {
 		}
 
 		function closeEditSeniorModal() {
-			document.getElementById('editSeniorModal').style.display = 'none';
+			document.getElementById('editSeniorModal').classList.remove('active');
 			document.body.style.overflow = '';
+		}
+
+		function markAsDeceased() {
+			const seniorId = document.getElementById('editSeniorId').value;
+			if (!seniorId) {
+				alert('No senior selected');
+				return;
+			}
+			
+			// Close edit modal first
+			closeEditSeniorModal();
+			
+			// Open deceased modal
+			openDeceasedModal(seniorId);
+		}
+
+		function transferSenior() {
+			const seniorId = document.getElementById('editSeniorId').value;
+			if (!seniorId) {
+				alert('No senior selected');
+				return;
+			}
+			
+			// Close edit modal first
+			closeEditSeniorModal();
+			
+			// Open transfer modal
+			openTransferModal(seniorId);
+		}
+
+		function openTransferModal(seniorId) {
+			// Set the senior ID
+			document.getElementById('transferSeniorId').value = seniorId;
+			
+			// Set default effective date to today
+			const today = new Date().toISOString().split('T')[0];
+			document.getElementById('effectiveDate').value = today;
+			
+			// Show the modal
+			document.getElementById('transferModal').classList.add('active');
+			document.body.style.overflow = 'hidden';
+		}
+
+		function closeTransferModal() {
+			document.getElementById('transferModal').classList.remove('active');
+			document.body.style.overflow = '';
+			
+			// Reset form
+			document.getElementById('transferForm').reset();
+		}
+
+		function openDeceasedModal(seniorId) {
+			// Set the senior ID
+			document.getElementById('deceasedSeniorId').value = seniorId;
+			
+			// Set default death date to today
+			const today = new Date().toISOString().split('T')[0];
+			document.getElementById('deathDate').value = today;
+			
+			// Show the modal
+			document.getElementById('deceasedModal').classList.add('active');
+			document.body.style.overflow = 'hidden';
+		}
+
+		function closeDeceasedModal() {
+			document.getElementById('deceasedModal').classList.remove('active');
+			document.body.style.overflow = '';
+			
+			// Reset form
+			document.getElementById('deceasedForm').reset();
 		}
 
 		function deleteSenior(id, name) {
@@ -1101,7 +1666,7 @@ try {
 					</div>
 					
 					<div class="form-group">
-						<button type="button" class="button secondary small" onclick="removeFamilyMember(this)">
+					<button type="button" class="button secondary small" onclick="removeFamilyMember(this)" aria-label="Remove family member" title="Remove family member">
 							<i class="fas fa-trash"></i>
 						</button>
 					</div>
@@ -1181,8 +1746,8 @@ try {
 		// Close modals when clicking outside
 		document.addEventListener('click', function(e) {
 			if (e.target.classList.contains('modal-overlay')) {
-				// Skip closing for addSeniorModal - only close via X button
-				if (e.target.id === 'addSeniorModal') return;
+				// Skip closing for addSeniorModal, editSeniorModal, transferModal, and deceasedModal - only close via X button
+				if (e.target.id === 'addSeniorModal' || e.target.id === 'editSeniorModal' || e.target.id === 'transferModal' || e.target.id === 'deceasedModal') return;
 
 				// Directly close modal without animation to avoid movement
 				e.target.classList.remove('active');
@@ -1222,7 +1787,7 @@ try {
 		<div class="modal" style="width: 600px; max-width: 95%; animation: zoomIn 0.3s forwards;">
 			<div class="modal-header">
 				<h2 class="modal-title">Add Senior</h2>
-				<button class="modal-close" onclick="closeAddSeniorModal()">&times;</button>
+				<button class="modal-close" onclick="closeAddSeniorModal()" aria-label="Close add senior form">&times;</button>
 			</div>
 			<div class="modal-body">
 				<form id="addSeniorForm" method="post" action="<?= htmlspecialchars($_SERVER['PHP_SELF']) ?>">
@@ -1638,7 +2203,7 @@ try {
 									</div>
 
 									<div class="form-group">
-										<button type="button" class="button secondary small" onclick="removeFamilyMember(this)">
+									<button type="button" class="button secondary small" onclick="removeFamilyMember(this)" aria-label="Remove family member" title="Remove family member">
 											<i class="fas fa-trash"></i>
 										</button>
 									</div>
@@ -1802,11 +2367,11 @@ try {
 	</script>
 
 	<!-- Edit Senior Modal -->
-	<div id="editSeniorModal" class="modal-overlay" style="display:none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center;">
+	<div id="editSeniorModal" class="modal-overlay">
 		<div class="modal" style="background: white; border-radius: 12px; padding: 2rem; max-width: 600px; width: 90%; max-height: 90%; overflow-y: auto; position: relative;">
 			<div class="modal-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
 				<h2 style="margin: 0; font-size: 1.5rem; font-weight: 700; color: #111827;">Edit Senior Profile</h2>
-				<button onclick="closeEditSeniorModal()" style="background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #6b7280;">&times;</button>
+				<button onclick="closeEditSeniorModal()" style="background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #6b7280;" aria-label="Close edit senior form">&times;</button>
 			</div>
 			<form id="editSeniorForm" method="POST" action="<?= htmlspecialchars($_SERVER['PHP_SELF']) ?>" style="display: flex; flex-direction: column; gap: 1rem;">
 				<input type="hidden" name="csrf" value="<?= $csrf ?>">
@@ -1941,17 +2506,6 @@ try {
 				</div>
 
 				<div style="display: flex; align-items: center; gap: 1rem;">
-					<label for="editBenefitsReceived" style="font-weight: 600; display: flex; align-items: center; gap: 0.5rem;">
-						<input type="checkbox" id="editBenefitsReceived" name="benefits_received" style="width: auto;">
-						Benefits Received
-					</label>
-					<label for="editLifeStatus" style="font-weight: 600; display: flex; align-items: center; gap: 0.5rem;">
-						Life Status:
-						<select id="editLifeStatus" name="life_status" style="padding: 0.25rem; border: 1px solid #d1d5db; border-radius: 6px;">
-							<option value="living">Living</option>
-							<option value="deceased">Deceased</option>
-						</select>
-					</label>
 					<label for="editCategory" style="font-weight: 600; display: flex; align-items: center; gap: 0.5rem;">
 						Category:
 						<select id="editCategory" name="category" style="padding: 0.25rem; border: 1px solid #d1d5db; border-radius: 6px;">
@@ -1959,22 +2513,115 @@ try {
 							<option value="national">National</option>
 						</select>
 					</label>
-
-					<label for="editWaitingList" style="font-weight: 600; display: flex; align-items: center; gap: 0.5rem;">
-						<input
-							type="checkbox"
-							id="editWaitingList"
-							name="waiting_list"
-							value="1"
-							style="width: auto;"
-						>
-						On Waiting List
-					</label>
 				</div>
 
-				<div style="display: flex; justify-content: flex-end; gap: 1rem; margin-top: 1rem;">
-					<button type="button" onclick="closeEditSeniorModal()" style="padding: 0.5rem 1rem; background: #f3f4f6; border: 1px solid #d1d5db; border-radius: 6px; cursor: pointer;">Cancel</button>
-					<button type="submit" style="padding: 0.5rem 1rem; background: #2563eb; color: white; border: none; border-radius: 6px; cursor: pointer;">Update Senior</button>
+				<div style="display: flex; justify-content: space-between; align-items: center; margin-top: 1rem; padding-top: 1rem; border-top: 1px solid #e5e7eb;">
+					<div style="display: flex; gap: 1rem;">
+						<button type="button" onclick="markAsDeceased()" style="padding: 0.5rem 1rem; background: #dc2626; color: white; border: none; border-radius: 6px; cursor: pointer; display: flex; align-items: center; gap: 0.5rem;">
+							<i class="fas fa-cross"></i>
+							Mark as Deceased
+						</button>
+						<button type="button" onclick="transferSenior()" style="padding: 0.5rem 1rem; background: #f59e0b; color: white; border: none; border-radius: 6px; cursor: pointer; display: flex; align-items: center; gap: 0.5rem;">
+							<i class="fas fa-exchange-alt"></i>
+							Transfer Senior
+						</button>
+					</div>
+					<div style="display: flex; gap: 1rem;">
+						<button type="button" onclick="closeEditSeniorModal()" style="padding: 0.5rem 1rem; background: #f3f4f6; border: 1px solid #d1d5db; border-radius: 6px; cursor: pointer;">Cancel</button>
+						<button type="submit" style="padding: 0.5rem 1rem; background: #2563eb; color: white; border: none; border-radius: 6px; cursor: pointer;">Update Senior</button>
+					</div>
+				</div>
+			</form>
+		</div>
+	</div>
+
+	<!-- Transfer Senior Modal -->
+	<div id="transferModal" class="modal-overlay">
+		<div class="modal" style="background: white; border-radius: 12px; padding: 2rem; max-width: 500px; width: 90%; max-height: 90%; overflow-y: auto; position: relative;">
+			<div class="modal-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+				<h2 style="margin: 0; font-size: 1.5rem; font-weight: 700; color: #111827;">📦 Transfer Details</h2>
+				<button onclick="closeTransferModal()" style="background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #6b7280;" aria-label="Close transfer form">&times;</button>
+			</div>
+			<form id="transferForm" method="POST" action="<?= htmlspecialchars($_SERVER['PHP_SELF']) ?>" style="display: flex; flex-direction: column; gap: 1.5rem;">
+				<input type="hidden" name="csrf" value="<?= $csrf ?>">
+				<input type="hidden" name="op" value="transfer_details">
+				<input type="hidden" name="id" id="transferSeniorId">
+				
+				<div>
+					<div style="font-weight: 600; margin-bottom: 0.75rem; font-size: 1rem;">Reason for Transfer:</div>
+					<div style="display: flex; flex-direction: column; gap: 0.75rem;">
+						<label style="display: flex; align-items: center; gap: 0.5rem; font-weight: normal; cursor: pointer;">
+							<input type="radio" name="transfer_reason" value="change_of_residence" required style="margin-right: 0.5rem;">
+							☐ Change of residence
+						</label>
+						<label style="display: flex; align-items: center; gap: 0.5rem; font-weight: normal; cursor: pointer;">
+							<input type="radio" name="transfer_reason" value="moved_with_family" required style="margin-right: 0.5rem;">
+							☐ Moved with family
+						</label>
+						<label style="display: flex; align-items: center; gap: 0.5rem; font-weight: normal; cursor: pointer;">
+							<input type="radio" name="transfer_reason" value="admitted_to_care_facility" required style="margin-right: 0.5rem;">
+							☐ Admitted to care facility
+						</label>
+						<label style="display: flex; align-items: center; gap: 0.5rem; font-weight: normal; cursor: pointer;">
+							<input type="radio" name="transfer_reason" value="other" required style="margin-right: 0.5rem;">
+							☐ Other: <input type="text" name="transfer_reason_other" placeholder="___________________________" style="flex: 1; padding: 0.25rem; border: none; border-bottom: 1px solid #d1d5db; background: transparent; margin-left: 0.5rem; outline: none;">
+						</label>
+					</div>
+				</div>
+				
+				<div>
+					<div style="font-weight: 600; margin-bottom: 0.5rem; font-size: 1rem;">New Address / Barangay:</div>
+					<input type="text" id="newAddress" name="new_address" required style="width: 100%; padding: 0.5rem; border: none; border-bottom: 1px solid #d1d5db; background: transparent; outline: none; font-size: 1rem;" placeholder="______________________________">
+				</div>
+				
+				<div>
+					<div style="font-weight: 600; margin-bottom: 0.5rem; font-size: 1rem;">Effective Date of Transfer:</div>
+					<input type="date" id="effectiveDate" name="effective_date" required style="width: 100%; padding: 0.5rem; border: none; border-bottom: 1px solid #d1d5db; background: transparent; outline: none; font-size: 1rem;">
+				</div>
+				
+				<div style="display: flex; justify-content: flex-end; gap: 1rem; margin-top: 2rem;">
+					<button type="button" onclick="closeTransferModal()" style="padding: 0.75rem 1.5rem; background: #f3f4f6; border: 1px solid #d1d5db; border-radius: 6px; cursor: pointer; font-weight: 500;">Cancel</button>
+					<button type="submit" style="padding: 0.75rem 1.5rem; background: #2563eb; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 500;">Submit Transfer</button>
+				</div>
+			</form>
+		</div>
+	</div>
+
+	<!-- Mark as Deceased Modal -->
+	<div id="deceasedModal" class="modal-overlay">
+		<div class="modal" style="background: white; border-radius: 12px; padding: 2rem; max-width: 500px; width: 90%; max-height: 90%; overflow-y: auto; position: relative;">
+			<div class="modal-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+				<h2 style="margin: 0; font-size: 1.5rem; font-weight: 700; color: #111827;">💀 Death Information</h2>
+				<button onclick="closeDeceasedModal()" style="background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #6b7280;" aria-label="Close deceased form">&times;</button>
+			</div>
+			<form id="deceasedForm" method="POST" action="<?= htmlspecialchars($_SERVER['PHP_SELF']) ?>" style="display: flex; flex-direction: column; gap: 1.5rem;">
+				<input type="hidden" name="csrf" value="<?= $csrf ?>">
+				<input type="hidden" name="op" value="mark_deceased">
+				<input type="hidden" name="id" id="deceasedSeniorId">
+				
+				<div>
+					<div style="font-weight: 600; margin-bottom: 0.5rem; font-size: 1rem;">Date of Death:</div>
+					<input type="date" id="deathDate" name="death_date" required style="width: 100%; padding: 0.5rem; border: 1px solid #d1d5db; border-radius: 6px;">
+				</div>
+				
+				<div>
+					<div style="font-weight: 600; margin-bottom: 0.5rem; font-size: 1rem;">Time of Death:</div>
+					<input type="time" id="deathTime" name="death_time" style="width: 100%; padding: 0.5rem; border: 1px solid #d1d5db; border-radius: 6px;">
+				</div>
+				
+				<div>
+					<div style="font-weight: 600; margin-bottom: 0.5rem; font-size: 1rem;">Place of Death:</div>
+					<input type="text" id="deathPlace" name="death_place" required style="width: 100%; padding: 0.5rem; border: 1px solid #d1d5db; border-radius: 6px;" placeholder="e.g., Hospital, Home, etc.">
+				</div>
+				
+				<div>
+					<div style="font-weight: 600; margin-bottom: 0.5rem; font-size: 1rem;">Cause of Death:</div>
+					<input type="text" id="deathCause" name="death_cause" required style="width: 100%; padding: 0.5rem; border: 1px solid #d1d5db; border-radius: 6px;" placeholder="e.g., Natural causes, Illness, etc.">
+				</div>
+				
+				<div style="display: flex; justify-content: flex-end; gap: 1rem; margin-top: 2rem;">
+					<button type="button" onclick="closeDeceasedModal()" style="padding: 0.75rem 1.5rem; background: #f3f4f6; border: 1px solid #d1d5db; border-radius: 6px; cursor: pointer; font-weight: 500;">Cancel</button>
+					<button type="submit" style="padding: 0.75rem 1.5rem; background: #dc2626; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 500;">Mark as Deceased</button>
 				</div>
 			</form>
 		</div>
@@ -1983,14 +2630,12 @@ try {
 	<script>
 		// Populate waiting list checkbox in edit modal based on senior category
 		document.getElementById('editSeniorModal').addEventListener('show', function() {
-			const waitingListCheckbox = document.getElementById('editWaitingList');
-			const categorySelect = document.getElementById('editCategory');
-			waitingListCheckbox.checked = categorySelect.value === 'waiting';
+			// Waiting list functionality removed
 		});
 
 		// When loading senior data for edit, set waiting list checkbox accordingly
 		function openEditSeniorModal(id) {
-			fetch(`senior_details.php?id=${id}&edit=1`)
+			fetch(`seniors.php?action=get_senior&id=${id}`)
 				.then(response => response.json())
 				.then(data => {
 					if (!data.success) {
@@ -2015,21 +2660,15 @@ try {
 					document.getElementById('editAnnualIncome').value = senior.annual_income || '';
 					document.getElementById('editOtherSkills').value = senior.other_skills || '';
 					document.getElementById('editBarangay').value = senior.barangay;
-                    // contact field removed
-                    // cellphone field removed
 					document.getElementById('editOscaIdNo').value = senior.osca_id_no || '';
 					document.getElementById('editPurok').value = senior.purok || '';
+					document.getElementById('editCellphone').value = senior.cellphone || '';
 					document.getElementById('editHealthCondition').value = senior.health_condition || '';
 					document.getElementById('editRemarks').value = senior.remarks || '';
-					document.getElementById('editBenefitsReceived').checked = senior.benefits_received == 1;
-					document.getElementById('editLifeStatus').value = senior.life_status;
-					document.getElementById('editCategory').value = senior.category;
-
-					// Set waiting list checkbox
-					document.getElementById('editWaitingList').checked = senior.category === 'waiting';
+					document.getElementById('editCategory').value = senior.category || '';
 
 					// Show modal
-					document.getElementById('editSeniorModal').style.display = 'flex';
+					document.getElementById('editSeniorModal').classList.add('active');
 					document.body.style.overflow = 'hidden';
 				})
 				.catch(() => {

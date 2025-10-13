@@ -142,7 +142,7 @@ body {
     font-size: var(--text-base);
     line-height: var(--leading-normal);
     color: var(--text-primary);
-    background-color: var(--bg-secondary);
+    background-color: var(--bg-primary);
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
 }
@@ -273,6 +273,7 @@ a:hover {
 .login-header {
     background: rgba(255, 255, 255, 0.1);
     backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
     border-bottom: 1px solid rgba(255, 255, 255, 0.2);
     padding: var(--space-8) 0;
     position: relative;
@@ -708,7 +709,7 @@ a:hover {
 .content {
     margin-left: 280px;
     min-height: 100vh;
-    background-color: var(--bg-secondary);
+    background-color: var(--bg-primary);
     position: relative;
 }
 
@@ -719,9 +720,7 @@ a:hover {
     left: 280px;
     right: 0;
     bottom: 0;
-    background: 
-        radial-gradient(circle at 20% 20%, rgba(30, 58, 138, 0.03) 0%, transparent 50%),
-        radial-gradient(circle at 80% 80%, rgba(5, 150, 105, 0.03) 0%, transparent 50%);
+    background: none;
     pointer-events: none;
     z-index: -1;
 }
@@ -1559,7 +1558,7 @@ tr:hover {
     .main-content {
 	margin-left: 280px;
 	min-height: 100vh;
-	background-color: var(--bg-secondary);
+    background-color: var(--bg-primary);
 	position: relative;
 }
 
@@ -1570,9 +1569,7 @@ tr:hover {
 	left: 280px;
 	right: 0;
 	bottom: 0;
-	background: 
-		radial-gradient(circle at 20% 20%, rgba(30, 58, 138, 0.03) 0%, transparent 50%),
-		radial-gradient(circle at 80% 80%, rgba(5, 150, 105, 0.03) 0%, transparent 50%);
+    background: none;
 	pointer-events: none;
 	z-index: -1;
     }
