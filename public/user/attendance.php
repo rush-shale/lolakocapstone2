@@ -10,7 +10,7 @@ $user = current_user();
 $message = '';
 
 // Load seniors in my barangay (living only)
-$seniorsStmt = $pdo->prepare("SELECT id, first_name, middle_name, last_name, age FROM seniors WHERE barangay=? AND life_status='living' ORDER BY last_name, first_name");
+$seniorsStmt = $pdo->prepare("SELECT id, first_name, middle_name, last_name, ext_name, barangay, age, sex, date_of_birth, osca_id_no, remarks, health_condition, purok, place_of_birth, cellphone, validation_status, validation_date, category, life_status FROM seniors WHERE barangay=? AND life_status='living' ORDER BY last_name, first_name");
 $seniorsStmt->execute([$user['barangay']]);
 $seniors = $seniorsStmt->fetchAll();
 
@@ -66,18 +66,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 	if (!validate_csrf_token($_POST['csrf'] ?? '')) {
 		$message = 'Invalid session token';
 	} else {
-		$event_id = (int)($_POST['event_id'] ?? 0);
-		$senior_id = (int)($_POST['senior_id'] ?? 0);
-		if ($event_id && $senior_id) {
-			try {
-				$stmt = $pdo->prepare('INSERT INTO attendance (senior_id, event_id) VALUES (?,?)');
-				$stmt->execute([$senior_id, $event_id]);
-				$message = 'Attendance marked successfully!';
-			} catch (Throwable $e) {
-				$message = 'Attendance already marked or error occurred';
+		$op = $_POST['op'] ?? '';
+		if ($op === 'bulk_mark') {
+			$event_id = (int)($_POST['event_id'] ?? 0);
+			$present_ids = isset($_POST['present_ids']) && is_array($_POST['present_ids']) ? array_map('intval', $_POST['present_ids']) : [];
+			if ($event_id && !empty($present_ids)) {
+				$inserted = 0;
+				foreach ($present_ids as $sid) {
+					try {
+						$stmt = $pdo->prepare('INSERT INTO attendance (senior_id, event_id) VALUES (?,?)');
+						$stmt->execute([$sid, $event_id]);
+						$inserted++;
+					} catch (Throwable $e) {
+						// ignore duplicates or errors for individual entries
+					}
+				}
+				$message = $inserted > 0 ? "Attendance saved for $inserted senior(s)." : 'No new attendance saved (possibly already marked).';
+			} else {
+				$message = 'Please select an event and at least one senior';
 			}
 		} else {
-			$message = 'Please select both event and senior';
+			$message = 'Invalid operation';
 		}
 	}
 }
@@ -157,68 +166,92 @@ $csrf = generate_csrf_token();
 			</div>
 			</div>
 
-			<!-- Main Content Grid -->
-			<div class="grid grid-2 animate-fade-in">
-			<!-- Mark Attendance Card -->
-			<div class="card">
-				<div class="card-header">
-					<h2>
-						<i class="fas fa-plus"></i>
-						Mark New Attendance
-					</h2>
-					<p>Record attendance for seniors at events</p>
-				</div>
-				<div class="card-body">
-					<form method="post" class="modern-form">
-						<input type="hidden" name="csrf" value="<?= $csrf ?>">
-						
-						<div class="form-group">
-							<label for="event_id" class="form-label">
-								<i class="fas fa-calendar-alt"></i>
-								Select Event
-							</label>
+			<!-- Seniors Attendance List (Admin-like UI) -->
+			<div class="card animate-fade-in" style="background: #fff; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); border: none; overflow: hidden;">
+				<form method="post">
+					<input type="hidden" name="csrf" value="<?= $csrf ?>">
+					<input type="hidden" name="op" value="bulk_mark">
+					<div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
+						<div>
+							<h2 class="card-title">All Seniors</h2>
+							<p class="card-subtitle">Check attendees, then save for the selected event</p>
+						</div>
+						<div style="display: flex; align-items: center; gap: 1rem;">
+							<input type="text" id="searchInput" placeholder="Search seniors..." style="padding: 0.5rem; width: 250px; border: 1px solid #ccc; border-radius: 4px; font-size: 1rem;">
 							<select name="event_id" id="event_id" class="form-select" required>
-								<option value="">Choose an event...</option>
+								<option value="">Choose event...</option>
 								<?php foreach ($events as $e): ?>
 									<option value="<?= (int)$e['id'] ?>">
 										<?= htmlspecialchars($e['event_date']) ?> - <?= htmlspecialchars($e['title']) ?>
-										<?php if ($e['event_time']): ?>
-											(<?= htmlspecialchars($e['event_time']) ?>)
-										<?php endif; ?>
+										<?php if ($e['event_time']): ?>(<?= htmlspecialchars($e['event_time']) ?>)<?php endif; ?>
 									</option>
 								<?php endforeach; ?>
 							</select>
-							<div class="input-focus-line"></div>
+							<button type="submit" class="button primary"><i class="fas fa-save"></i> Save Attendance</button>
 						</div>
-						
-						<div class="form-group">
-							<label for="senior_id" class="form-label">
-								<i class="fas fa-user"></i>
-								Select Senior
-							</label>
-							<select name="senior_id" id="senior_id" class="form-select" required>
-								<option value="">Choose a senior...</option>
-								<?php foreach ($seniors as $s): ?>
-									<option value="<?= (int)$s['id'] ?>">
-										<?= htmlspecialchars($s['last_name'] . ', ' . $s['first_name']) ?>
-										<?php if ($s['middle_name']): ?>
-											<?= htmlspecialchars(' ' . $s['middle_name']) ?>
-										<?php endif; ?>
-										(<?= $s['age'] ?> years)
-									</option>
-								<?php endforeach; ?>
-							</select>
-							<div class="input-focus-line"></div>
+					</div>
+					<div class="card-body">
+						<div class="table-container">
+							<table class="table">
+								<thead>
+									<tr>
+										<th>Present</th>
+										<th>LAST NAME</th>
+										<th>FIRST NAME</th>
+										<th>MIDDLE NAME</th>
+										<th>EXT</th>
+										<th>AGE</th>
+										<th>SEX</th>
+										<th>BIRTHDATE</th>
+										<th>OSCA ID NO.</th>
+										<th>REMARKS</th>
+										<th>HEALTH CONDITION</th>
+										<th>PUROK</th>
+										<th>PLACE OF BIRTH</th>
+										<th>CELLPHONE #</th>
+									</tr>
+								</thead>
+								<tbody id="seniorsTableBody">
+									<?php if (!empty($seniors)): ?>
+										<?php foreach ($seniors as $senior): ?>
+										<tr>
+											<td><input type="checkbox" name="present_ids[]" value="<?= (int)$senior['id'] ?>" /></td>
+											<td><?= htmlspecialchars($senior['last_name']) ?></td>
+											<td><?= htmlspecialchars($senior['first_name']) ?></td>
+											<td><?= htmlspecialchars($senior['middle_name'] ?: '') ?></td>
+											<td><?= isset($senior['ext_name']) ? htmlspecialchars($senior['ext_name']) : '' ?></td>
+											<td><?= (int)$senior['age'] ?></td>
+											<td>
+												<?php
+												switch ($senior['sex']) {
+													case 'male': echo 'Male'; break;
+													case 'female': echo 'Female'; break;
+													case 'lgbtq': echo 'LGBTQ+'; break;
+													default: echo 'Not specified';
+												}
+												?>
+											</td>
+											<td><?= $senior['date_of_birth'] ? date('M d, Y', strtotime($senior['date_of_birth'])) : '' ?></td>
+											<td><?= htmlspecialchars($senior['osca_id_no'] ?? '') ?></td>
+											<td><?= htmlspecialchars($senior['remarks'] ?? '') ?></td>
+											<td><?= htmlspecialchars($senior['health_condition'] ?? '') ?></td>
+											<td><?= htmlspecialchars($senior['purok'] ?? '') ?></td>
+											<td><?= htmlspecialchars($senior['place_of_birth'] ?: '') ?></td>
+											<td><?= htmlspecialchars($senior['cellphone'] ?? '') ?></td>
+										</tr>
+										<?php endforeach; ?>
+									<?php else: ?>
+									<tr class="no-data">
+										<td colspan="14" style="text-align: center; padding: 2rem; color: var(--gov-text-muted);">
+											No seniors found in your barangay.
+										</td>
+									</tr>
+									<?php endif; ?>
+								</tbody>
+							</table>
 						</div>
-						
-						<div class="form-actions">
-							<button type="submit" class="button primary">
-								<i class="fas fa-check"></i>
-								Mark Present
-							</button>
-						</div>
-					</form>
-				</div>
+					</div>
+				</form>
 			</div>
 
 			<!-- Upcoming Events Card -->
@@ -384,9 +417,21 @@ $csrf = generate_csrf_token();
 
 	<script src="<?= BASE_URL ?>/assets/app.js"></script>
 	<script>
-		// Initialize functionality on page load
-		document.addEventListener('DOMContentLoaded', function() {
-			// Page initialization code can go here
+		// Search filter similar to admin All Seniors
+		document.getElementById('searchInput')?.addEventListener('input', function() {
+			const filter = this.value.toLowerCase();
+			const rows = document.querySelectorAll('#seniorsTableBody tr');
+			rows.forEach(row => {
+				if (row.classList.contains('no-data')) return;
+				const lastName = row.cells[1]?.textContent.toLowerCase() || '';
+				const firstName = row.cells[2]?.textContent.toLowerCase() || '';
+				const middleName = row.cells[3]?.textContent.toLowerCase() || '';
+				if (lastName.includes(filter) || firstName.includes(filter) || middleName.includes(filter)) {
+					row.style.display = '';
+				} else {
+					row.style.display = 'none';
+				}
+			});
 		});
 	</script>
 </body>
