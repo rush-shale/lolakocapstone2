@@ -40,13 +40,6 @@ $current_page = basename($_SERVER['PHP_SELF']);
 		</div>
 		
 		<div class="nav-item">
-			<a href="<?= BASE_URL ?>/user/barangays.php" class="nav-link <?= $current_page === 'barangays.php' ? 'active' : '' ?>">
-				<span class="nav-icon">🏘️</span>
-				<span>Barangays</span>
-			</a>
-		</div>
-		
-		<div class="nav-item">
 			<a href="<?= BASE_URL ?>/user/seniors.php" class="nav-link <?= $current_page === 'seniors.php' ? 'active' : '' ?>">
 				<span class="nav-icon">👥</span>
 				<span>Senior Citizens</span>
