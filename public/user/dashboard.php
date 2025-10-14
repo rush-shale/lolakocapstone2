@@ -37,20 +37,7 @@ $recentPastEvents = $recentPast->fetchAll();
 			<p>SeniorCare Information System - Staff Portal for <?= htmlspecialchars($user['barangay']) ?></p>
 		</div>
 		
-		<div class="stats">
-			<div class="stat success">
-				<h3>📅 My Upcoming Events</h3>
-				<p class="number"><?= count($barangayEvents) ?></p>
-			</div>
-			<div class="stat">
-				<h3>🏛️ OSCA Events</h3>
-				<p class="number"><?= count($adminEvents) ?></p>
-			</div>
-			<div class="stat warning">
-				<h3>📜 My Past Events</h3>
-				<p class="number"><?= count($recentPastEvents) ?></p>
-			</div>
-		</div>
+
 
 		<div class="grid grid-2">
 			<div class="card">
