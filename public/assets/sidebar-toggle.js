@@ -33,12 +33,16 @@ document.addEventListener('DOMContentLoaded', function () {
   });
 
   // Also collapse any expanded submenu when clicking other top-level nav links
+  // This should NOT affect sidebar visibility - only submenu state
   document.querySelectorAll('.sidebar .nav-link').forEach(function (link) {
     if (link.id !== 'seniors-toggle') {
-      link.addEventListener('click', function () {
+      link.addEventListener('click', function (e) {
+        // Only collapse submenus, never affect sidebar visibility
         document.querySelectorAll('.nav-item.has-submenu.expanded').forEach(function (item) {
           item.classList.remove('expanded');
         });
+        // Ensure we don't accidentally trigger sidebar hiding
+        e.stopPropagation();
       });
     }
   });
@@ -63,16 +67,37 @@ document.addEventListener('DOMContentLoaded', function () {
     if (!sidebar) return;
     const collapsed = sidebar.classList.toggle('sidebar-collapsed');
     document.body.classList.toggle('sidebar-hidden', collapsed);
+    
+    // Update burger button position based on sidebar state
+    const burger = document.getElementById('floating-burger');
+    if (burger) {
+      if (collapsed) {
+        burger.style.left = '16px'; // Move to left edge when sidebar is hidden
+      } else {
+        burger.style.left = '300px'; // Move to right edge of sidebar when visible
+      }
+    }
   }
 
   ensureBurger();
 
-  // Default neutral state: hide the sidebar on load
-  (function setDefaultHidden(){
+  // Default state: show the sidebar on load (user can hide it with burger button)
+  (function setDefaultVisible(){
     const sidebar = document.querySelector('.sidebar');
     if (sidebar) {
-      sidebar.classList.add('sidebar-collapsed');
-      document.body.classList.add('sidebar-hidden');
+      sidebar.classList.remove('sidebar-collapsed');
+      document.body.classList.remove('sidebar-hidden');
     }
   })();
+
+  // Prevent any accidental sidebar hiding from other scripts
+  // Only the burger button should control sidebar visibility
+  window.addEventListener('click', function(e) {
+    // If someone tries to hide sidebar through other means, prevent it
+    const sidebar = document.querySelector('.sidebar');
+    if (sidebar && e.target.closest('.sidebar') && !e.target.closest('#floating-burger')) {
+      // Allow normal sidebar interactions (submenu toggles, etc.)
+      return;
+    }
+  });
 });

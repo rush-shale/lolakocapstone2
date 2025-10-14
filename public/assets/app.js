@@ -63,10 +63,12 @@ function initializeSidebarInteractions() {
         });
     });
     
-    // Mobile sidebar toggle
+    // Mobile sidebar toggle (only for mobile-specific behavior)
+    // Note: This should NOT interfere with the main burger button functionality
     const mobileToggle = document.querySelector('.mobile-toggle');
     if (mobileToggle) {
         mobileToggle.addEventListener('click', () => {
+            // Only handle mobile-specific overlay, not main sidebar visibility
             sidebar.classList.toggle('mobile-open');
             toggleSidebarOverlay(sidebar);
         });
@@ -82,12 +84,17 @@ function initializeSidebarInteractions() {
     });
 
     // Submenu toggle for nav items with submenu
+    // Note: This should NOT affect sidebar visibility - only submenu state
     const submenuToggles = sidebar.querySelectorAll('.nav-item.has-submenu > .nav-link');
     submenuToggles.forEach(toggle => {
         toggle.addEventListener('click', (e) => {
-            e.preventDefault();
-            const parentItem = toggle.parentElement;
-            parentItem.classList.toggle('expanded');
+            // Only prevent default if it's the chevron/toggle element, not the main link
+            if (e.target.id === 'seniors-toggle' || e.target.classList.contains('nav-chevron')) {
+                e.preventDefault();
+                const parentItem = toggle.parentElement;
+                parentItem.classList.toggle('expanded');
+            }
+            // For main nav links, allow normal navigation
         });
     });
 }
