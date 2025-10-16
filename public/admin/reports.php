@@ -40,7 +40,7 @@ if ($type === 'attendance') {
 </head>
 <body>
 	<?php include __DIR__ . '/../partials/sidebar_admin.php'; ?>
-	<main class="main-content">
+	<main class="content">
 		<header class="content-header">
 			<h1 class="content-title">Reports & Analytics</h1>
 			<p class="content-subtitle">Generate and download system reports</p>

@@ -35,7 +35,7 @@ $active = $activeStmt->fetchAll();
 </head>
 <body>
 	<?php include __DIR__ . '/../partials/sidebar_user.php'; ?>
-	<main class="main-content">
+	<main class="content">
 		<header class="content-header">
 			<h1 class="content-title">My Barangay Seniors</h1>
 			<p class="content-subtitle">View senior citizens in your barangay</p>

@@ -75,7 +75,7 @@ $transferredThisMonthCount = count($transferredThisMonth);
 <body>
     <?php include '../partials/sidebar_admin.php'; ?>
 
-    <div class="main-content">
+    <main class="content">
         <div class="page-header">
             <div class="header-content">
                 <h1><i class="fas fa-exchange-alt"></i> Transferred Seniors</h1>
@@ -212,7 +212,7 @@ $transferredThisMonthCount = count($transferredThisMonth);
                 <?php endif; ?>
             </div>
         </div>
-    </div>
+    </main>
 
     <script src="../assets/app.js"></script>
 </body>

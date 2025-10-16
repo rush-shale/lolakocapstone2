@@ -106,7 +106,7 @@ $csrf = generate_csrf_token();
 </head>
 <body>
 	<?php include __DIR__ . '/../partials/sidebar_user.php'; ?>
-	<main class="main-content">
+	<main class="content">
 		<header class="content-header">
 			<h1 class="content-title">Attendance Management</h1>
 			<p class="content-subtitle">Mark attendance and track active seniors in <?= htmlspecialchars($user['barangay']) ?></p>

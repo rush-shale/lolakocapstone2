@@ -41,7 +41,7 @@ $events = $events->fetchAll();
 </head>
 <body>
 	<?php include __DIR__ . '/../partials/sidebar_user.php'; ?>
-	<main class="main-content">
+	<main class="content">
 		<header class="content-header">
 			<h1 class="content-title">My Barangay Events</h1>
 			<p class="content-subtitle">Manage events for your barangay</p>

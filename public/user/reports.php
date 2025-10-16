@@ -46,7 +46,7 @@ if ($type === 'attendance') {
 </head>
 <body>
 	<?php include __DIR__ . '/../partials/sidebar_user.php'; ?>
-	<main class="main-content">
+	<main class="content">
 		<header class="content-header">
 			<h1 class="content-title">Reports</h1>
 			<p class="content-subtitle">Generate and download reports for <?= htmlspecialchars($user['barangay']) ?></p>

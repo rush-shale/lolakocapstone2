@@ -58,7 +58,7 @@ $totalReceived = count($receivedSeniors);
 </head>
 <body>
 	<?php include __DIR__ . '/../partials/sidebar_admin.php'; ?>
-	<main class="main-content">
+	<main class="content">
 		<header class="content-header">
 			<h1 class="content-title">Benefits Management</h1>
 			<p class="content-subtitle">Mark seniors as having received their benefits</p>

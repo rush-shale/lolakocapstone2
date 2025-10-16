@@ -29,7 +29,7 @@ $pastEvents = array_filter($events, function($event) {
 </head>
 <body>
 	<?php include __DIR__ . '/../partials/sidebar_user.php'; ?>
-	<main class="main-content">
+	<main class="content">
 		<header class="content-header">
 			<h1 class="content-title">OSCA Events</h1>
 			<p class="content-subtitle">View all events created by the OSCA Head for senior citizens</p>

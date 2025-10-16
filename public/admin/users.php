@@ -84,7 +84,7 @@ if ($action === 'edit' && $id) {
 </head>
 <body>
 	<?php include __DIR__ . '/../partials/sidebar_admin.php'; ?>
-	<main class="main-content">
+	<main class="content">
 		<header class="content-header">
 			<h1 class="content-title">Staff Management</h1>
 			<p class="content-subtitle">Manage barangay staff accounts</p>

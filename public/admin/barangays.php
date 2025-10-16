@@ -89,7 +89,7 @@ $barangays = $pdo->query('SELECT * FROM barangays ORDER BY name ASC')->fetchAll(
 </head>
 <body>
 	<?php include __DIR__ . '/../partials/sidebar_admin.php'; ?>
-	<main class="main-content">
+	<main class="content">
 		<header class="content-header">
 			<h1 class="content-title">Barangays Management</h1>
 			<p class="content-subtitle">Manage barangay information and locations</p>

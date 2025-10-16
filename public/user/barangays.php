@@ -26,7 +26,7 @@ foreach ($stmt as $row) { $byBarangay[$row['barangay']][] = $row; }
 </head>
 <body>
 	<?php include __DIR__ . '/../partials/sidebar_user.php'; ?>
-	<main class="main-content">
+	<main class="content">
 		<header class="content-header">
 			<h1 class="content-title">Barangays & Seniors</h1>
 			<p class="content-subtitle">View seniors organized by barangay location</p>

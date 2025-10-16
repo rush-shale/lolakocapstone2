@@ -27,7 +27,7 @@ $user = current_user();
 <body>
     <?php include __DIR__ . '/../partials/sidebar_admin.php'; ?>
 
-    <main class="main-content">
+	<main class="content">
         <header class="content-header">
             <h1 class="content-title">Local Seniors</h1>
             <p class="content-subtitle">Manage local category senior citizen records</p>
