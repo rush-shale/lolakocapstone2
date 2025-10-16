@@ -9,8 +9,8 @@ $current_page = basename($_SERVER['PHP_SELF']);
 			<div class="sidebar-logo">
 				<img src="<?= BASE_URL ?>/images/dilg.png" alt="DILG Logo" style="height: 40px; width: auto; border-radius: 6px;" onerror="this.onerror=null;this.src='<?= BASE_URL ?>/images/logo.png';">
 			</div>
-			<div class="sidebar-title">SeniorCare Admin</div>
 		</a>
+		<button type="button" id="header-burger" class="sidebar-toggle" aria-label="Toggle menu"></button>
 	</div>
 	
 	<nav class="sidebar-nav">

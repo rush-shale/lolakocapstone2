@@ -537,10 +537,7 @@ a:hover {
     box-shadow: var(--shadow-md);
 }
 
-.sidebar-title {
-    font-size: var(--text-xl);
-    font-weight: var(--font-bold);
-}
+/* Removed textual title next to logo; replaced by hamburger button */
 
 .sidebar-toggle {
     background: none;
@@ -727,9 +724,29 @@ a:hover {
 }
 
 /* Floating burger button */
+/* Header burger icon appearance mirrors three lines */
+#header-burger {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+}
+
+#header-burger::before {
+    content: '☰';
+    font-size: 22px;
+    line-height: 1;
+}
+
+/* When sidebar is hidden, pull content full width */
+.sidebar-hidden .content { margin-left: 0 !important; }
+.sidebar-hidden .content::before { left: 0 !important; }
+.sidebar.sidebar-collapsed { transform: translateX(-100%); }
+/* Floating burger styles (visible while sidebar hidden) */
 .floating-burger {
     position: fixed;
-    left: 300px; /* just outside sidebar when visible */
+    left: 300px;
     top: 16px;
     width: 44px;
     height: 44px;
@@ -764,16 +781,6 @@ a:hover {
 
 .floating-burger span::before { top: -6px; }
 .floating-burger span::after { top: 6px; }
-
-/* When sidebar is hidden, pull content full width */
-.sidebar-hidden .content { margin-left: 0 !important; }
-.sidebar-hidden .content::before { left: 0 !important; }
-.sidebar.sidebar-collapsed { transform: translateX(-100%); }
-.sidebar-hidden .floating-burger { left: 16px; }
-
-@media (max-width: 1024px) {
-    .floating-burger { left: 16px; }
-}
 
 /* Page Header */
 .page-header {

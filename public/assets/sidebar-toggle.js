@@ -47,19 +47,43 @@ document.addEventListener('DOMContentLoaded', function () {
     }
   });
 
-  // Floating burger: hide/show sidebar
-  function ensureBurger() {
-    if (!document.getElementById('floating-burger')) {
-      const btn = document.createElement('button');
-      btn.id = 'floating-burger';
-      btn.className = 'floating-burger';
-      btn.type = 'button';
-      btn.setAttribute('aria-label', 'Toggle sidebar');
-      const bar = document.createElement('span');
-      btn.appendChild(bar);
-      document.body.appendChild(btn);
-      btn.addEventListener('click', toggleSidebarVisibility);
+  // Header burger: hide/show sidebar
+  function wireHeaderBurger() {
+    const headerBurger = document.getElementById('header-burger');
+    if (headerBurger) {
+      if (headerBurger.dataset.wired === 'true') return;
+      headerBurger.dataset.wired = 'true';
+
+      let clickLocked = false;
+      headerBurger.addEventListener('click', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        if (clickLocked) return;
+        clickLocked = true;
+        toggleSidebarVisibility();
+        setTimeout(function(){ clickLocked = false; }, 0);
+      });
     }
+  }
+
+  // Create a floating burger button that appears when sidebar is collapsed
+  function ensureFloatingBurger() {
+    if (document.getElementById('floating-burger')) return;
+    const btn = document.createElement('button');
+    btn.id = 'floating-burger';
+    btn.className = 'floating-burger';
+    btn.type = 'button';
+    btn.setAttribute('aria-label', 'Toggle sidebar');
+    const bar = document.createElement('span');
+    btn.appendChild(bar);
+    document.body.appendChild(btn);
+    btn.addEventListener('click', function(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      toggleSidebarVisibility();
+    });
+    // Hidden by default; will be shown when sidebar collapses
+    btn.style.display = 'none';
   }
 
   function toggleSidebarVisibility() {
@@ -72,14 +96,17 @@ document.addEventListener('DOMContentLoaded', function () {
     const burger = document.getElementById('floating-burger');
     if (burger) {
       if (collapsed) {
-        burger.style.left = '16px'; // Move to left edge when sidebar is hidden
+        burger.style.left = '16px';
+        burger.style.display = 'flex';
       } else {
-        burger.style.left = '300px'; // Move to right edge of sidebar when visible
+        burger.style.left = '300px';
+        burger.style.display = 'none';
       }
     }
   }
 
-  ensureBurger();
+  wireHeaderBurger();
+  ensureFloatingBurger();
 
   // Default state: show the sidebar on load (user can hide it with burger button)
   (function setDefaultVisible(){
@@ -88,16 +115,9 @@ document.addEventListener('DOMContentLoaded', function () {
       sidebar.classList.remove('sidebar-collapsed');
       document.body.classList.remove('sidebar-hidden');
     }
+    const burger = document.getElementById('floating-burger');
+    if (burger) burger.style.display = 'none';
   })();
 
-  // Prevent any accidental sidebar hiding from other scripts
-  // Only the burger button should control sidebar visibility
-  window.addEventListener('click', function(e) {
-    // If someone tries to hide sidebar through other means, prevent it
-    const sidebar = document.querySelector('.sidebar');
-    if (sidebar && e.target.closest('.sidebar') && !e.target.closest('#floating-burger')) {
-      // Allow normal sidebar interactions (submenu toggles, etc.)
-      return;
-    }
-  });
+  // No global click hijacking needed for header burger
 });
