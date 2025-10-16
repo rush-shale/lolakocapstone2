@@ -1190,7 +1190,7 @@ try {
 <body>
 	<?php include __DIR__ . '/../partials/sidebar_admin.php'; ?>
 	
-	<main class="main-content">
+	<main class="content">
 		<header class="content-header">
 			<h1 class="content-title">All Seniors</h1>
 			<p class="content-subtitle">Manage senior citizen records and information</p>
@@ -2329,7 +2329,7 @@ try {
 				modalContent.style.top = '';
 			}
 			// Apply blur to the main content area, not just content-body
-			const mainContent = document.querySelector('main.main-content');
+            const mainContent = document.querySelector('main.content');
 			if (mainContent) {
 				mainContent.style.filter = 'blur(0)'; // Remove blur on open modal to show modal clearly
 			}
@@ -2342,7 +2342,7 @@ try {
 				modal.style.display = 'none';
 				modal.classList.remove('active');
 				document.body.style.overflow = '';
-				const mainContent = document.querySelector('main.main-content');
+                const mainContent = document.querySelector('main.content');
 				if (mainContent) {
 					mainContent.style.filter = ''; // Reset filter on close modal
 				}
