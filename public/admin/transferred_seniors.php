@@ -70,10 +70,10 @@ $transferredThisMonthCount = count($transferredThisMonth);
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Transferred Seniors - OSCA Management System</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <link rel="stylesheet" href="../assets/government-portal.css">
+    <link rel="stylesheet" href="<?= BASE_URL ?>/assets/government-portal.css">
 </head>
 <body>
-    <?php include '../partials/sidebar_admin.php'; ?>
+    <?php include __DIR__ . '/../partials/sidebar_admin.php'; ?>
 
     <main class="content">
         <div class="page-header">
@@ -214,6 +214,6 @@ $transferredThisMonthCount = count($transferredThisMonth);
         </div>
     </main>
 
-    <script src="../assets/app.js"></script>
+    <script src="<?= BASE_URL ?>/assets/app.js"></script>
 </body>
 </html>

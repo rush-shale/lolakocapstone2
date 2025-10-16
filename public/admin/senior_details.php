@@ -198,7 +198,7 @@ $lastEvent = !empty($attendanceHistory) ? $attendanceHistory[0] : null;
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Senior Details - OSCA Management System</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <link rel="stylesheet" href="../assets/government-portal.css">
+    <link rel="stylesheet" href="<?= BASE_URL ?>/assets/government-portal.css">
     <style>
         .senior-profile {
             font-family: 'Inter', sans-serif;
@@ -526,9 +526,9 @@ $lastEvent = !empty($attendanceHistory) ? $attendanceHistory[0] : null;
     </style>
 </head>
 <body>
-    <?php include '../partials/sidebar_admin.php'; ?>
+    <?php include __DIR__ . '/../partials/sidebar_admin.php'; ?>
 
-    <div class="main-content">
+    <main class="content">
         <div class="page-header">
             <div class="header-content">
                 <h1><i class="fas fa-user"></i> Senior Details</h1>
@@ -724,7 +724,7 @@ $lastEvent = !empty($attendanceHistory) ? $attendanceHistory[0] : null;
                 <?php endif; ?>
             </div>
         </div>
-    </div>
+    </main>
     </div>
 
     <!-- Edit Senior Modal -->
@@ -939,7 +939,7 @@ $lastEvent = !empty($attendanceHistory) ? $attendanceHistory[0] : null;
         </div>
     </div>
 
-    <script src="../assets/app.js"></script>
+    <script src="<?= BASE_URL ?>/assets/app.js"></script>
     <script>
         // Global variables
         var currentSeniorId = null;
