@@ -95,66 +95,39 @@ $csrf = generate_csrf_token();
 
 	<script src="<?= BASE_URL ?>/assets/app.js"></script>
 	<script>
-		// Password toggle functionality
+		// Safe password toggle (icon optional)
 		function togglePassword() {
-			const passwordInput = document.getElementById('password');
-			const passwordIcon = document.getElementById('password-icon');
-			
-			if (passwordInput.type === 'password') {
-				passwordInput.type = 'text';
-				passwordIcon.classList.remove('fa-eye');
-				passwordIcon.classList.add('fa-eye-slash');
-			} else {
-				passwordInput.type = 'password';
-				passwordIcon.classList.remove('fa-eye-slash');
-				passwordIcon.classList.add('fa-eye');
+			var input = document.getElementById('password');
+			var icon = document.getElementById('password-icon');
+			if (!input) return;
+			var toText = input.type === 'password';
+			input.type = toText ? 'text' : 'password';
+			if (icon && icon.classList) {
+				icon.classList.toggle('fa-eye', !toText);
+				icon.classList.toggle('fa-eye-slash', toText);
 			}
 		}
 
-		// Form submission with loading state
-		document.querySelector('.auth-form').addEventListener('submit', function(e) {
-			const button = this.querySelector('.auth-button');
-			const buttonText = button.querySelector('.button-text');
-			const buttonLoading = button.querySelector('.button-loading');
-			
-			button.classList.add('loading');
-			buttonText.style.opacity = '0';
-			buttonLoading.style.opacity = '1';
-		});
-
-		// Input focus animations
-		document.querySelectorAll('.form-input').forEach(input => {
-			input.addEventListener('focus', function() {
-				this.parentNode.classList.add('focused');
-			});
-			
-			input.addEventListener('blur', function() {
-				if (!this.value) {
-					this.parentNode.classList.remove('focused');
+		// Form submission loading state (target actual login form)
+		(function(){
+			var form = document.querySelector('.login-form');
+			if (!form) return;
+			form.addEventListener('submit', function(){
+				var btn = form.querySelector('button[type="submit"]');
+				if (btn) {
+					btn.classList.add('loading');
 				}
 			});
-		});
+		})();
 
-		// Floating shapes animation
-		function animateShapes() {
-			const shapes = document.querySelectorAll('.shape');
-			shapes.forEach((shape, index) => {
-				const delay = index * 0.5;
-				const duration = 3 + Math.random() * 2;
-				shape.style.animation = `float ${duration}s ease-in-out infinite`;
-				shape.style.animationDelay = `${delay}s`;
+		// Input focus animations
+		document.querySelectorAll('.form-input').forEach(function(input){
+			input.addEventListener('focus', function(){
+				this.parentNode.classList.add('focused');
 			});
-		}
-
-		// Initialize animations
-		document.addEventListener('DOMContentLoaded', function() {
-			animateShapes();
-			
-			// Add entrance animation to auth card
-			const authCard = document.querySelector('.auth-card');
-			setTimeout(() => {
-				authCard.classList.add('animate-fade-in');
-			}, 100);
+			input.addEventListener('blur', function(){
+				if (!this.value) this.parentNode.classList.remove('focused');
+			});
 		});
 	</script>
 </body>
