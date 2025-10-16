@@ -703,6 +703,18 @@ a:hover {
     text-align: center;
 }
 
+/* Outline SVG icon styling for sidebar icons */
+.nav-icon svg {
+    width: 24px;
+    height: 24px;
+    display: inline-block;
+    stroke: currentColor;
+    fill: none;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
 /* Content Area */
 .content {
     margin-left: 280px;
