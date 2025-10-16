@@ -347,6 +347,13 @@ a:hover {
     font-weight: var(--font-bold);
 }
 
+/* Selection highlight for login inputs */
+.login-form .form-input#email::selection,
+.login-form .form-input#password::selection {
+    background: var(--gov-primary);
+    color: var(--text-white);
+}
+
 /* Form Styles */
 .form-group {
     margin-bottom: var(--space-6);
@@ -1161,39 +1168,51 @@ tr:hover {
 }
 
 @media (max-width: 768px) {
+    /* Keep sidebar fixed on mobile, same behavior as desktop */
     .sidebar {
-        position: static;
-        width: 100%;
-        height: auto;
+        position: fixed;
+        top: 0;
+        left: 0;
+        height: 100vh;
+        width: 240px;
+        transform: translateX(0);
+        z-index: 1000;
+        overflow-y: auto;
+        box-shadow: var(--shadow-lg);
     }
-    
+
+    .sidebar.sidebar-collapsed {
+        transform: translateX(-100%);
+    }
+
     .content {
+        margin-left: 240px;
+        transition: margin-left 0.3s ease;
+    }
+
+    .sidebar.sidebar-collapsed + .content {
         margin-left: 0;
     }
-    
+
     .content::before {
-        display: none;
+        left: 240px;
     }
-    
+
+    /* Layout/grids remain responsive */
     .grid-2,
     .grid-3,
     .grid-4 {
         grid-template-columns: 1fr;
     }
-    
+
     .stats {
         grid-template-columns: repeat(2, 1fr);
     }
-    
-    .login-form-container {
-        padding: var(--space-6);
-    }
-    
-    .login-form-card {
-        padding: var(--space-8);
-    }
 
-    /* Attendance page specific responsiveness */
+    .login-form-container { padding: var(--space-6); }
+    .login-form-card { padding: var(--space-8); }
+
+    /* Attendance cards */
     .active-seniors-grid {
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
@@ -1211,129 +1230,28 @@ tr:hover {
         transition: box-shadow var(--transition-fast);
     }
 
-    .active-senior-card:hover {
-        box-shadow: var(--shadow-lg);
-    }
-
-    .senior-avatar {
-        width: 60px;
-        height: 60px;
-        font-size: var(--text-3xl);
-        margin-bottom: var(--space-3);
-    }
-
-    .senior-info h4 {
-        font-size: var(--text-lg);
-        margin-bottom: var(--space-1);
-        text-align: center;
-    }
-
-    .senior-middle,
-    .senior-age {
-        font-size: var(--text-sm);
-        color: var(--text-muted);
-        text-align: center;
-    }
-
-    .attendance-stats {
-        display: flex;
-        justify-content: space-around;
-        width: 100%;
-        margin-top: var(--space-3);
-    }
-
-    .attendance-count {
-        text-align: center;
-    }
-
-    .count-number {
-        font-weight: var(--font-bold);
-        font-size: var(--text-xl);
-        color: var(--gov-primary);
-    }
-
-    .count-label {
-        font-size: var(--text-xs);
-        color: var(--text-muted);
-    }
-
-    .last-attendance {
-        display: flex;
-        align-items: center;
-        gap: var(--space-1);
-        font-size: var(--text-xs);
-        color: var(--text-muted);
-    }
-
-    .award-badge {
-        margin-top: var(--space-3);
-        font-size: var(--text-2xl);
-        color: var(--gov-secondary);
-    }
-
-    .event-item {
-        display: flex;
-        gap: var(--space-4);
-        padding: var(--space-3);
-        border-radius: var(--radius-lg);
-        background: var(--bg-primary);
-        box-shadow: var(--shadow-md);
-        transition: box-shadow var(--transition-fast);
-        margin-bottom: var(--space-4);
-    }
-
-    .event-item:hover {
-        box-shadow: var(--shadow-lg);
-    }
-
-    .event-date {
-        flex-shrink: 0;
-        text-align: center;
-        background: var(--gov-primary);
-        color: var(--text-white);
-        border-radius: var(--radius-lg);
-        padding: var(--space-2) var(--space-3);
-        width: 60px;
-    }
-
-    .date-day {
-        font-size: var(--text-2xl);
-        font-weight: var(--font-extrabold);
-        line-height: 1;
-    }
-
-    .date-month {
-        font-size: var(--text-sm);
-        text-transform: uppercase;
-        letter-spacing: 0.1em;
-    }
-
-    .event-details h4 {
-        margin: 0 0 var(--space-1) 0;
-        font-size: var(--text-lg);
-        color: var(--text-primary);
-    }
-
-    .event-details p {
-        margin: 0;
-        font-size: var(--text-sm);
-        color: var(--text-muted);
-    }
+    .active-senior-card:hover { box-shadow: var(--shadow-lg); }
+    .senior-avatar { width: 60px; height: 60px; font-size: var(--text-3xl); margin-bottom: var(--space-3); }
+    .senior-info h4 { font-size: var(--text-lg); margin-bottom: var(--space-1); text-align: center; }
+    .senior-middle, .senior-age { font-size: var(--text-sm); color: var(--text-muted); text-align: center; }
+    .attendance-stats { display: flex; justify-content: space-around; width: 100%; margin-top: var(--space-3); }
+    .attendance-count { text-align: center; }
+    .count-number { font-weight: var(--font-bold); font-size: var(--text-xl); color: var(--gov-primary); }
+    .count-label { font-size: var(--text-xs); color: var(--text-muted); }
+    .last-attendance { display: flex; align-items: center; gap: var(--space-1); font-size: var(--text-xs); color: var(--text-muted); }
+    .award-badge { margin-top: var(--space-3); font-size: var(--text-2xl); color: var(--gov-secondary); }
+    .event-item { display: flex; gap: var(--space-4); padding: var(--space-3); border-radius: var(--radius-lg); background: var(--bg-primary); box-shadow: var(--shadow-md); transition: box-shadow var(--transition-fast); margin-bottom: var(--space-4); }
+    .event-item:hover { box-shadow: var(--shadow-lg); }
+    .event-date { flex-shrink: 0; text-align: center; background: var(--gov-primary); color: var(--text-white); border-radius: var(--radius-lg); padding: var(--space-2) var(--space-3); width: 60px; }
+    .date-day { font-size: var(--text-2xl); font-weight: var(--font-extrabold); line-height: 1; }
+    .date-month { font-size: var(--text-sm); text-transform: uppercase; letter-spacing: 0.1em; }
+    .event-details h4 { margin: 0 0 var(--space-1) 0; font-size: var(--text-lg); color: var(--text-primary); }
+    .event-details p { margin: 0; font-size: var(--text-sm); color: var(--text-muted); }
 
     /* Table responsiveness */
-    .table-container {
-        overflow-x: auto;
-    }
-
-    table {
-        width: 100%;
-        border-collapse: collapse;
-        min-width: 600px;
-    }
-
-    th, td {
-        white-space: nowrap;
-    }
+    .table-container { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; min-width: 600px; }
+    th, td { white-space: nowrap; }
 }
 
 @media (max-width: 480px) {
