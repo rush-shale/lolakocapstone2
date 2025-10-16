@@ -47,6 +47,21 @@ document.addEventListener('DOMContentLoaded', function () {
     }
   });
 
+  // Highlight active nav based on current page
+  (function setActiveNav(){
+    const page = (window.location.pathname.split('/').pop() || '').toLowerCase();
+    document.querySelectorAll('.sidebar .nav-link').forEach(function (link) {
+      try {
+        const href = (link.getAttribute('href') || '').split('/').pop().toLowerCase();
+        if (href && href === page) {
+          link.classList.add('active');
+        } else {
+          link.classList.remove('active');
+        }
+      } catch (_) {}
+    });
+  })();
+
   // Header burger: hide/show sidebar
   function wireHeaderBurger() {
     const headerBurger = document.getElementById('header-burger');
