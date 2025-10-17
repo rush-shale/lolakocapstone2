@@ -46,8 +46,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 				} catch (Exception $e) {
 					echo json_encode(['success' => false, 'message' => $e->getMessage()]);
 					exit;
-				}
-			}
+    }
+}
 			echo json_encode(['success' => false, 'message' => 'Invalid payload']);
 			exit;
 		}
@@ -56,15 +56,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 $csrf = generate_csrf_token();
-
-// Get seniors who haven't received benefits yet
-$pendingSeniors = $pdo->query("SELECT * FROM seniors WHERE life_status='living' AND benefits_received=0 ORDER BY last_name, first_name")->fetchAll();
-
-// Get seniors who have received benefits
-$receivedSeniors = $pdo->query("SELECT * FROM seniors WHERE life_status='living' AND benefits_received=1 ORDER BY last_name, first_name")->fetchAll();
-
-$totalPending = count($pendingSeniors);
-$totalReceived = count($receivedSeniors);
 
 ?>
 <!doctype html>
@@ -136,14 +127,11 @@ $totalReceived = count($receivedSeniors);
                                     <td><?= htmlspecialchars($row['barangay'] ?? '') ?></td>
                                     <td><?= htmlspecialchars($row['category'] === 'local' ? 'Local' : 'National') ?></td>
                                     <?php
-                                        // Ensure table exists before reading (avoids first-load errors)
-                                        try { $pdo->exec("CREATE TABLE IF NOT EXISTS benefit_records (id INT AUTO_INCREMENT PRIMARY KEY, senior_id INT NOT NULL, benefit_type VARCHAR(64) NOT NULL, received TINYINT(1) NOT NULL DEFAULT 0, remarks VARCHAR(255) NULL, updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP, UNIQUE KEY uniq_senior_type (senior_id, benefit_type), INDEX idx_benefit_type (benefit_type), CONSTRAINT fk_benefit_records_senior FOREIGN KEY (senior_id) REFERENCES seniors(id) ON DELETE CASCADE) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci"); } catch (Exception $ignore) {}
                                         $types = ['sp_q1','sp_q2','sp_q3','sp_q4','octogenarian','nonagenarian','centenarian','financial_asst','burial_asst'];
-                                        // Preload current states
-                                        $stmt = $pdo->prepare('SELECT benefit_type, received, remarks FROM benefit_records WHERE senior_id=?');
-                                        $stmt->execute([(int)$row['id']]);
+                                        $sid = (int)$row['id'];
                                         $current = [];
-                                        foreach ($stmt->fetchAll() as $r) { $current[$r['benefit_type']] = ['received' => (int)$r['received'], 'remarks' => (string)($r['remarks'] ?? '')]; }
+                                        // Use preloaded map if available, else empty state
+                                        if (isset($benefitMap[$sid])) { $current = $benefitMap[$sid]; }
                                     ?>
                                     <?php foreach ($types as $t): $on = !empty($current[$t]['received']); ?>
                                         <td>
