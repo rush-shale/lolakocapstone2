@@ -770,6 +770,10 @@ a:hover {
 .sidebar.sidebar-collapsed { transform: translateX(-100%); }
 /* When the sidebar element is immediately followed by .content, expand content */
 .sidebar.sidebar-collapsed + .content { margin-left: 0 !important; }
+/* Ensure main content flexes to available width */
+.content { width: calc(100% - 280px); }
+.sidebar.sidebar-collapsed + .content,
+.sidebar-hidden .content { width: 100% !important; }
 /* Floating burger styles (visible while sidebar hidden) */
 .floating-burger {
     position: fixed;
@@ -1238,10 +1242,12 @@ tr:hover {
     .content {
         margin-left: 220px;
         transition: margin-left 0.3s ease;
+        width: calc(100% - 220px);
     }
     
     .sidebar.sidebar-collapsed + .content {
         margin-left: 0;
+        width: 100%;
     }
     
     .content::before {
@@ -1285,10 +1291,12 @@ tr:hover {
     .content {
         margin-left: 0;
         transition: margin-left 0.3s ease;
+        width: 100%;
     }
 
     .sidebar.sidebar-collapsed + .content {
         margin-left: 0;
+        width: 100%;
     }
 
     .content::before {
