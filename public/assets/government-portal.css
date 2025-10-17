@@ -121,6 +121,9 @@
     --z-modal: 1050;
     --z-popover: 1060;
     --z-tooltip: 1070;
+    
+    /* Dashboard limited scroll spacer (controls how far you can scroll) */
+    --dash-extra-scroll: 140px;
 }
 
 /* Reset and Base Styles */
@@ -1321,8 +1324,10 @@ tr:hover {
     grid-auto-rows: 120px; /* base row height for bento */
     gap: var(--space-3) !important;
 	padding: var(--space-6) var(--space-6) var(--space-4) !important;
-	height: calc(100vh - 0px) !important;
-	overflow: hidden !important;
+	/* Limit scroll to just reveal bottom of calendar */
+	max-height: calc(100vh - 0px + var(--dash-extra-scroll)) !important;
+	overflow-y: auto !important;
+	overflow-x: hidden !important;
 	max-width: 1200px;
 	margin: 0 auto;
 }
@@ -1368,6 +1373,7 @@ tr:hover {
 	flex-direction: column;
 	overflow: hidden;
     margin-top: 0px; /* nudge down slightly */
+    margin-bottom: var(--space-6); /* add breathing room below upcoming vs calendar */
 }
 
 .dash-upcoming .card-body {
@@ -1405,6 +1411,73 @@ tr:hover {
 .dash-calendar .card-body {
 	padding: var(--space-4);
 	overflow: auto;
+}
+
+/* Responsive Enhancements */
+
+/* Fluid typography scale for better readability across DPIs */
+html { font-size: clamp(14px, 1.5vw + 8px, 16px); }
+
+/* Ensure media scales within containers */
+img, video, canvas { max-width: 100%; height: auto; }
+
+/* Make charts flexible when wrapped in .chart-wrap */
+.chart-wrap { position: relative; width: 100%; height: 100%; }
+canvas { display: block; width: 100% !important; height: auto !important; }
+
+/* Responsive containers */
+.container, .content { width: 100%; max-width: 1400px; margin: 0 auto; }
+
+/* Dashboard grid responsive overrides */
+@media (max-width: 1024px) {
+	.content .dashboard-grid {
+		grid-template-columns: repeat(8, 1fr) !important;
+		grid-auto-rows: 120px;
+		max-height: calc(100vh - 0px + var(--dash-extra-scroll));
+		overflow-y: auto;
+		max-width: 100%;
+		padding: var(--space-4) var(--space-4) var(--space-3) !important;
+	}
+
+	.content .dashboard-grid .dash-graph { grid-column: 1 / span 8 !important; }
+	.content .dashboard-grid .dash-local { grid-column: 1 / span 4 !important; grid-row: auto !important; }
+	.content .dashboard-grid .dash-national { grid-column: 5 / span 4 !important; grid-row: auto !important; }
+	.content .dashboard-grid .dash-upcoming { grid-column: 1 / span 8 !important; grid-row: auto !important; margin-top: 0; margin-bottom: var(--space-5); }
+	.content .dashboard-grid .dash-calendar { grid-column: 1 / span 8 !important; grid-row: auto !important; margin-top: var(--space-4); }
+}
+
+@media (max-width: 768px) {
+	/* Stack dashboard widgets */
+	.content .dashboard-grid {
+		grid-template-columns: repeat(4, 1fr) !important;
+		grid-auto-rows: auto;
+		gap: var(--space-3) !important;
+		padding: var(--space-4) var(--space-3) var(--space-3) !important;
+		max-height: none;
+		overflow: visible !important; /* full page scroll on small screens */
+	}
+
+	.content .dashboard-grid .dash-graph { grid-column: 1 / span 4 !important; grid-row: auto !important; min-height: 260px; }
+	.content .dashboard-grid .dash-local { grid-column: 1 / span 4 !important; }
+	.content .dashboard-grid .dash-national { grid-column: 1 / span 4 !important; }
+	.content .dashboard-grid .dash-upcoming { grid-column: 1 / span 4 !important; margin-bottom: var(--space-4); }
+	.content .dashboard-grid .dash-calendar { grid-column: 1 / span 4 !important; margin-top: 0; }
+
+	/* Improve table handling on small screens */
+	.table-container { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+	table { min-width: 640px; }
+
+	/* Tighten paddings for cards */
+	.card-body { padding: var(--space-4); }
+}
+
+@media (max-width: 480px) {
+	/* Slightly larger body text for readability */
+	html { font-size: clamp(15px, 3.2vw + 6px, 16px); }
+
+	/* Reduce heading sizes */
+	.page-header h1 { font-size: var(--text-2xl); }
+	.card .card-title, .card h2 { font-size: 1.05rem; }
 }
 
 .dash-calendar .card-header {
