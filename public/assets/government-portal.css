@@ -856,6 +856,19 @@ a:hover {
 .table thead th { padding: 0.75rem 1rem; }
 .table tbody td { padding: 0.75rem 1rem; }
 
+/* Benefit management wide table */
+.benefits-wide { min-width: 1400px; table-layout: auto; }
+.benefits-wide thead tr:first-child th { text-align: center; border-bottom: 2px solid var(--border-light); }
+.benefits-wide th:nth-child(1) { min-width: 120px; }
+.benefits-wide th:nth-child(2) { min-width: 200px; }
+.benefits-wide th:nth-child(3) { min-width: 80px; text-align: center; }
+.benefits-wide th:nth-child(4) { min-width: 100px; text-align: center; }
+.benefits-wide th:nth-child(5) { min-width: 140px; }
+.benefits-wide th:nth-child(6) { min-width: 140px; }
+.benefits-wide td { vertical-align: middle; }
+.benefit-mark { width: 10px; height: 10px; border-radius: 2px; background: #e5e7eb; display: inline-block; }
+.benefit-mark.on { background: #10b981; }
+
 .page-header::before {
     content: '';
     position: absolute;

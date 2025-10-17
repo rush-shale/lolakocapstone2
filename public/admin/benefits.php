@@ -9,30 +9,49 @@ start_app_session();
 
 $message = '';
 
+// Ensure benefit_records table exists for per-period/benefit tracking
+try {
+	$pdo->exec("CREATE TABLE IF NOT EXISTS benefit_records (
+		id INT AUTO_INCREMENT PRIMARY KEY,
+		senior_id INT NOT NULL,
+		benefit_type VARCHAR(64) NOT NULL,
+		received TINYINT(1) NOT NULL DEFAULT 0,
+		remarks VARCHAR(255) NULL,
+		updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+		UNIQUE KEY uniq_senior_type (senior_id, benefit_type),
+		CONSTRAINT fk_benefit_records_senior FOREIGN KEY (senior_id) REFERENCES seniors(id) ON DELETE CASCADE
+	) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci);");
+} catch (Exception $e) {
+	// swallow - page should still load; log for debugging
+	error_log('Failed ensuring benefit_records table: ' . $e->getMessage());
+}
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 	if (!validate_csrf_token($_POST['csrf'] ?? '')) {
 		$message = 'Invalid session token';
 	} else {
 		$op = $_POST['op'] ?? '';
-		if ($op === 'mark_benefits') {
-			$id = (int)($_POST['id'] ?? 0);
-			$benefits_status = isset($_POST['benefits_received']) ? 1 : 0;
-			if ($id) {
-				$stmt = $pdo->prepare('UPDATE seniors SET benefits_received=? WHERE id=?');
-				$stmt->execute([$benefits_status, $id]);
-				$message = 'Benefits status updated successfully';
+		if ($op === 'toggle_benefit') {
+			$seniorId = (int)($_POST['senior_id'] ?? 0);
+			$type = trim($_POST['benefit_type'] ?? '');
+			$received = (int)($_POST['received'] ?? 0) ? 1 : 0;
+			$remarks = trim($_POST['remarks'] ?? '');
+			if ($seniorId && $type !== '') {
+				try {
+					$pdo = get_db_connection();
+					$stmt = $pdo->prepare('INSERT INTO benefit_records (senior_id, benefit_type, received, remarks) VALUES (?, ?, ?, ?) ON DUPLICATE KEY UPDATE received=VALUES(received), remarks=VALUES(remarks)');
+					$stmt->execute([$seniorId, $type, $received, $remarks !== '' ? $remarks : null]);
+					echo json_encode(['success' => true]);
+					exit;
+				} catch (Exception $e) {
+					echo json_encode(['success' => false, 'message' => $e->getMessage()]);
+					exit;
+				}
 			}
+			echo json_encode(['success' => false, 'message' => 'Invalid payload']);
+			exit;
 		}
-		if ($op === 'bulk_mark') {
-			$senior_ids = $_POST['senior_ids'] ?? [];
-			$benefits_status = isset($_POST['bulk_benefits']) ? 1 : 0;
-			if (!empty($senior_ids)) {
-				$placeholders = str_repeat('?,', count($senior_ids) - 1) . '?';
-				$stmt = $pdo->prepare("UPDATE seniors SET benefits_received=? WHERE id IN ($placeholders)");
-				$stmt->execute(array_merge([$benefits_status], $senior_ids));
-				$message = 'Bulk benefits status updated successfully';
-			}
-		}
+        // Old mark_benefits/bulk_mark logic removed in favor of per-benefit toggles
 	}
 }
 
@@ -65,213 +84,84 @@ $totalReceived = count($receivedSeniors);
 		</header>
 		
 		<div class="content-body">
-			<?php if ($message): ?>
-			<div class="alert alert-success animate-fade-in">
-				<div class="alert-icon">
-					<i class="fas fa-check-circle"></i>
-				</div>
-				<div class="alert-content">
-					<strong>Success!</strong>
-					<p><?= htmlspecialchars($message) ?></p>
-				</div>
-			</div>
-			<?php endif; ?>
-		
-			<div class="stats animate-fade-in">
-				<div class="stat warning">
-					<div class="stat-icon">
-						<i class="fas fa-clock"></i>
-					</div>
-					<div class="stat-content">
-						<h3>Pending Benefits</h3>
-						<p class="number"><?= $totalPending ?></p>
-					</div>
-				</div>
-				<div class="stat success">
-					<div class="stat-icon">
-						<i class="fas fa-check-circle"></i>
-					</div>
-					<div class="stat-content">
-						<h3>Benefits Received</h3>
-						<p class="number"><?= $totalReceived ?></p>
-					</div>
-				</div>
-				<div class="stat">
-					<div class="stat-icon">
-						<i class="fas fa-users"></i>
-					</div>
-					<div class="stat-content">
-						<h3>Total Living</h3>
-						<p class="number"><?= $totalPending + $totalReceived ?></p>
-					</div>
-				</div>
-			</div>
-
-			<div class="grid grid-2">
-				<div class="card">
-					<div class="card-header">
-						<h2 class="card-title">
-							<i class="fas fa-clock"></i>
-							Seniors Pending Benefits
-						</h2>
-						<p class="card-subtitle">Mark these seniors as having received their benefits</p>
-					</div>
-				<form method="post" id="bulk-form">
-					<input type="hidden" name="csrf" value="<?= $csrf ?>">
-					<input type="hidden" name="op" value="bulk_mark">
-					<input type="hidden" name="bulk_benefits" value="1">
-					
-					<div class="form-actions">
-						<button type="submit" class="button success" onclick="return confirm('Mark all selected seniors as having received benefits?')">
-							<i class="fas fa-check-double"></i>
-							Mark All Selected as Received
-						</button>
-					</div>
-					
-					<div class="table-container">
-						<table>
-							<thead>
-								<tr>
-									<th><input type="checkbox" id="select-all-pending" onchange="toggleAllPending(this)"></th>
-									<th>Name</th>
-									<th>Age</th>
-									<th>Barangay</th>
-									<th>Category</th>
-									<th>Action</th>
-								</tr>
-							</thead>
-							<tbody>
-								<?php foreach ($pendingSeniors as $s): ?>
-									<tr>
-										<td>
-											<input type="checkbox" name="senior_ids[]" value="<?= (int)$s['id'] ?>" class="pending-checkbox">
-										</td>
-										<td>
-											<div class="senior-info">
-												<div class="senior-avatar">
-													<i class="fas fa-user"></i>
-												</div>
-												<div class="senior-details">
-													<span class="senior-name"><?= htmlspecialchars($s['last_name'] . ', ' . $s['first_name']) ?></span>
-													<?php if ($s['middle_name']): ?>
-														<span class="senior-middle"><?= htmlspecialchars($s['middle_name']) ?></span>
-													<?php endif; ?>
-												</div>
-											</div>
-										</td>
-										<td><?= (int)$s['age'] ?></td>
-										<td><?= htmlspecialchars($s['barangay']) ?></td>
-										<td>
-											<span class="badge <?= $s['category'] === 'local' ? 'badge-primary' : 'badge-warning' ?>">
-												<?= $s['category'] === 'local' ? 'Local' : 'National' ?>
-											</span>
-										</td>
-										<td>
-											<form method="post" style="display:inline">
-												<input type="hidden" name="csrf" value="<?= $csrf ?>">
-												<input type="hidden" name="op" value="mark_benefits">
-												<input type="hidden" name="id" value="<?= (int)$s['id'] ?>">
-												<input type="hidden" name="benefits_received" value="1">
-												<button type="submit" class="button small success">
-													<i class="fas fa-check"></i>
-													Mark Received
-												</button>
-											</form>
-										</td>
-									</tr>
-								<?php endforeach; ?>
-								<?php if (empty($pendingSeniors)): ?>
-									<tr>
-										<td colspan="6">
-											<div class="empty-state">
-												<div class="empty-icon">
-													<i class="fas fa-check-circle"></i>
-												</div>
-												<h3>All Benefits Distributed!</h3>
-												<p>All seniors have received their benefits.</p>
-											</div>
-										</td>
-									</tr>
-								<?php endif; ?>
-							</tbody>
-						</table>
-					</div>
-				</form>
-			</div>
-
-				<div class="card">
-					<div class="card-header">
-						<h2 class="card-title">
-							<i class="fas fa-check-circle"></i>
-							Seniors Who Received Benefits
-						</h2>
-						<p class="card-subtitle">Seniors who have already received their benefits</p>
-					</div>
-				<div class="table-container">
-					<table>
-						<thead>
-							<tr>
-								<th>Name</th>
-								<th>Age</th>
-								<th>Barangay</th>
-								<th>Category</th>
-								<th>Action</th>
-							</tr>
-						</thead>
-						<tbody>
-							<?php foreach ($receivedSeniors as $s): ?>
-								<tr>
-									<td>
-										<div class="senior-info">
-											<div class="senior-avatar">
-												<i class="fas fa-user"></i>
-											</div>
-											<div class="senior-details">
-												<span class="senior-name"><?= htmlspecialchars($s['last_name'] . ', ' . $s['first_name']) ?></span>
-												<?php if ($s['middle_name']): ?>
-													<span class="senior-middle"><?= htmlspecialchars($s['middle_name']) ?></span>
-												<?php endif; ?>
-											</div>
-										</div>
-									</td>
-									<td><?= (int)$s['age'] ?></td>
-									<td><?= htmlspecialchars($s['barangay']) ?></td>
-									<td>
-										<span class="badge <?= $s['category'] === 'local' ? 'badge-primary' : 'badge-warning' ?>">
-											<?= $s['category'] === 'local' ? 'Local' : 'National' ?>
-										</span>
-									</td>
-									<td>
-										<form method="post" style="display:inline">
-											<input type="hidden" name="csrf" value="<?= $csrf ?>">
-											<input type="hidden" name="op" value="mark_benefits">
-											<input type="hidden" name="id" value="<?= (int)$s['id'] ?>">
-											<button type="submit" class="button small warning">
-												<i class="fas fa-clock"></i>
-												Mark Pending
-											</button>
-										</form>
-									</td>
-								</tr>
-							<?php endforeach; ?>
-							<?php if (empty($receivedSeniors)): ?>
-								<tr>
-									<td colspan="5">
-										<div class="empty-state">
-											<div class="empty-icon">
-												<i class="fas fa-gift"></i>
-											</div>
-											<h3>No Benefits Distributed Yet</h3>
-											<p>No seniors have received benefits yet.</p>
-										</div>
-									</td>
-								</tr>
-							<?php endif; ?>
-						</tbody>
-					</table>
-				</div>
-			</div>
-			</div>
+            <!-- New Responsive Benefit Management Table -->
+            <div class="card" style="margin-bottom: 1.25rem;">
+                <div class="card-header">
+                    <h2 class="card-title">Benefit Management</h2>
+                    <p class="card-subtitle">Mark seniors as having received their benefits</p>
+                </div>
+                <div class="card-body" style="padding: 0;">
+                    <div class="table-container table-scroll">
+                        <table class="table benefits-wide">
+                            <thead>
+                                <tr>
+                                    <th>ID Number</th>
+                                    <th>Name</th>
+                                    <th>Age</th>
+                                    <th>Gender</th>
+                                    <th>Barangay</th>
+                                    <th>Category</th>
+                                    <th colspan="4" style="text-align:center;">Social Pension</th>
+                                    <th colspan="5" style="text-align:center;">Other Benefits</th>
+                                </tr>
+                                <tr>
+                                    <th></th>
+                                    <th></th>
+                                    <th></th>
+                                    <th></th>
+                                    <th></th>
+                                    <th>(Local/National)</th>
+                                    <th>Jan–Mar</th>
+                                    <th>Apr–Jun</th>
+                                    <th>Jul–Sep</th>
+                                    <th>Oct–Dec</th>
+                                    <th>Octogenarian</th>
+                                    <th>Nonagenarian</th>
+                                    <th>Centenarian</th>
+                                    <th>Financial Asst.</th>
+                                    <th>Burial Asst.</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <?php
+                                $rows = $pdo->query("SELECT id, osca_id_no, first_name, middle_name, last_name, sex AS gender, age, barangay, category FROM seniors WHERE life_status='living' ORDER BY barangay, last_name, first_name")->fetchAll();
+                                foreach ($rows as $row):
+                                    $name = trim(($row['last_name'] ?: '') . ', ' . ($row['first_name'] ?: '') . ' ' . ($row['middle_name'] ?: ''));
+                                ?>
+                                <tr>
+                                    <td><?= htmlspecialchars($row['osca_id_no'] ?? '') ?></td>
+                                    <td><?= htmlspecialchars($name) ?></td>
+                                    <td><?= (int)($row['age'] ?? 0) ?></td>
+                                    <td><?= htmlspecialchars($row['gender'] === 'male' ? 'Male' : ($row['gender'] === 'female' ? 'Female' : '')) ?></td>
+                                    <td><?= htmlspecialchars($row['barangay'] ?? '') ?></td>
+                                    <td><?= htmlspecialchars($row['category'] === 'local' ? 'Local' : 'National') ?></td>
+                                    <?php
+                                        // Ensure table exists before reading (avoids first-load errors)
+                                        try { $pdo->exec("CREATE TABLE IF NOT EXISTS benefit_records (id INT AUTO_INCREMENT PRIMARY KEY, senior_id INT NOT NULL, benefit_type VARCHAR(64) NOT NULL, received TINYINT(1) NOT NULL DEFAULT 0, remarks VARCHAR(255) NULL, updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP, UNIQUE KEY uniq_senior_type (senior_id, benefit_type), INDEX idx_benefit_type (benefit_type), CONSTRAINT fk_benefit_records_senior FOREIGN KEY (senior_id) REFERENCES seniors(id) ON DELETE CASCADE) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci"); } catch (Exception $ignore) {}
+                                        $types = ['sp_q1','sp_q2','sp_q3','sp_q4','octogenarian','nonagenarian','centenarian','financial_asst','burial_asst'];
+                                        // Preload current states
+                                        $stmt = $pdo->prepare('SELECT benefit_type, received, remarks FROM benefit_records WHERE senior_id=?');
+                                        $stmt->execute([(int)$row['id']]);
+                                        $current = [];
+                                        foreach ($stmt->fetchAll() as $r) { $current[$r['benefit_type']] = ['received' => (int)$r['received'], 'remarks' => (string)($r['remarks'] ?? '')]; }
+                                    ?>
+                                    <?php foreach ($types as $t): $on = !empty($current[$t]['received']); ?>
+                                        <td>
+                                            <label style="display:flex; align-items:center; gap:.35rem;">
+                                                <input type="checkbox" class="benefit-toggle" data-senior-id="<?= (int)$row['id'] ?>" data-type="<?= $t ?>" <?= $on ? 'checked' : '' ?>>
+                                                <span class="benefit-mark <?= $on ? 'on' : '' ?>"></span>
+                                            </label>
+                                        </td>
+                                    <?php endforeach; ?>
+                                </tr>
+                                <?php endforeach; ?>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            <!-- Old summary cards and lists removed -->
+            </div>
 		</div>
 	</main>
 	
@@ -294,5 +184,38 @@ $totalReceived = count($receivedSeniors);
 		});
 	</script>
 	<script src="<?= BASE_URL ?>/assets/app.js"></script>
+<script>
+// Auto-save benefit toggles
+document.addEventListener('change', function(e){
+	const el = e.target;
+	if (!el.classList || !el.classList.contains('benefit-toggle')) return;
+	const seniorId = el.getAttribute('data-senior-id');
+	const type = el.getAttribute('data-type');
+	const received = el.checked ? 1 : 0;
+	const mark = el.parentElement.querySelector('.benefit-mark');
+	if (mark) { mark.classList.toggle('on', !!received); }
+	fetch('', {
+		method: 'POST',
+		headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+		body: new URLSearchParams({
+			op: 'toggle_benefit',
+			senior_id: seniorId,
+			benefit_type: type,
+			received: received,
+			csrf: '<?= $csrf ?>'
+		}).toString()
+	}).then(r => r.json()).then(resp => {
+		if (!resp || !resp.success) {
+			if (mark) { mark.classList.toggle('on', !received); }
+			el.checked = !received;
+			alert('Failed to save. Please try again.');
+		}
+	}).catch(()=>{
+		if (mark) { mark.classList.toggle('on', !received); }
+		el.checked = !received;
+		alert('Network error. Please try again.');
+	});
+});
+</script>
 </body>
 </html>
