@@ -1785,7 +1785,7 @@ try {
 
 	<!-- Add Senior Modal -->
 	<div class="modal-overlay" id="addSeniorModal" style="display:none;">
-		<div class="modal" style="width: 600px; max-width: 95%; animation: zoomIn 0.3s forwards;">
+		<div class="modal" style="width: 1000px; max-width: 95%; max-height: 95vh; overflow-y: auto; animation: zoomIn 0.3s forwards;">
 			<div class="modal-header">
 				<h2 class="modal-title">Add Senior</h2>
 				<button class="modal-close" onclick="closeAddSeniorModal()" aria-label="Close add senior form">&times;</button>
