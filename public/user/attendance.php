@@ -126,45 +126,6 @@ $csrf = generate_csrf_token();
 			</div>
 			<?php endif; ?>
 
-			<!-- Statistics Cards -->
-			<div class="stats animate-fade-in">
-			<div class="stat success">
-				<div class="stat-icon">
-					<i class="fas fa-users"></i>
-				</div>
-				<div class="stat-content">
-					<h3>Total Seniors</h3>
-					<p class="number"><?= count($seniors) ?></p>
-				</div>
-			</div>
-			<div class="stat info">
-				<div class="stat-icon">
-					<i class="fas fa-star"></i>
-				</div>
-				<div class="stat-content">
-					<h3>Active Seniors</h3>
-					<p class="number"><?= count($activeSeniors) ?></p>
-				</div>
-			</div>
-			<div class="stat">
-				<div class="stat-icon">
-					<i class="fas fa-calendar"></i>
-				</div>
-				<div class="stat-content">
-					<h3>Upcoming Events</h3>
-					<p class="number"><?= count($events) ?></p>
-				</div>
-			</div>
-			<div class="stat warning">
-				<div class="stat-icon">
-					<i class="fas fa-history"></i>
-				</div>
-				<div class="stat-content">
-					<h3>Recent Attendance</h3>
-					<p class="number"><?= count($attendanceHistory) ?></p>
-				</div>
-			</div>
-			</div>
 
 			<!-- Seniors Attendance List (Admin-like UI) -->
 			<div class="card animate-fade-in" style="background: #fff; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); border: none; overflow: hidden;">
