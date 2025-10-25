@@ -4,36 +4,38 @@
 ?>
 
 <div class="senior-profile" data-senior-id="<?= $senior['id'] ?>" style="font-family: 'Inter', sans-serif; max-width: 100%; margin: 0; padding: 0; background: transparent; border-radius: 0; box-shadow: none; color: #1f2937; font-size: 0.875rem; line-height: 1.4;">
-    <!-- Personal Information -->
-    <div class="profile-section" style="margin-bottom: 1rem; padding: 0 1rem;">
-        <div class="profile-header">
-            <div class="profile-avatar">
-                <i class="fas fa-user-circle"></i>
-            </div>
-            <div class="profile-info">
-                <h2><?= htmlspecialchars($senior['first_name'] . ' ' . ($senior['middle_name'] ? $senior['middle_name'] . ' ' : '') . $senior['last_name'] . ($senior['ext_name'] ? ' ' . $senior['ext_name'] : '')) ?></h2>
-                <div class="profile-badges">
-                    <span class="badge <?= $senior['life_status'] === 'living' ? 'badge-success' : 'badge-danger' ?>">
-                        <?= ucfirst($senior['life_status']) ?>
-                    </span>
-                    <span class="badge <?= $senior['category'] === 'local' ? 'badge-primary' : ($senior['category'] === 'national' ? 'badge-info' : 'badge-warning') ?>">
-                        <?= ucfirst($senior['category']) ?>
-                    </span>
+    <!-- Profile Summary (Sticky) -->
+    <div class="profile-summary-sticky">
+        <!-- Personal Information -->
+        <div class="profile-section" style="margin-bottom: 1rem; padding: 0 1rem;">
+            <div class="profile-header">
+                <div class="profile-avatar">
+                    <i class="fas fa-user-circle"></i>
+                </div>
+                <div class="profile-info">
+                    <h2><?= htmlspecialchars($senior['first_name'] . ' ' . ($senior['middle_name'] ? $senior['middle_name'] . ' ' : '') . $senior['last_name'] . ($senior['ext_name'] ? ' ' . $senior['ext_name'] : '')) ?></h2>
+                    <div class="profile-badges">
+                        <span class="badge <?= $senior['life_status'] === 'living' ? 'badge-success' : 'badge-danger' ?>">
+                            <?= ucfirst($senior['life_status']) ?>
+                        </span>
+                        <span class="badge <?= $senior['category'] === 'local' ? 'badge-primary' : ($senior['category'] === 'national' ? 'badge-info' : 'badge-warning') ?>">
+                            <?= ucfirst($senior['category']) ?>
+                        </span>
+                    </div>
+                </div>
+                <div class="profile-actions">
+                    <?php if (($_GET['noedit'] ?? '') !== '1'): ?>
+                    <button class="button primary" data-senior-id="<?= $senior['id'] ?>">
+                        <i class="fas fa-edit"></i>
+                        Edit Profile
+                    </button>
+                    <?php endif; ?>
                 </div>
             </div>
-            <div class="profile-actions">
-                <?php if (($_GET['noedit'] ?? '') !== '1'): ?>
-                <button class="button primary" data-senior-id="<?= $senior['id'] ?>">
-                    <i class="fas fa-edit"></i>
-                    Edit Profile
-                </button>
-                <?php endif; ?>
-            </div>
         </div>
-    </div>
 
-    <!-- Statistics Cards -->
-    <div class="profile-stats">
+        <!-- Statistics Cards -->
+        <div class="profile-stats">
         <div class="stat-card">
             <div class="stat-icon">
                 <i class="fas fa-birthday-cake"></i>
@@ -62,6 +64,7 @@
             </div>
         </div>
     </div>
+    </div> <!-- End of profile-summary-sticky -->
 
     <!-- Detailed Information -->
     <div class="profile-details">

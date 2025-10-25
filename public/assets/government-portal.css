@@ -4721,11 +4721,48 @@ canvas { display: block; width: 100% !important; height: auto !important; }
 	max-width: 1200px;
 }
 
-/* Senior Details Modal specific styles */
+/* Senior Details Modal specific styles - Override existing modal-overlay styles */
+#seniorDetailsModal.modal-overlay {
+	position: fixed !important;
+	top: 0 !important;
+	left: 0 !important;
+	width: 100% !important;
+	height: 100% !important;
+	background: rgba(0, 0, 0, 0.8) !important;
+	backdrop-filter: blur(8px);
+	-webkit-backdrop-filter: blur(8px);
+	z-index: 9999 !important;
+	display: none !important;
+	align-items: center !important;
+	justify-content: center !important;
+	padding: 2rem !important;
+	transition: all 0.3s ease;
+	opacity: 0;
+	visibility: hidden;
+}
+
+#seniorDetailsModal.modal-overlay.active {
+	display: flex !important;
+	opacity: 1 !important;
+	visibility: visible !important;
+}
+
 #seniorDetailsModal .modal {
 	display: flex;
 	flex-direction: column;
 	height: 90vh;
+	width: 100%;
+	max-width: 1200px;
+	background: white;
+	border-radius: 12px;
+	box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+	overflow: hidden;
+	transform: scale(0.9);
+	transition: transform 0.3s ease;
+}
+
+#seniorDetailsModal.modal-overlay.active .modal {
+	transform: scale(1);
 }
 
 #seniorDetailsModal .modal-header {
@@ -4739,6 +4776,208 @@ canvas { display: block; width: 100% !important; height: auto !important; }
 	flex: 1;
 	overflow-y: auto;
 	position: relative;
+	padding: 0;
+}
+
+/* Hide background content when modal is active */
+body.modal-active {
+	overflow: hidden;
+}
+
+body.modal-active .main-content,
+body.modal-active .content-body,
+body.modal-active .table-container {
+	opacity: 0.3;
+	filter: blur(2px);
+	pointer-events: none;
+}
+
+/* Edit Senior Modal specific styles */
+#editSeniorModal.modal-overlay {
+	position: fixed !important;
+	top: 0 !important;
+	left: 0 !important;
+	width: 100% !important;
+	height: 100% !important;
+	background: rgba(0, 0, 0, 0.8) !important;
+	backdrop-filter: blur(8px);
+	-webkit-backdrop-filter: blur(8px);
+	z-index: 9999 !important;
+	display: none !important;
+	align-items: center !important;
+	justify-content: center !important;
+	padding: 2rem !important;
+	transition: all 0.3s ease;
+	opacity: 0;
+	visibility: hidden;
+}
+
+#editSeniorModal.modal-overlay.active {
+	display: flex !important;
+	opacity: 1 !important;
+	visibility: visible !important;
+}
+
+#editSeniorModal .modal {
+	transform: scale(0.9);
+	transition: transform 0.3s ease;
+}
+
+#editSeniorModal.modal-overlay.active .modal {
+	transform: scale(1);
+}
+
+/* Add Senior Modal specific styles */
+#addSeniorModal.modal-overlay {
+	position: fixed !important;
+	top: 0 !important;
+	left: 0 !important;
+	width: 100% !important;
+	height: 100% !important;
+	background: rgba(0, 0, 0, 0.8) !important;
+	backdrop-filter: blur(8px);
+	-webkit-backdrop-filter: blur(8px);
+	z-index: 9999 !important;
+	display: none !important;
+	align-items: center !important;
+	justify-content: center !important;
+	padding: 2rem !important;
+	transition: all 0.3s ease;
+	opacity: 0;
+	visibility: hidden;
+}
+
+#addSeniorModal.modal-overlay.active {
+	display: flex !important;
+	opacity: 1 !important;
+	visibility: visible !important;
+}
+
+#addSeniorModal .modal {
+	transform: scale(0.9);
+	transition: transform 0.3s ease;
+}
+
+#addSeniorModal.modal-overlay.active .modal {
+	transform: scale(1);
+}
+
+/* Transfer Modal specific styles */
+#transferModal.modal-overlay {
+	position: fixed !important;
+	top: 0 !important;
+	left: 0 !important;
+	width: 100% !important;
+	height: 100% !important;
+	background: rgba(0, 0, 0, 0.8) !important;
+	backdrop-filter: blur(8px);
+	-webkit-backdrop-filter: blur(8px);
+	z-index: 9999 !important;
+	display: none !important;
+	align-items: center !important;
+	justify-content: center !important;
+	padding: 2rem !important;
+	transition: all 0.3s ease;
+	opacity: 0;
+	visibility: hidden;
+}
+
+#transferModal.modal-overlay.active {
+	display: flex !important;
+	opacity: 1 !important;
+	visibility: visible !important;
+}
+
+#transferModal .modal {
+	transform: scale(0.9);
+	transition: transform 0.3s ease;
+}
+
+#transferModal.modal-overlay.active .modal {
+	transform: scale(1);
+}
+
+/* Deceased Modal specific styles */
+#deceasedModal.modal-overlay {
+	position: fixed !important;
+	top: 0 !important;
+	left: 0 !important;
+	width: 100% !important;
+	height: 100% !important;
+	background: rgba(0, 0, 0, 0.8) !important;
+	backdrop-filter: blur(8px);
+	-webkit-backdrop-filter: blur(8px);
+	z-index: 9999 !important;
+	display: none !important;
+	align-items: center !important;
+	justify-content: center !important;
+	padding: 2rem !important;
+	transition: all 0.3s ease;
+	opacity: 0;
+	visibility: hidden;
+}
+
+#deceasedModal.modal-overlay.active {
+	display: flex !important;
+	opacity: 1 !important;
+	visibility: visible !important;
+}
+
+#deceasedModal .modal {
+	transform: scale(0.9);
+	transition: transform 0.3s ease;
+}
+
+#deceasedModal.modal-overlay.active .modal {
+	transform: scale(1);
+}
+
+/* Ensure the senior profile content doesn't interfere with sticky positioning */
+#seniorDetailsModal .senior-profile {
+	position: relative;
+	z-index: 1;
+}
+
+/* Style the detailed information sections */
+#seniorDetailsModal .profile-details {
+	padding: 1.5rem;
+	background: #fafafa;
+}
+
+#seniorDetailsModal .detail-section {
+	background: white;
+	border-radius: 8px;
+	padding: 1.5rem;
+	margin-bottom: 1rem;
+	box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+	border: 1px solid var(--border-light);
+}
+
+/* Style the contact information and other sections */
+#seniorDetailsModal .profile-section:not(.profile-summary-sticky) {
+	background: white;
+	border-radius: 8px;
+	padding: 1.5rem;
+	margin: 1rem;
+	box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+	border: 1px solid var(--border-light);
+}
+
+/* Make the profile summary section sticky */
+#seniorDetailsModal .profile-summary-sticky {
+	position: sticky;
+	top: 0;
+	z-index: 5;
+	background: white;
+	border-bottom: 2px solid var(--border-light);
+	margin-bottom: 0;
+	padding: 1.5rem;
+	box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+	backdrop-filter: blur(10px);
+	-webkit-backdrop-filter: blur(10px);
+	/* Ensure it stays solid and doesn't become transparent */
+	background-color: white !important;
+	opacity: 1 !important;
 }
 
 .modal-header {

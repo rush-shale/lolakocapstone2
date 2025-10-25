@@ -1447,11 +1447,13 @@ try {
 			document.getElementById('deleteSeniorId').value = seniorId;
 			document.getElementById('deleteSeniorName').textContent = seniorName;
 			document.getElementById('deleteModal').classList.add('active');
+			document.body.classList.add('modal-active');
 			document.body.style.overflow = 'hidden';
 		}
 
 		function closeDeleteModal() {
 			document.getElementById('deleteModal').classList.remove('active');
+			document.body.classList.remove('modal-active');
 			document.body.style.overflow = '';
 		}
 
@@ -1460,6 +1462,9 @@ try {
 			// Show the modal with loading state
 			const modal = document.getElementById('seniorDetailsModal');
 			const content = document.getElementById('seniorDetailsContent');
+			
+			console.log('Modal element found:', modal);
+			console.log('Content element found:', content);
 			
 			// Show loading state
 			content.innerHTML = `
@@ -1471,7 +1476,27 @@ try {
 			
 			// Show modal with blur and zoom animation
 			modal.classList.add('active');
+			document.body.classList.add('modal-active');
 			document.body.style.overflow = 'hidden';
+			
+			console.log('Modal classes after adding active:', modal.className);
+			console.log('Modal display style:', window.getComputedStyle(modal).display);
+			
+			// Add click handler to close modal when clicking backdrop
+			modal.addEventListener('click', function(e) {
+				if (e.target === modal) {
+					closeSeniorDetailsModal();
+				}
+			});
+			
+			// Add keyboard handler to close modal with Escape key
+			const handleKeyDown = function(e) {
+				if (e.key === 'Escape') {
+					closeSeniorDetailsModal();
+					document.removeEventListener('keydown', handleKeyDown);
+				}
+			};
+			document.addEventListener('keydown', handleKeyDown);
 			
 			// Load senior details via AJAX
 			fetch(`senior_details.php?id=${id}&ajax=1&t=${Date.now()}`)
@@ -1507,8 +1532,17 @@ try {
 		}
 
 		function closeSeniorDetailsModal() {
-			document.getElementById('seniorDetailsModal').classList.remove('active');
+			const modal = document.getElementById('seniorDetailsModal');
+			modal.classList.remove('active');
+			document.body.classList.remove('modal-active');
 			document.body.style.overflow = '';
+			
+			// Remove event listeners
+			modal.removeEventListener('click', function(e) {
+				if (e.target === modal) {
+					closeSeniorDetailsModal();
+				}
+			});
 		}
 
 		function editSenior(id) {
@@ -1518,6 +1552,7 @@ try {
 
 		function closeEditSeniorModal() {
 			document.getElementById('editSeniorModal').classList.remove('active');
+			document.body.classList.remove('modal-active');
 			document.body.style.overflow = '';
 		}
 
@@ -1559,11 +1594,13 @@ try {
 			
 			// Show the modal
 			document.getElementById('transferModal').classList.add('active');
+			document.body.classList.add('modal-active');
 			document.body.style.overflow = 'hidden';
 		}
 
 		function closeTransferModal() {
 			document.getElementById('transferModal').classList.remove('active');
+			document.body.classList.remove('modal-active');
 			document.body.style.overflow = '';
 			
 			// Reset form
@@ -1580,11 +1617,13 @@ try {
 			
 			// Show the modal
 			document.getElementById('deceasedModal').classList.add('active');
+			document.body.classList.add('modal-active');
 			document.body.style.overflow = 'hidden';
 		}
 
 		function closeDeceasedModal() {
 			document.getElementById('deceasedModal').classList.remove('active');
+			document.body.classList.remove('modal-active');
 			document.body.style.overflow = '';
 			
 			// Reset form
@@ -2375,6 +2414,7 @@ try {
 			const modal = document.getElementById('addSeniorModal');
 			modal.style.display = 'flex';
 			modal.classList.add('active');
+			document.body.classList.add('modal-active');
 			document.body.style.overflow = 'hidden';
 			// Remove any transform or position styles to prevent movement
 			const modalContent = modal.querySelector('.modal');
@@ -2396,6 +2436,7 @@ try {
 			setTimeout(() => {
 				modal.style.display = 'none';
 				modal.classList.remove('active');
+				document.body.classList.remove('modal-active');
 				document.body.style.overflow = '';
                 const mainContent = document.querySelector('main.content');
 				if (mainContent) {
@@ -2724,6 +2765,7 @@ try {
 
 					// Show modal
 					document.getElementById('editSeniorModal').classList.add('active');
+					document.body.classList.add('modal-active');
 					document.body.style.overflow = 'hidden';
 				})
 				.catch(() => {
