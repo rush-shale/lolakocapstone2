@@ -214,7 +214,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 
                 // After write, force a full reload so the table reflects changes immediately
         if ($op === 'create') {
-                    header('Location: ' . $_SERVER['PHP_SELF'] . '?success=1');
+                    header('Location: ' . $_SERVER['PHP_SELF'] . '?success=1&new_senior_id=' . $senior_id);
                     exit;
                 }
                 if ($op === 'update') {
@@ -1316,7 +1316,7 @@ try {
 									<?php foreach ($grouped as $barangay => $seniors_in_barangay): ?>
 									<tr class="barangay-header"><td colspan="20" style="background: #f9fafb; font-weight: bold; padding: 1rem;">Barangay <?= htmlspecialchars($barangay) ?></td></tr>
 									<?php foreach ($seniors_in_barangay as $senior): ?>
-									<tr onclick="viewSeniorDetails(<?= $senior['id'] ?>)" style="cursor: pointer;">
+									<tr onclick="viewSeniorDetails(<?= $senior['id'] ?>)" style="cursor: pointer;" data-senior-id="<?= $senior['id'] ?>">
 										<td><?= htmlspecialchars($senior['last_name']) ?></td>
 										<td><?= htmlspecialchars($senior['first_name']) ?></td>
 										<td><?= htmlspecialchars($senior['middle_name'] ?: '') ?></td>
@@ -1407,6 +1407,60 @@ try {
 
 	<script src="<?= BASE_URL ?>/assets/app.js"></script>
 	<script>
+		// Handle new senior highlighting and reordering
+		document.addEventListener('DOMContentLoaded', function() {
+			const urlParams = new URLSearchParams(window.location.search);
+			const newSeniorId = urlParams.get('new_senior_id');
+			
+			if (newSeniorId) {
+				highlightAndReorderNewSenior(newSeniorId);
+			}
+		});
+
+		function highlightAndReorderNewSenior(seniorId) {
+			// Find the senior row by data attribute
+			const seniorRow = document.querySelector(`tr[data-senior-id="${seniorId}"]`);
+			
+			if (seniorRow) {
+				// Add highlighting class
+				seniorRow.classList.add('new-senior-highlight');
+				
+				// Find the barangay header for this senior
+				let barangayHeader = seniorRow.previousElementSibling;
+				while (barangayHeader && !barangayHeader.classList.contains('barangay-header')) {
+					barangayHeader = barangayHeader.previousElementSibling;
+				}
+				
+				if (barangayHeader) {
+					// Find all senior rows in this barangay section
+					const barangaySection = barangayHeader.parentNode;
+					const allRows = Array.from(barangaySection.children);
+					const barangayRows = allRows.filter(row => 
+						row.classList.contains('barangay-header') || 
+						row.hasAttribute('data-senior-id')
+					);
+					
+					// Find the index of the current senior row
+					const currentIndex = barangayRows.indexOf(seniorRow);
+					
+					if (currentIndex > 0) {
+						// Move the senior row to the top of its barangay section (after the header)
+						barangaySection.insertBefore(seniorRow, barangayRows[1]);
+					}
+					
+					// Scroll to the highlighted senior
+					seniorRow.scrollIntoView({ 
+						behavior: 'smooth', 
+						block: 'center' 
+					});
+					
+					// Remove highlighting after 5 seconds
+					setTimeout(() => {
+						seniorRow.classList.remove('new-senior-highlight');
+					}, 5000);
+				}
+			}
+		}
 
 		function viewSeniorDetails(id) {
 			console.log('Loading senior details for ID:', id);

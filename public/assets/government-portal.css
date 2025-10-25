@@ -4963,6 +4963,44 @@ body.modal-active .table-container {
 	border: 1px solid var(--border-light);
 }
 
+/* New Senior Highlighting */
+.new-senior-highlight {
+	background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%) !important;
+	border-left: 4px solid #28a745 !important;
+	animation: newSeniorPulse 3s ease-in-out;
+	position: relative;
+	z-index: 10;
+}
+
+.new-senior-highlight::before {
+	content: "✨ NEW";
+	position: absolute;
+	top: 8px;
+	right: 8px;
+	background: #28a745;
+	color: white;
+	padding: 2px 8px;
+	border-radius: 12px;
+	font-size: 0.75rem;
+	font-weight: bold;
+	z-index: 11;
+}
+
+@keyframes newSeniorPulse {
+	0% {
+		background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
+		transform: scale(1);
+	}
+	50% {
+		background: linear-gradient(135deg, #b8dacc 0%, #a8d5b8 100%);
+		transform: scale(1.02);
+	}
+	100% {
+		background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
+		transform: scale(1);
+	}
+}
+
 /* Make the profile summary section sticky */
 #seniorDetailsModal .profile-summary-sticky {
 	position: sticky;
