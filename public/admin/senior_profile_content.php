@@ -3,9 +3,9 @@
 // It should be included by senior_details.php when handling AJAX requests
 ?>
 
-<div class="senior-profile" data-senior-id="<?= $senior['id'] ?>">
+<div class="senior-profile" data-senior-id="<?= $senior['id'] ?>" style="font-family: 'Inter', sans-serif; max-width: 100%; margin: 0; padding: 0; background: transparent; border-radius: 0; box-shadow: none; color: #1f2937; font-size: 0.875rem; line-height: 1.4;">
     <!-- Personal Information -->
-    <div class="profile-section">
+    <div class="profile-section" style="margin-bottom: 1rem; padding: 0 1rem;">
         <div class="profile-header">
             <div class="profile-avatar">
                 <i class="fas fa-user-circle"></i>
@@ -140,7 +140,7 @@
             <div class="detail-grid">
                 <div class="detail-item">
                     <span class="label">Health Condition:</span>
-                    <span class="value"><?= htmlspecialchars($senior['health_condition'] ?: 'Not specified') ?></span>
+                    <span class="value"><?= htmlspecialchars($senior['health_condition'] && !in_array(strtolower($senior['health_condition']), ['iwan', 'none', 'n/a', 'na', 'not specified', 'unknown', '']) ? $senior['health_condition'] : 'Not specified') ?></span>
                 </div>
                 <div class="detail-item">
                     <span class="label">Benefits Received:</span>
@@ -160,7 +160,7 @@
     </div>
 
     <!-- Event Attendance -->
-    <div class="profile-section">
+    <div class="profile-section" style="margin-bottom: 1rem; padding: 0 1rem;">
         <h3><i class="fas fa-calendar-check"></i> Recent Event Attendance</h3>
         <?php
         // Try to fetch recent event attendance for this senior

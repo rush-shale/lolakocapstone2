@@ -202,18 +202,19 @@ $lastEvent = !empty($attendanceHistory) ? $attendanceHistory[0] : null;
     <style>
         .senior-profile {
             font-family: 'Inter', sans-serif;
-            max-width: 480px;
-            margin: 0 auto;
-            padding: 1rem;
-            background: #fff;
-            border-radius: 12px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            max-width: 100%;
+            margin: 0;
+            padding: 0;
+            background: transparent;
+            border-radius: 0;
+            box-shadow: none;
             color: #1f2937;
             font-size: 0.875rem;
             line-height: 1.4;
         }
         .profile-section {
             margin-bottom: 1rem;
+            padding: 0 1rem;
         }
         .profile-header {
             display: flex;
@@ -656,7 +657,7 @@ $lastEvent = !empty($attendanceHistory) ? $attendanceHistory[0] : null;
                         <span>Purok: <?= htmlspecialchars($senior['purok']) ?></span>
                     </div>
                     <?php endif; ?>
-                    <?php if ($senior['health_condition']): ?>
+                    <?php if ($senior['health_condition'] && !in_array(strtolower($senior['health_condition']), ['iwan', 'none', 'n/a', 'na', 'not specified', 'unknown', ''])): ?>
                     <div class="contact-item">
                         <i class="fas fa-heartbeat"></i>
                         <span>Health Condition: <?= htmlspecialchars($senior['health_condition']) ?></span>

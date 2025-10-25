@@ -57,6 +57,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 		$osca_id_no = trim($_POST['osca_id_no'] ?? '') ?: '';
 		$remarks = trim($_POST['remarks'] ?? '') ?: '';
 		$health_condition = trim($_POST['health_condition'] ?? '') ?: '';
+		// Clean up placeholder or incomplete health condition entries
+		if (in_array(strtolower($health_condition), ['iwan', 'none', 'n/a', 'na', 'not specified', 'unknown', ''])) {
+			$health_condition = '';
+		}
 		$purok = trim($_POST['purok'] ?? '') ?: '';
 		$cellphone = trim($_POST['cellphone'] ?? '') ?: '';
 		$benefits_received = isset($_POST['benefits_received']) ? 1 : 0;
@@ -1309,7 +1313,7 @@ try {
 										<td><?= $senior['date_of_birth'] ? date('M d, Y', strtotime($senior['date_of_birth'])) : '' ?></td>
 										<td><?= htmlspecialchars($senior['osca_id_no'] ?? '') ?></td>
 										<td><?= htmlspecialchars($senior['remarks'] ?? '') ?></td>
-										<td><?= htmlspecialchars($senior['health_condition'] ?? '') ?></td>
+										<td><?= htmlspecialchars(($senior['health_condition'] && !in_array(strtolower($senior['health_condition']), ['iwan', 'none', 'n/a', 'na', 'not specified', 'unknown', ''])) ? $senior['health_condition'] : 'Not specified') ?></td>
 										<td><?= htmlspecialchars($senior['purok'] ?? '') ?></td>
 										<td><?= htmlspecialchars($senior['place_of_birth'] ?: '') ?></td>
 										<td><?= htmlspecialchars($senior['cellphone'] ?? '') ?></td>
@@ -1452,6 +1456,7 @@ try {
 		}
 
 		function viewSeniorDetails(id) {
+			console.log('Loading senior details for ID:', id);
 			// Show the modal with loading state
 			const modal = document.getElementById('seniorDetailsModal');
 			const content = document.getElementById('seniorDetailsContent');
@@ -1469,7 +1474,7 @@ try {
 			document.body.style.overflow = 'hidden';
 			
 			// Load senior details via AJAX
-			fetch(`senior_details.php?id=${id}&ajax=1`)
+			fetch(`senior_details.php?id=${id}&ajax=1&t=${Date.now()}`)
 				.then(response => response.text())
 				.then(html => {
 					// Extract only the senior profile content from the response
