@@ -1226,24 +1226,39 @@ try {
 
 
 				<!-- Seniors List -->
-				<div class="card" style="background: #fff; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); border: none;">
-                    <div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
-						<div>
-							<h2 class="card-title">All Seniors</h2>
-							<p class="card-subtitle">Manage senior citizen records and information</p>
+				<div class="modern-table-container">
+                    <div class="modern-table-header">
+						<div class="table-title-section">
+							<h2>All Seniors</h2>
+							<p>Manage senior citizen records and information</p>
 						</div>
-<div style="display: flex; align-items: center; gap: 1rem;">
-	<input type="text" id="searchInput" placeholder="Search seniors..." style="padding: 0.5rem; width: 250px; border: 1px solid #ccc; border-radius: 4px; font-size: 1rem;">
-	<?php if ($status !== 'waiting'): ?>
-	<button class="btn btn-primary" onclick="openAddSeniorModal()">
-		Add New Senior
-	</button>
-	<?php endif; ?>
-</div>
+						<div class="table-controls">
+							<div class="table-search">
+								<span class="table-search-icon">🔍</span>
+								<input type="text" id="searchInput" placeholder="Search seniors...">
+							</div>
+							<div class="table-filters">
+								<button class="filter-btn active" data-filter="all">All</button>
+								<button class="filter-btn" data-filter="local">Local</button>
+								<button class="filter-btn" data-filter="national">National</button>
+								<button class="filter-btn" data-filter="waiting">Waiting</button>
+							</div>
+							<div class="table-actions">
+								<?php if ($status !== 'waiting'): ?>
+								<button class="table-btn" onclick="openAddSeniorModal()">
+									<span>➕</span>
+									<span>Add Senior</span>
+								</button>
+								<?php endif; ?>
+								<button class="table-btn" onclick="exportTable()">
+									<span>📥</span>
+									<span>Export</span>
+								</button>
+							</div>
+						</div>
 					</div>
-                    <div class="card-body">
 					<div class="table-container table-scroll">
-                            <table class="table seniors-table">
+                            <table class="modern-table seniors-table">
                                 <thead>
 									<tr>
 										<th>LAST NAME</th>
@@ -1299,21 +1314,24 @@ try {
 										<td><?= htmlspecialchars($senior['place_of_birth'] ?: '') ?></td>
 										<td><?= htmlspecialchars($senior['cellphone'] ?? '') ?></td>
 										<td>
-											<span class="badge <?= $senior['life_status'] === 'living' ? 'badge-success' : 'badge-danger' ?>">
+											<span class="status-badge <?= $senior['life_status'] === 'living' ? 'validated' : 'deceased' ?>">
+												<?= $senior['life_status'] === 'living' ? '👤' : '💀' ?>
 												<?= ucfirst($senior['life_status']) ?>
 											</span>
 										</td>
 										<td>
-											<span class="badge <?= $senior['category'] === 'local' ? 'badge-primary' : 'badge-info' ?>">
+											<span class="status-badge <?= $senior['category'] === 'local' ? 'local' : 'national' ?>">
+												<?= $senior['category'] === 'local' ? '🏘️' : '🏛️' ?>
 												<?= ucfirst($senior['category']) ?>
 											</span>
 										</td>
 										<td>
-							<span class="badge <?= $senior['validation_status'] === 'Validated' ? 'badge-success' : 'badge-warning' ?>">
+							<span class="status-badge <?= $senior['validation_status'] === 'Validated' ? 'validated' : 'pending' ?>">
+								<?= $senior['validation_status'] === 'Validated' ? '✅' : '⏳' ?>
 								<?= $senior['validation_status'] ?>
 							</span>
 							<?php if (($senior['validation_status'] ?? '') === 'Validated' && !empty($senior['validation_date'])): ?>
-								<br><small style="color: #6b7280;"><?= date('M d, Y H:i', strtotime($senior['validation_date'])) ?></small>
+								<br><small style="color: var(--text-secondary); font-size: 0.75rem;"><?= date('M d, Y H:i', strtotime($senior['validation_date'])) ?></small>
 							<?php endif; ?>
 										</td>
 										<td>
@@ -1326,19 +1344,19 @@ try {
 										<input type="hidden" name="csrf" value="<?= $csrf ?>">
 										<input type="hidden" name="op" value="validate_waiting">
 										<input type="hidden" name="id" value="<?= (int)$senior['id'] ?>">
-										<button type="submit" class="button small primary" title="Validate Senior">
-											<i class="fas fa-check"></i>
+										<button type="submit" class="action-btn view" title="Validate Senior">
+											✅
 										</button>
 									</form>
 								<?php endif; ?>
-												<button class="button small primary" onclick="event.stopPropagation(); editSenior(<?= $senior['id'] ?>)" title="Edit Senior">
-													<i class="fas fa-edit"></i>
+												<button class="action-btn view" onclick="event.stopPropagation(); viewSeniorDetails(<?= $senior['id'] ?>)" title="View Details">
+													👁️
 												</button>
-												<button class="button small secondary" onclick="event.stopPropagation(); viewSeniorDetails(<?= $senior['id'] ?>)" title="View Details">
-													<i class="fas fa-eye"></i>
+												<button class="action-btn edit" onclick="event.stopPropagation(); editSenior(<?= $senior['id'] ?>)" title="Edit Senior">
+													✏️
 												</button>
-												<button class="button small danger" onclick="event.stopPropagation(); deleteSenior(<?= $senior['id'] ?>, '<?= htmlspecialchars($senior['first_name'] . ' ' . $senior['last_name']) ?>')" title="Delete Senior">
-													<i class="fas fa-trash"></i>
+												<button class="action-btn delete" onclick="event.stopPropagation(); deleteSenior(<?= $senior['id'] ?>, '<?= htmlspecialchars($senior['first_name'] . ' ' . $senior['last_name']) ?>')" title="Delete Senior">
+													🗑️
 												</button>
 											</div>
 										</td>
@@ -1791,132 +1809,157 @@ try {
 				<button class="modal-close" onclick="closeAddSeniorModal()" aria-label="Close add senior form">&times;</button>
 			</div>
 			<div class="modal-body">
-				<form id="addSeniorForm" method="post" action="<?= htmlspecialchars($_SERVER['PHP_SELF']) ?>">
+				<form id="addSeniorForm" method="post" action="<?= htmlspecialchars($_SERVER['PHP_SELF']) ?>" data-autosave="true">
 					<input type="hidden" name="csrf" value="<?= $csrf ?>">
 					<input type="hidden" name="op" value="create">
+
+					<!-- Form Progress -->
+					<div class="form-progress">
+						<div class="progress-bar">
+							<div class="progress-fill"></div>
+						</div>
+						<div class="progress-text">0 of 0 required fields completed</div>
+					</div>
 
 					<!-- Basic Information Section -->
 					<div class="form-section">
 						<h3 class="section-title">Basic Information</h3>
 						<div class="form-row">
-							<div class="form-group">
-								<label for="first_name" class="form-label">
+							<div class="form-group modern-form-group">
+								<label for="first_name" class="form-label modern-label">
+									<span class="label-icon">👤</span>
 									<span class="label-text">First Name</span>
 								</label>
 								<input
 									type="text"
 									name="first_name"
 									id="first_name"
-									class="form-input"
+									class="form-input modern-input"
 									placeholder="Enter first name"
 									required
 								>
+								<div class="input-focus-border"></div>
 							</div>
 							
 
-							<div class="form-group">
-								<label for="middle_name" class="form-label">
+							<div class="form-group modern-form-group">
+								<label for="middle_name" class="form-label modern-label">
+									<span class="label-icon">👤</span>
 									<span class="label-text">Middle Name</span>
 								</label>
 								<input
 									type="text"
 									name="middle_name"
 									id="middle_name"
-									class="form-input"
+									class="form-input modern-input"
 									placeholder="Enter middle name"
 								>
+								<div class="input-focus-border"></div>
 							</div>
 
-							<div class="form-group">
-								<label for="last_name" class="form-label">
+							<div class="form-group modern-form-group">
+								<label for="last_name" class="form-label modern-label">
+									<span class="label-icon">👤</span>
 									<span class="label-text">Last Name</span>
 								</label>
 								<input
 									type="text"
 									name="last_name"
 									id="last_name"
-									class="form-input"
+									class="form-input modern-input"
 									placeholder="Enter last name"
 									required
 								>
+								<div class="input-focus-border"></div>
 							</div>
 
-							<div class="form-group">
-								<label for="ext_name" class="form-label">
+							<div class="form-group modern-form-group">
+								<label for="ext_name" class="form-label modern-label">
+									<span class="label-icon">🏷️</span>
 									<span class="label-text">Extension</span>
 								</label>
 								<input
 									type="text"
 									name="ext_name"
 									id="ext_name"
-									class="form-input"
+									class="form-input modern-input"
 									placeholder="Enter extension (e.g., Jr., Sr.)"
 								>
+								<div class="input-focus-border"></div>
 							</div>
 						</div>
 
 						<div class="form-row">
-							<div class="form-group">
-								<label for="age" class="form-label">
+							<div class="form-group modern-form-group">
+								<label for="age" class="form-label modern-label">
+									<span class="label-icon">🎂</span>
 									<span class="label-text">Age</span>
 								</label>
 								<input
 									type="number"
 									name="age"
 									id="age"
-									class="form-input"
+									class="form-input modern-input"
 									placeholder="Age"
-									min="0"
-									max="150"
+									min="60"
+									max="120"
 									required
 								>
+								<div class="input-focus-border"></div>
 							</div>
 
-							<div class="form-group">
-								<label for="date_of_birth" class="form-label">
+							<div class="form-group modern-form-group">
+								<label for="date_of_birth" class="form-label modern-label">
+									<span class="label-icon">📅</span>
 									<span class="label-text">Date of Birth</span>
 								</label>
 								<input
 									type="date"
 									name="date_of_birth"
 									id="date_of_birth"
-									class="form-input"
+									class="form-input modern-input"
 									onchange="calculateAge()"
 								>
+								<div class="input-focus-border"></div>
 							</div>
 
-							<div class="form-group">
-								<label for="sex" class="form-label">
+							<div class="form-group modern-form-group">
+								<label for="sex" class="form-label modern-label">
+									<span class="label-icon">⚥</span>
 									<span class="label-text">Sex</span>
 								</label>
-								<select name="sex" id="sex" class="form-input" required>
+								<select name="sex" id="sex" class="form-input modern-input" required>
 									<option value="">Select sex</option>
 									<option value="male">Male</option>
 									<option value="female">Female</option>
 									<option value="lgbtq">LGBTQ+</option>
 								</select>
+								<div class="input-focus-border"></div>
 							</div>
 						</div>
 
 						<div class="form-row">
-							<div class="form-group">
-								<label for="place_of_birth" class="form-label">
+							<div class="form-group modern-form-group">
+								<label for="place_of_birth" class="form-label modern-label">
+									<span class="label-icon">🏠</span>
 									<span class="label-text">Place of Birth</span>
 								</label>
 								<input
 									type="text"
 									name="place_of_birth"
 									id="place_of_birth"
-									class="form-input"
+									class="form-input modern-input"
 									placeholder="Enter place of birth"
 								>
+								<div class="input-focus-border"></div>
 							</div>
 
-							<div class="form-group">
-								<label for="civil_status" class="form-label">
+							<div class="form-group modern-form-group">
+								<label for="civil_status" class="form-label modern-label">
+									<span class="label-icon">💍</span>
 									<span class="label-text">Civil Status</span>
 								</label>
-								<select name="civil_status" id="civil_status" class="form-input" required>
+								<select name="civil_status" id="civil_status" class="form-input modern-input" required>
 									<option value="">Select civil status</option>
 									<option value="single">Single</option>
 									<option value="married">Married</option>
@@ -1924,13 +1967,15 @@ try {
 									<option value="separated">Separated</option>
 									<option value="divorced">Divorced</option>
 								</select>
+								<div class="input-focus-border"></div>
 							</div>
 
-							<div class="form-group">
-								<label for="educational_attainment" class="form-label">
+							<div class="form-group modern-form-group">
+								<label for="educational_attainment" class="form-label modern-label">
+									<span class="label-icon">🎓</span>
 									<span class="label-text">Educational Attainment</span>
 								</label>
-								<select name="educational_attainment" id="educational_attainment" class="form-input" required>
+								<select name="educational_attainment" id="educational_attainment" class="form-input modern-input" required>
 									<option value="">Select educational attainment</option>
 									<option value="no_formal_education">None</option>
 									<option value="elementary">Elementary</option>
@@ -2306,9 +2351,13 @@ try {
 					</div>
 
 					<div class="form-actions">
-						<button type="submit" class="button primary">
-							<i class="fas fa-save"></i>
-							Add Senior
+						<button type="submit" class="btn btn-primary modern-btn">
+							<span class="btn-text">Add Senior</span>
+							<span class="btn-icon">💾</span>
+							<div class="btn-loading">
+								<div class="loading-spinner"></div>
+								<span>Adding Senior...</span>
+							</div>
 						</button>
 					</div>
 				</form>

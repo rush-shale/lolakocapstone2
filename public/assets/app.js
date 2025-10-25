@@ -10,6 +10,11 @@ document.addEventListener('DOMContentLoaded', () => {
         initializeLoadingStates();
         initializeSmoothScrolling();
         initializeThemeToggle();
+        initializeFormAutoSave();
+        addMicroInteractions();
+        initializeNavigationEnhancements();
+        initializeAccessibilityFeatures();
+        addRequiredIndicators();
 });
 
 // Modern Animation System
@@ -187,11 +192,18 @@ function removeSidebarOverlay() {
                     input.addEventListener('focus', enhanceInputFocus);
                     input.addEventListener('blur', enhanceInputBlur);
                     input.addEventListener('input', validateField);
+                    input.addEventListener('change', validateField);
                 });
             });
             
             // Modern form interactions
             initializeModernFormInteractions();
+            
+            // Initialize form progress tracking
+            initializeFormProgress();
+            
+            // Initialize real-time validation
+            initializeRealTimeValidation();
         }
 
         // Modern Form Interactions
@@ -684,6 +696,1015 @@ function clearFieldError(e) {
             themeTexts.forEach(text => {
                 text.textContent = theme === 'dark' ? 'Light Mode' : 'Dark Mode';
             });
+        }
+
+        // Form Progress Tracking
+        function initializeFormProgress() {
+            const forms = document.querySelectorAll('form');
+            forms.forEach(form => {
+                const progressContainer = form.querySelector('.form-progress');
+                if (!progressContainer) return;
+                
+                const progressBar = progressContainer.querySelector('.progress-fill');
+                const progressText = progressContainer.querySelector('.progress-text');
+                const inputs = form.querySelectorAll('input[required], select[required], textarea[required]');
+                
+                if (!progressBar || !progressText) return;
+                
+                function updateProgress() {
+                    const filledInputs = Array.from(inputs).filter(input => {
+                        if (input.type === 'checkbox' || input.type === 'radio') {
+                            return input.checked;
+                        }
+                        return input.value.trim() !== '';
+                    });
+                    
+                    const progress = (filledInputs.length / inputs.length) * 100;
+                    progressBar.style.width = `${progress}%`;
+                    progressText.textContent = `${filledInputs.length} of ${inputs.length} required fields completed`;
+                }
+                
+                inputs.forEach(input => {
+                    input.addEventListener('input', updateProgress);
+                    input.addEventListener('change', updateProgress);
+                });
+                
+                updateProgress();
+            });
+        }
+
+        // Real-time Form Validation
+        function initializeRealTimeValidation() {
+            const forms = document.querySelectorAll('form');
+            forms.forEach(form => {
+                const inputs = form.querySelectorAll('input, select, textarea');
+                
+                inputs.forEach(input => {
+                    // Add validation on input
+                    input.addEventListener('input', function() {
+                        validateFieldRealTime(this);
+                    });
+                    
+                    // Add validation on blur
+                    input.addEventListener('blur', function() {
+                        validateFieldRealTime(this);
+                    });
+                });
+            });
+        }
+
+        function validateFieldRealTime(field) {
+            const group = field.closest('.form-group');
+            if (!group) return;
+            
+            // Remove existing validation states
+            group.classList.remove('error', 'success', 'validating');
+            const existingError = group.querySelector('.field-error');
+            const existingSuccess = group.querySelector('.field-success');
+            
+            if (existingError) existingError.remove();
+            if (existingSuccess) existingSuccess.remove();
+            
+            // Add validating state
+            group.classList.add('validating');
+            
+            // Simulate validation delay for better UX
+            setTimeout(() => {
+                group.classList.remove('validating');
+                
+                const value = field.value.trim();
+                let isValid = true;
+                let errorMessage = '';
+                
+                // Required validation
+                if (field.hasAttribute('required') && !value) {
+                    isValid = false;
+                    errorMessage = 'This field is required';
+                }
+                
+                // Email validation
+                else if (field.type === 'email' && value && !isValidEmail(value)) {
+                    isValid = false;
+                    errorMessage = 'Please enter a valid email address';
+                }
+                
+                // Phone validation
+                else if (field.type === 'tel' && value) {
+                    const phoneRegex = /^[\+]?[1-9][\d]{0,15}$/;
+                    if (!phoneRegex.test(value.replace(/[\s\-\(\)]/g, ''))) {
+                        isValid = false;
+                        errorMessage = 'Please enter a valid phone number';
+                    }
+                }
+                
+                // Age validation
+                else if (field.name === 'age' && value) {
+                    const age = parseInt(value);
+                    if (age < 60 || age > 120) {
+                        isValid = false;
+                        errorMessage = 'Age must be between 60 and 120 years';
+                    }
+                }
+                
+                // OSCA ID validation
+                else if (field.name === 'osca_id_no' && value) {
+                    if (value.length < 5) {
+                        isValid = false;
+                        errorMessage = 'OSCA ID must be at least 5 characters';
+                    }
+                }
+                
+                // Update field state
+                if (isValid && value) {
+                    group.classList.add('success');
+                    showFieldSuccess(group, 'Looks good!');
+                } else if (!isValid) {
+                    group.classList.add('error');
+                    showFieldError(group, errorMessage);
+                }
+            }, 500);
+        }
+
+        function showFieldSuccess(group, message) {
+            const successDiv = document.createElement('div');
+            successDiv.className = 'field-success';
+            successDiv.textContent = message;
+            group.appendChild(successDiv);
+        }
+
+        // Enhanced Form Submission
+        function handleFormSubmit(e) {
+            const form = e.target;
+            const submitBtn = form.querySelector('button[type="submit"]');
+            
+            if (submitBtn) {
+                const originalText = submitBtn.innerHTML;
+                submitBtn.innerHTML = '<span class="loading-spinner"></span> Processing...';
+                submitBtn.disabled = true;
+                submitBtn.classList.add('loading');
+                
+                // Add form validation before submission
+                const isValid = validateForm(form);
+                if (!isValid) {
+                    e.preventDefault();
+                    submitBtn.innerHTML = originalText;
+                    submitBtn.disabled = false;
+                    submitBtn.classList.remove('loading');
+                    return;
+                }
+                
+                // Re-enable after 5 seconds (adjust based on your needs)
+                setTimeout(() => {
+                    submitBtn.innerHTML = originalText;
+                    submitBtn.disabled = false;
+                    submitBtn.classList.remove('loading');
+                }, 5000);
+            }
+        }
+
+        function validateForm(form) {
+            const inputs = form.querySelectorAll('input[required], select[required], textarea[required]');
+            let isValid = true;
+            
+            inputs.forEach(input => {
+                const group = input.closest('.form-group');
+                if (!group) return;
+                
+                // Remove existing validation states
+                group.classList.remove('error', 'success');
+                const existingError = group.querySelector('.field-error');
+                if (existingError) existingError.remove();
+                
+                const value = input.value.trim();
+                
+                if (!value) {
+                    isValid = false;
+                    group.classList.add('error');
+                    showFieldError(group, 'This field is required');
+                } else if (input.type === 'email' && !isValidEmail(value)) {
+                    isValid = false;
+                    group.classList.add('error');
+                    showFieldError(group, 'Please enter a valid email address');
+                } else {
+                    group.classList.add('success');
+                }
+            });
+            
+            return isValid;
+        }
+
+        function showFieldError(group, message) {
+            const errorDiv = document.createElement('div');
+            errorDiv.className = 'field-error';
+            errorDiv.textContent = message;
+            group.appendChild(errorDiv);
+        }
+
+        // Form Auto-save functionality
+        function initializeFormAutoSave() {
+            const forms = document.querySelectorAll('form[data-autosave]');
+            forms.forEach(form => {
+                const inputs = form.querySelectorAll('input, select, textarea');
+                const formId = form.id || 'form_' + Math.random().toString(36).substr(2, 9);
+                
+                // Load saved data
+                loadFormData(form, formId);
+                
+                inputs.forEach(input => {
+                    input.addEventListener('input', debounce(() => {
+                        saveFormData(form, formId);
+                    }, 1000));
+                });
+            });
+        }
+
+        // Table functionality
+        function initializeTableInteractions() {
+            // Search functionality
+            const searchInput = document.getElementById('searchInput');
+            if (searchInput) {
+                searchInput.addEventListener('input', debounce(filterTable, 300));
+            }
+
+            // Filter buttons
+            const filterButtons = document.querySelectorAll('.filter-btn');
+            filterButtons.forEach(btn => {
+                btn.addEventListener('click', function() {
+                    // Remove active class from all buttons
+                    filterButtons.forEach(b => b.classList.remove('active'));
+                    // Add active class to clicked button
+                    this.classList.add('active');
+                    
+                    // Filter table
+                    filterTable();
+                });
+            });
+
+            // Sort functionality
+            const tableHeaders = document.querySelectorAll('.modern-table th');
+            tableHeaders.forEach((header, index) => {
+                if (header.textContent.trim() !== 'ACTIONS') {
+                    header.style.cursor = 'pointer';
+                    header.addEventListener('click', () => sortTable(index));
+                }
+            });
+        }
+
+        function filterTable() {
+            const searchInput = document.getElementById('searchInput');
+            const activeFilter = document.querySelector('.filter-btn.active');
+            const tableRows = document.querySelectorAll('.modern-table tbody tr');
+            
+            const searchTerm = searchInput ? searchInput.value.toLowerCase() : '';
+            const filterType = activeFilter ? activeFilter.dataset.filter : 'all';
+            
+            tableRows.forEach(row => {
+                if (row.classList.contains('barangay-header')) return;
+                
+                const text = row.textContent.toLowerCase();
+                const matchesSearch = text.includes(searchTerm);
+                
+                let matchesFilter = true;
+                if (filterType !== 'all') {
+                    const categoryCell = row.querySelector('td:nth-child(16)'); // Category column
+                    const lifeStatusCell = row.querySelector('td:nth-child(15)'); // Life status column
+                    
+                    if (filterType === 'local' || filterType === 'national') {
+                        matchesFilter = categoryCell && categoryCell.textContent.toLowerCase().includes(filterType);
+                    } else if (filterType === 'waiting') {
+                        matchesFilter = categoryCell && categoryCell.textContent.toLowerCase().includes('waiting');
+                    }
+                }
+                
+                row.style.display = (matchesSearch && matchesFilter) ? '' : 'none';
+            });
+        }
+
+        function sortTable(columnIndex) {
+            const table = document.querySelector('.modern-table');
+            const tbody = table.querySelector('tbody');
+            const rows = Array.from(tbody.querySelectorAll('tr:not(.barangay-header)'));
+            
+            const isAscending = !table.dataset.sortAscending || table.dataset.sortColumn !== columnIndex;
+            table.dataset.sortAscending = isAscending;
+            table.dataset.sortColumn = columnIndex;
+            
+            rows.sort((a, b) => {
+                const aText = a.cells[columnIndex].textContent.trim();
+                const bText = b.cells[columnIndex].textContent.trim();
+                
+                // Try to parse as numbers
+                const aNum = parseFloat(aText);
+                const bNum = parseFloat(bText);
+                
+                if (!isNaN(aNum) && !isNaN(bNum)) {
+                    return isAscending ? aNum - bNum : bNum - aNum;
+                }
+                
+                // Sort as strings
+                return isAscending ? aText.localeCompare(bText) : bText.localeCompare(aText);
+            });
+            
+            // Re-append sorted rows
+            rows.forEach(row => tbody.appendChild(row));
+        }
+
+        function exportTable() {
+            const table = document.querySelector('.modern-table');
+            const rows = Array.from(table.querySelectorAll('tr'));
+            
+            let csv = '';
+            rows.forEach(row => {
+                const cells = Array.from(row.querySelectorAll('th, td'));
+                const rowData = cells.map(cell => {
+                    let text = cell.textContent.trim();
+                    // Remove emojis and clean text
+                    text = text.replace(/[\u{1F600}-\u{1F64F}]|[\u{1F300}-\u{1F5FF}]|[\u{1F680}-\u{1F6FF}]|[\u{1F1E0}-\u{1F1FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]/gu, '');
+                    return `"${text}"`;
+                });
+                csv += rowData.join(',') + '\n';
+            });
+            
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'seniors-export.csv';
+            a.click();
+            window.URL.revokeObjectURL(url);
+        }
+
+        // Loading States and Micro-interactions
+        function showLoadingOverlay(message = 'Loading...', subtext = 'Please wait') {
+            const overlay = document.createElement('div');
+            overlay.className = 'loading-overlay';
+            overlay.innerHTML = `
+                <div class="loading-spinner"></div>
+                <div class="loading-text">${message}</div>
+                <div class="loading-subtext">${subtext}</div>
+            `;
+            document.body.appendChild(overlay);
+            return overlay;
+        }
+
+        function hideLoadingOverlay(overlay) {
+            if (overlay && overlay.parentNode) {
+                overlay.parentNode.removeChild(overlay);
+            }
+        }
+
+        function showToast(type, title, message, duration = 5000) {
+            const container = getOrCreateToastContainer();
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            
+            const icons = {
+                success: '✅',
+                error: '❌',
+                warning: '⚠️',
+                info: 'ℹ️'
+            };
+            
+            toast.innerHTML = `
+                <div class="toast-header">
+                    <span class="toast-icon">${icons[type] || icons.info}</span>
+                    <span class="toast-title">${title}</span>
+                    <button class="toast-close" onclick="removeToast(this)">&times;</button>
+                </div>
+                <div class="toast-body">${message}</div>
+            `;
+            
+            container.appendChild(toast);
+            
+            // Auto remove after duration
+            setTimeout(() => {
+                removeToast(toast.querySelector('.toast-close'));
+            }, duration);
+        }
+
+        function getOrCreateToastContainer() {
+            let container = document.querySelector('.toast-container');
+            if (!container) {
+                container = document.createElement('div');
+                container.className = 'toast-container';
+                document.body.appendChild(container);
+            }
+            return container;
+        }
+
+        function removeToast(closeBtn) {
+            const toast = closeBtn.closest('.toast');
+            if (toast) {
+                toast.style.animation = 'slideOut 0.3s ease-out forwards';
+                setTimeout(() => {
+                    if (toast.parentNode) {
+                        toast.parentNode.removeChild(toast);
+                    }
+                }, 300);
+            }
+        }
+
+        function showProgressIndicator() {
+            const indicator = document.createElement('div');
+            indicator.className = 'progress-indicator';
+            indicator.innerHTML = '<div class="progress-bar-fill"></div>';
+            document.body.appendChild(indicator);
+            
+            // Animate progress
+            setTimeout(() => {
+                const fill = indicator.querySelector('.progress-bar-fill');
+                if (fill) {
+                    fill.style.width = '100%';
+                }
+            }, 100);
+            
+            return indicator;
+        }
+
+        function hideProgressIndicator(indicator) {
+            if (indicator && indicator.parentNode) {
+                indicator.parentNode.removeChild(indicator);
+            }
+        }
+
+        function addMicroInteractions() {
+            // Add hover effects to cards
+            document.querySelectorAll('.card, .modern-card').forEach(card => {
+                card.classList.add('hover-lift');
+            });
+
+            // Add click ripple effects to buttons
+            document.querySelectorAll('.btn, .action-btn').forEach(btn => {
+                btn.classList.add('click-ripple');
+            });
+
+            // Add scale effects to interactive elements
+            document.querySelectorAll('.filter-btn, .table-btn').forEach(btn => {
+                btn.classList.add('hover-scale');
+            });
+
+            // Add glow effects to important buttons
+            document.querySelectorAll('.btn-primary, .modern-btn').forEach(btn => {
+                btn.classList.add('hover-glow');
+            });
+        }
+
+        function createSkeletonLoader(container, type = 'card') {
+            const skeleton = document.createElement('div');
+            skeleton.className = 'skeleton';
+            
+            if (type === 'card') {
+                skeleton.innerHTML = `
+                    <div class="skeleton-text long"></div>
+                    <div class="skeleton-text medium"></div>
+                    <div class="skeleton-text short"></div>
+                `;
+            } else if (type === 'table') {
+                skeleton.innerHTML = `
+                    <div class="skeleton-text long"></div>
+                    <div class="skeleton-text long"></div>
+                    <div class="skeleton-text long"></div>
+                `;
+            }
+            
+            container.appendChild(skeleton);
+            return skeleton;
+        }
+
+        function removeSkeletonLoader(skeleton) {
+            if (skeleton && skeleton.parentNode) {
+                skeleton.parentNode.removeChild(skeleton);
+            }
+        }
+
+        // Enhanced form submission with loading states
+        function handleFormSubmitWithLoading(form) {
+            const submitBtn = form.querySelector('button[type="submit"]');
+            const originalText = submitBtn.innerHTML;
+            
+            // Show loading state
+            submitBtn.classList.add('loading');
+            submitBtn.disabled = true;
+            
+            // Show progress indicator
+            const progressIndicator = showProgressIndicator();
+            
+            // Simulate form processing
+            setTimeout(() => {
+                hideProgressIndicator(progressIndicator);
+                submitBtn.classList.remove('loading');
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = originalText;
+                
+                // Show success toast
+                showToast('success', 'Success!', 'Form submitted successfully');
+            }, 2000);
+        }
+
+        // Navigation Improvements
+        function initializeNavigationEnhancements() {
+            initializeBreadcrumbs();
+            initializeGlobalSearch();
+            initializeQuickActions();
+            initializeNavTabs();
+        }
+
+        function initializeBreadcrumbs() {
+            const breadcrumbs = document.querySelectorAll('.breadcrumb');
+            breadcrumbs.forEach(breadcrumb => {
+                // Add click handlers for breadcrumb items
+                const items = breadcrumb.querySelectorAll('.breadcrumb-item');
+                items.forEach(item => {
+                    item.addEventListener('click', function(e) {
+                        if (this.classList.contains('active')) {
+                            e.preventDefault();
+                        }
+                    });
+                });
+            });
+        }
+
+        function initializeGlobalSearch() {
+            const searchInput = document.querySelector('.global-search input');
+            if (!searchInput) return;
+
+            const suggestionsContainer = document.createElement('div');
+            suggestionsContainer.className = 'search-suggestions';
+            searchInput.parentNode.appendChild(suggestionsContainer);
+
+            let searchTimeout;
+            searchInput.addEventListener('input', function() {
+                clearTimeout(searchTimeout);
+                const query = this.value.trim();
+                
+                if (query.length < 2) {
+                    suggestionsContainer.style.display = 'none';
+                    return;
+                }
+
+                searchTimeout = setTimeout(() => {
+                    performGlobalSearch(query, suggestionsContainer);
+                }, 300);
+            });
+
+            // Hide suggestions when clicking outside
+            document.addEventListener('click', function(e) {
+                if (!searchInput.contains(e.target) && !suggestionsContainer.contains(e.target)) {
+                    suggestionsContainer.style.display = 'none';
+                }
+            });
+        }
+
+        function performGlobalSearch(query, container) {
+            // Mock search results - in a real app, this would be an API call
+            const mockResults = [
+                { type: 'senior', icon: '👤', title: 'Senior Citizen Records', description: 'Manage senior citizen information' },
+                { type: 'event', icon: '📅', title: 'Events', description: 'View and manage events' },
+                { type: 'report', icon: '📊', title: 'Reports', description: 'Generate and view reports' },
+                { type: 'barangay', icon: '🏘️', title: 'Barangays', description: 'Manage barangay information' }
+            ];
+
+            const filteredResults = mockResults.filter(result => 
+                result.title.toLowerCase().includes(query.toLowerCase()) ||
+                result.description.toLowerCase().includes(query.toLowerCase())
+            );
+
+            if (filteredResults.length === 0) {
+                container.innerHTML = '<div class="search-suggestion"><div class="suggestion-content"><h4>No results found</h4></div></div>';
+            } else {
+                container.innerHTML = filteredResults.map(result => `
+                    <div class="search-suggestion" onclick="navigateToSearchResult('${result.type}')">
+                        <div class="suggestion-icon">${result.icon}</div>
+                        <div class="suggestion-content">
+                            <h4>${result.title}</h4>
+                            <p>${result.description}</p>
+                        </div>
+                    </div>
+                `).join('');
+            }
+
+            container.style.display = 'block';
+        }
+
+        function navigateToSearchResult(type) {
+            const routes = {
+                senior: '/admin/seniors.php',
+                event: '/admin/events.php',
+                report: '/admin/reports.php',
+                barangay: '/admin/barangays.php'
+            };
+
+            if (routes[type]) {
+                window.location.href = routes[type];
+            }
+        }
+
+        function initializeQuickActions() {
+            const quickActionBtns = document.querySelectorAll('.quick-action-btn');
+            quickActionBtns.forEach(btn => {
+                btn.addEventListener('click', function(e) {
+                    // Add ripple effect
+                    const ripple = document.createElement('div');
+                    ripple.className = 'ripple-effect';
+                    ripple.style.cssText = `
+                        position: absolute;
+                        border-radius: 50%;
+                        background: rgba(30, 58, 138, 0.3);
+                        transform: scale(0);
+                        animation: ripple 0.6s linear;
+                        pointer-events: none;
+                    `;
+                    
+                    const rect = this.getBoundingClientRect();
+                    const size = Math.max(rect.width, rect.height);
+                    ripple.style.width = ripple.style.height = size + 'px';
+                    ripple.style.left = (e.clientX - rect.left - size / 2) + 'px';
+                    ripple.style.top = (e.clientY - rect.top - size / 2) + 'px';
+                    
+                    this.style.position = 'relative';
+                    this.appendChild(ripple);
+                    
+                    setTimeout(() => ripple.remove(), 600);
+                });
+            });
+        }
+
+        function initializeNavTabs() {
+            const navTabs = document.querySelectorAll('.nav-tab');
+            navTabs.forEach(tab => {
+                tab.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    
+                    // Remove active class from all tabs
+                    navTabs.forEach(t => t.classList.remove('active'));
+                    
+                    // Add active class to clicked tab
+                    this.classList.add('active');
+                    
+                    // Show corresponding content
+                    const targetId = this.getAttribute('data-target');
+                    if (targetId) {
+                        showTabContent(targetId);
+                    }
+                });
+            });
+        }
+
+        function showTabContent(targetId) {
+            // Hide all tab content
+            const allTabContent = document.querySelectorAll('.tab-content');
+            allTabContent.forEach(content => {
+                content.style.display = 'none';
+            });
+            
+            // Show target content
+            const targetContent = document.getElementById(targetId);
+            if (targetContent) {
+                targetContent.style.display = 'block';
+                targetContent.classList.add('fade-in');
+            }
+        }
+
+        function createBreadcrumb(items) {
+            const breadcrumb = document.createElement('nav');
+            breadcrumb.className = 'breadcrumb';
+            
+            breadcrumb.innerHTML = items.map((item, index) => {
+                const isLast = index === items.length - 1;
+                return `
+                    <a href="${item.url || '#'}" class="breadcrumb-item ${isLast ? 'active' : ''}">
+                        ${item.icon ? `<span>${item.icon}</span>` : ''}
+                        <span>${item.title}</span>
+                    </a>
+                    ${!isLast ? '<span class="breadcrumb-separator">›</span>' : ''}
+                `;
+            }).join('');
+            
+            return breadcrumb;
+        }
+
+        function updatePageTitle(title, subtitle = '') {
+            const titleElement = document.querySelector('.page-title-section h1');
+            const subtitleElement = document.querySelector('.page-title-section p');
+            
+            if (titleElement) titleElement.textContent = title;
+            if (subtitleElement) subtitleElement.textContent = subtitle;
+        }
+
+        function addQuickAction(icon, title, action) {
+            const quickActions = document.querySelector('.quick-actions');
+            if (!quickActions) return;
+            
+            const btn = document.createElement('button');
+            btn.className = 'quick-action-btn';
+            btn.innerHTML = `<span>${icon}</span><span>${title}</span>`;
+            btn.addEventListener('click', action);
+            
+            quickActions.appendChild(btn);
+        }
+
+        // Accessibility Improvements
+        function initializeAccessibilityFeatures() {
+            addSkipLinks();
+            initializeKeyboardNavigation();
+            initializeARIALabels();
+            initializeFocusManagement();
+            initializeScreenReaderSupport();
+            initializeHighContrastMode();
+            initializeReducedMotion();
+        }
+
+        function addSkipLinks() {
+            const skipLink = document.createElement('a');
+            skipLink.href = '#main-content';
+            skipLink.className = 'skip-link';
+            skipLink.textContent = 'Skip to main content';
+            document.body.insertBefore(skipLink, document.body.firstChild);
+        }
+
+        function initializeKeyboardNavigation() {
+            // Add keyboard navigation class to body
+            document.body.classList.add('keyboard-nav');
+            
+            // Handle keyboard navigation for custom elements
+            document.addEventListener('keydown', function(e) {
+                // Tab navigation for custom elements
+                if (e.key === 'Tab') {
+                    handleTabNavigation(e);
+                }
+                
+                // Enter/Space for custom buttons
+                if ((e.key === 'Enter' || e.key === ' ') && e.target.classList.contains('keyboard-navigable')) {
+                    e.preventDefault();
+                    e.target.click();
+                }
+                
+                // Escape to close modals
+                if (e.key === 'Escape') {
+                    closeAllModals();
+                }
+                
+                // Arrow keys for table navigation
+                if (e.target.closest('.modern-table')) {
+                    handleTableNavigation(e);
+                }
+            });
+        }
+
+        function handleTabNavigation(e) {
+            const focusableElements = document.querySelectorAll(
+                'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+            );
+            
+            const firstElement = focusableElements[0];
+            const lastElement = focusableElements[focusableElements.length - 1];
+            
+            if (e.shiftKey && document.activeElement === firstElement) {
+                e.preventDefault();
+                lastElement.focus();
+            } else if (!e.shiftKey && document.activeElement === lastElement) {
+                e.preventDefault();
+                firstElement.focus();
+            }
+        }
+
+        function handleTableNavigation(e) {
+            const table = e.target.closest('.modern-table');
+            const rows = Array.from(table.querySelectorAll('tbody tr:not(.barangay-header)'));
+            const currentRow = e.target.closest('tr');
+            const currentIndex = rows.indexOf(currentRow);
+            
+            if (e.key === 'ArrowDown' && currentIndex < rows.length - 1) {
+                e.preventDefault();
+                rows[currentIndex + 1].focus();
+            } else if (e.key === 'ArrowUp' && currentIndex > 0) {
+                e.preventDefault();
+                rows[currentIndex - 1].focus();
+            }
+        }
+
+        function closeAllModals() {
+            const modals = document.querySelectorAll('.modal-overlay');
+            modals.forEach(modal => {
+                modal.style.display = 'none';
+                modal.setAttribute('aria-hidden', 'true');
+            });
+        }
+
+        function initializeARIALabels() {
+            // Add ARIA labels to interactive elements
+            const buttons = document.querySelectorAll('button:not([aria-label])');
+            buttons.forEach(btn => {
+                if (!btn.textContent.trim()) {
+                    btn.setAttribute('aria-label', 'Button');
+                }
+            });
+            
+            // Add ARIA labels to form inputs
+            const inputs = document.querySelectorAll('input:not([aria-label])');
+            inputs.forEach(input => {
+                const label = document.querySelector(`label[for="${input.id}"]`);
+                if (label) {
+                    input.setAttribute('aria-label', label.textContent.trim());
+                }
+            });
+            
+            // Add ARIA labels to tables
+            const tables = document.querySelectorAll('table:not([aria-label])');
+            tables.forEach(table => {
+                const caption = table.querySelector('caption');
+                if (caption) {
+                    table.setAttribute('aria-label', caption.textContent.trim());
+                } else {
+                    table.setAttribute('aria-label', 'Data table');
+                }
+            });
+        }
+
+        function initializeFocusManagement() {
+            // Manage focus when modals open/close
+            const modals = document.querySelectorAll('.modal-overlay');
+            modals.forEach(modal => {
+                const observer = new MutationObserver(function(mutations) {
+                    mutations.forEach(function(mutation) {
+                        if (mutation.type === 'attributes' && mutation.attributeName === 'style') {
+                            if (modal.style.display === 'none') {
+                                modal.setAttribute('aria-hidden', 'true');
+                            } else {
+                                modal.setAttribute('aria-hidden', 'false');
+                                // Focus first focusable element in modal
+                                const firstFocusable = modal.querySelector('button, input, select, textarea, [tabindex]:not([tabindex="-1"])');
+                                if (firstFocusable) {
+                                    firstFocusable.focus();
+                                }
+                            }
+                        }
+                    });
+                });
+                observer.observe(modal, { attributes: true });
+            });
+        }
+
+        function initializeScreenReaderSupport() {
+            // Add live regions for dynamic content
+            const liveRegion = document.createElement('div');
+            liveRegion.className = 'aria-live';
+            liveRegion.setAttribute('aria-live', 'polite');
+            liveRegion.setAttribute('aria-atomic', 'true');
+            liveRegion.id = 'live-region';
+            document.body.appendChild(liveRegion);
+            
+            // Announce form validation errors
+            const forms = document.querySelectorAll('form');
+            forms.forEach(form => {
+                form.addEventListener('invalid', function(e) {
+                    announceToScreenReader('Form validation error: ' + e.target.validationMessage);
+                });
+            });
+        }
+
+        function announceToScreenReader(message) {
+            const liveRegion = document.getElementById('live-region');
+            if (liveRegion) {
+                liveRegion.textContent = message;
+                setTimeout(() => {
+                    liveRegion.textContent = '';
+                }, 1000);
+            }
+        }
+
+        function initializeHighContrastMode() {
+            // Check for high contrast preference
+            if (window.matchMedia('(prefers-contrast: high)').matches) {
+                document.body.classList.add('high-contrast');
+            }
+            
+            // Listen for changes
+            window.matchMedia('(prefers-contrast: high)').addEventListener('change', function(e) {
+                if (e.matches) {
+                    document.body.classList.add('high-contrast');
+                } else {
+                    document.body.classList.remove('high-contrast');
+                }
+            });
+        }
+
+        function initializeReducedMotion() {
+            // Check for reduced motion preference
+            if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+                document.body.classList.add('reduced-motion');
+            }
+            
+            // Listen for changes
+            window.matchMedia('(prefers-reduced-motion: reduce)').addEventListener('change', function(e) {
+                if (e.matches) {
+                    document.body.classList.add('reduced-motion');
+                } else {
+                    document.body.classList.remove('reduced-motion');
+                }
+            });
+        }
+
+        function updateARIAInvalid(element, isValid) {
+            const formGroup = element.closest('.form-group');
+            if (formGroup) {
+                formGroup.setAttribute('aria-invalid', !isValid);
+            }
+        }
+
+        function updateARIASort(header, direction) {
+            // Remove sort attributes from all headers
+            const allHeaders = document.querySelectorAll('.modern-table th');
+            allHeaders.forEach(h => h.setAttribute('aria-sort', 'none'));
+            
+            // Set sort attribute for current header
+            header.setAttribute('aria-sort', direction);
+        }
+
+        function addRequiredIndicators() {
+            const requiredInputs = document.querySelectorAll('input[required], select[required], textarea[required]');
+            requiredInputs.forEach(input => {
+                const label = document.querySelector(`label[for="${input.id}"]`);
+                if (label && !label.querySelector('.required')) {
+                    label.classList.add('required');
+                }
+            });
+        }
+
+        // Add CSS for slideOut animation
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes slideOut {
+                from { transform: translateX(0); opacity: 1; }
+                to { transform: translateX(100%); opacity: 0; }
+            }
+        `;
+        document.head.appendChild(style);
+
+        function saveFormData(form, formId) {
+            const formData = new FormData(form);
+            const data = {};
+            
+            for (let [key, value] of formData.entries()) {
+                data[key] = value;
+            }
+            
+            localStorage.setItem(`form_${formId}`, JSON.stringify(data));
+            
+            // Show save indicator
+            showSaveIndicator(form);
+        }
+
+        function loadFormData(form, formId) {
+            const savedData = localStorage.getItem(`form_${formId}`);
+            if (!savedData) return;
+            
+            try {
+                const data = JSON.parse(savedData);
+                
+                Object.keys(data).forEach(key => {
+                    const input = form.querySelector(`[name="${key}"]`);
+                    if (input) {
+                        if (input.type === 'checkbox' || input.type === 'radio') {
+                            input.checked = data[key] === 'on' || data[key] === input.value;
+                        } else {
+                            input.value = data[key];
+                        }
+                    }
+                });
+            } catch (e) {
+                console.error('Error loading form data:', e);
+            }
+        }
+
+        function showSaveIndicator(form) {
+            let indicator = form.querySelector('.save-indicator');
+            if (!indicator) {
+                indicator = document.createElement('div');
+                indicator.className = 'save-indicator';
+                indicator.style.cssText = `
+                    position: absolute;
+                    top: 10px;
+                    right: 10px;
+                    background: var(--success);
+                    color: white;
+                    padding: 4px 8px;
+                    border-radius: 4px;
+                    font-size: 12px;
+                    font-weight: 600;
+                    opacity: 0;
+                    transition: opacity 0.3s ease;
+                `;
+                form.style.position = 'relative';
+                form.appendChild(indicator);
+            }
+            
+            indicator.textContent = 'Saved';
+            indicator.style.opacity = '1';
+            
+            setTimeout(() => {
+                indicator.style.opacity = '0';
+            }, 2000);
         }
 
 // Add Modern CSS Animations

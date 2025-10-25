@@ -306,101 +306,193 @@ $user = current_user();
 	<main class="content">
 		<div class="dashboard-grid">
 			<!-- Graph -->
-			<div class="card dash-graph">
-				<div class="card-body">
-					<h2 class="card-title" style="margin:0 0 .25rem;">Seniors Registered in <?= $year ?> (<?= $thisMonthPct ?>% this month)</h2>
-					<div class="chart-wrap"><canvas id="registrationsChart"></canvas></div>
+			<div class="card dash-graph modern-card">
+				<div class="card-header modern-card-header">
+					<div class="card-title-section">
+						<h2 class="card-title">📊 Registration Trends</h2>
+						<p class="card-subtitle">Seniors registered in <?= $year ?> (<?= $thisMonthPct ?>% this month)</p>
+					</div>
+					<div class="card-actions">
+						<button class="btn-icon" title="Refresh data" onclick="refreshChart()">
+							<span>🔄</span>
+						</button>
+						<button class="btn-icon" title="Export data" onclick="exportChart()">
+							<span>📥</span>
+						</button>
+					</div>
+				</div>
+				<div class="card-body modern-card-body">
+					<div class="chart-container">
+						<div class="chart-wrap"><canvas id="registrationsChart"></canvas></div>
+						<div class="chart-overlay" id="chartOverlay">
+							<div class="loading-spinner"></div>
+							<span>Loading chart data...</span>
+						</div>
+					</div>
+					<div class="chart-stats">
+						<div class="stat-item">
+							<span class="stat-label">This Month</span>
+							<span class="stat-value"><?= $thisMonthCount ?></span>
+						</div>
+						<div class="stat-item">
+							<span class="stat-label">Year Total</span>
+							<span class="stat-value"><?= $yearTotal ?></span>
+						</div>
+						<div class="stat-item">
+							<span class="stat-label">Monthly Avg</span>
+							<span class="stat-value"><?= round($yearTotal / 12) ?></span>
+						</div>
+					</div>
 				</div>
 			</div>
 
 			<!-- Second row: Local -->
-			<a href="<?= BASE_URL ?>/admin/local_seniors.php" class="dash-local" style="text-decoration: none; color: inherit;">
-				<div class="card dash-mini">
-						<div class="card-header" style="padding: .75rem 1rem;">
-							<h2 style="margin: 0; color: #333; font-size: 1rem; display: flex; align-items: center; gap:.5rem;">
-								<span class="badge-box"></span>
-								Local Seniors
-							</h2>
+			<a href="<?= BASE_URL ?>/admin/local_seniors.php" class="dash-local modern-stat-card" style="text-decoration: none; color: inherit;">
+				<div class="card dash-mini modern-mini-card">
+					<div class="card-header modern-mini-header">
+						<div class="mini-card-icon local-icon">🏘️</div>
+						<div class="mini-card-content">
+							<h3 class="mini-card-title">Local Seniors</h3>
+							<p class="mini-card-subtitle">Municipal residents</p>
 						</div>
-						<div class="card-body" style="padding: .75rem 1rem; text-align: center;">
-							<div style="font-size: 1.5rem; font-weight: 700; color: #28a745; margin-bottom: 0.2rem;"><?= $localSeniors ?></div>
-							<p style="margin: 0; color: #666; font-weight: 500; font-size: 0.8rem;">Registered Local Seniors</p>
+						<div class="mini-card-arrow">→</div>
+					</div>
+					<div class="card-body modern-mini-body">
+						<div class="mini-stat-number"><?= $localSeniors ?></div>
+						<div class="mini-stat-trend">
+							<span class="trend-icon">📈</span>
+							<span class="trend-text">Active</span>
 						</div>
+					</div>
 				</div>
 			</a>
 
 			<!-- Second row: National -->
-			<a href="<?= BASE_URL ?>/admin/national_seniors.php" class="dash-national" style="text-decoration: none; color: inherit;">
-				<div class="card dash-mini">
-						<div class="card-header" style="padding: .75rem 1rem;">
-							<h2 style="margin: 0; color: #333; font-size: 1rem; display: flex; align-items: center; gap:.5rem;">
-								<span class="badge-box badge-ph">PH</span>
-								National Seniors
-							</h2>
+			<a href="<?= BASE_URL ?>/admin/national_seniors.php" class="dash-national modern-stat-card" style="text-decoration: none; color: inherit;">
+				<div class="card dash-mini modern-mini-card">
+					<div class="card-header modern-mini-header">
+						<div class="mini-card-icon national-icon">🇵🇭</div>
+						<div class="mini-card-content">
+							<h3 class="mini-card-title">National Seniors</h3>
+							<p class="mini-card-subtitle">Philippine citizens</p>
 						</div>
-						<div class="card-body" style="padding: .75rem 1rem; text-align: center;">
-							<div style="font-size: 1.5rem; font-weight: 700; color: #007bff; margin-bottom: 0.2rem;"><?= $nationalSeniors ?></div>
-							<p style="margin: 0; color: #666; font-weight: 500; font-size: 0.8rem;">Registered National Seniors</p>
+						<div class="mini-card-arrow">→</div>
+					</div>
+					<div class="card-body modern-mini-body">
+						<div class="mini-stat-number"><?= $nationalSeniors ?></div>
+						<div class="mini-stat-trend">
+							<span class="trend-icon">📊</span>
+							<span class="trend-text">Registered</span>
 						</div>
+					</div>
 				</div>
 			</a>
 
 			<!-- Right column: Upcoming spans rows 2-3 -->
-			<div class="card dash-upcoming">
-					<div class="card-header" style="padding: .9rem 1rem;">
-						<h2 style="margin: 0; color: #333; font-size: 1.1rem; display: flex; align-items: center; gap:.5rem;">
-							<span class="badge-box"></span>
-							Upcoming Events
-						</h2>
+			<div class="card dash-upcoming modern-card">
+				<div class="card-header modern-card-header">
+					<div class="card-title-section">
+						<h2 class="card-title">📅 Upcoming Events</h2>
+						<p class="card-subtitle">Scheduled activities and meetings</p>
 					</div>
-				<div class="card-body">
-						<?php if (!empty($upcomingEventsList)): ?>
-							<div class="upcoming-list">
-								<?php foreach ($upcomingEventsList as $event): ?>
-									<div class="upcoming-item">
-										<div class="up-title"><?= htmlspecialchars($event['title']) ?></div>
-										<div class="up-meta"><?= date('M d, Y', strtotime($event['event_date'])) ?> • <?= htmlspecialchars($event['organizer_name'] ?: 'Unknown') ?></div>
-									</div>
-								<?php endforeach; ?>
-							</div>
-						<?php else: ?>
-							<div style="text-align: center; padding: .75rem; color: #666;">
-								<p style="margin: 0 0 .5rem; font-size: .95rem;">No upcoming events scheduled</p>
-								<a href="<?= BASE_URL ?>/admin/events.php" class="button" style="background: #667eea; color: white; padding: 0.5rem .75rem; border-radius: 6px; text-decoration: none; font-weight: 500;">Create Event</a>
-							</div>
-						<?php endif; ?>
+					<div class="card-actions">
+						<a href="<?= BASE_URL ?>/admin/events.php" class="btn-icon" title="View all events">
+							<span>📋</span>
+						</a>
 					</div>
-			</div>
-
-			<!-- Calendar -->
-			<div class="card dash-calendar">
-				<div class="card-header">
-					<h2 style="margin:0; display:flex; align-items:center; gap:.5rem;">
-						<span>🗓️</span> <?= date('F Y') ?>
-					</h2>
 				</div>
-				<div class="card-body">
-					<div class="calendar-dow">
-						<div>SUN</div><div>MON</div><div>TUE</div><div>WED</div><div>THUR</div><div>FRI</div><div>SAT</div>
-					</div>
-					<div class="calendar-grid">
-						<?php
-							$startWeekday = (int)date('N', strtotime($firstDay));
-							for ($i=1;$i<$startWeekday;$i++) echo '<div></div>';
-							$daysInMonth = (int)date('t');
-							for ($day=1;$day<=$daysInMonth;$day++):
-								$events = $calEvents[$day] ?? [];
-						?>
-						<div class="cal-day">
-							<div class="cal-day-num"><?= $day ?></div>
-							<?php foreach ($events as $e): ?>
-								<div class="cal-evt">
-									<strong><?= htmlspecialchars($e['organizer_name'] ?: 'Unknown') ?></strong><br>
-									<?= htmlspecialchars($e['title'] ?: 'Event') ?>
+				<div class="card-body modern-card-body">
+					<?php if (!empty($upcomingEventsList)): ?>
+						<div class="upcoming-list modern-event-list">
+							<?php foreach ($upcomingEventsList as $event): ?>
+								<div class="upcoming-item modern-event-item">
+									<div class="event-date-badge">
+										<span class="event-day"><?= date('d', strtotime($event['event_date'])) ?></span>
+										<span class="event-month"><?= date('M', strtotime($event['event_date'])) ?></span>
+									</div>
+									<div class="event-details">
+										<h4 class="event-title"><?= htmlspecialchars($event['title']) ?></h4>
+										<div class="event-meta">
+											<span class="event-organizer">👤 <?= htmlspecialchars($event['organizer_name'] ?: 'Unknown') ?></span>
+											<span class="event-time">🕐 <?= $event['event_time'] ? date('g:i A', strtotime($event['event_time'])) : 'All Day' ?></span>
+										</div>
+									</div>
+									<div class="event-status">
+										<span class="status-badge upcoming">Upcoming</span>
+									</div>
 								</div>
 							<?php endforeach; ?>
 						</div>
-						<?php endfor; ?>
+					<?php else: ?>
+						<div class="empty-state modern-empty-state">
+							<div class="empty-icon">📅</div>
+							<h3>No Upcoming Events</h3>
+							<p>No events are scheduled at the moment.</p>
+							<a href="<?= BASE_URL ?>/admin/events.php" class="btn btn-primary">
+								<span>Create Event</span>
+								<span>+</span>
+							</a>
+						</div>
+					<?php endif; ?>
+				</div>
+			</div>
+
+			<!-- Calendar -->
+			<div class="card dash-calendar modern-card">
+				<div class="card-header modern-card-header">
+					<div class="card-title-section">
+						<h2 class="card-title">🗓️ <?= date('F Y') ?></h2>
+						<p class="card-subtitle">Monthly event calendar</p>
+					</div>
+					<div class="card-actions">
+						<button class="btn-icon" title="Previous month" onclick="changeMonth(-1)">
+							<span>◀</span>
+						</button>
+						<button class="btn-icon" title="Next month" onclick="changeMonth(1)">
+							<span>▶</span>
+						</button>
+					</div>
+				</div>
+				<div class="card-body modern-card-body">
+					<div class="calendar-container">
+						<div class="calendar-dow modern-calendar-dow">
+							<div class="dow-item">SUN</div>
+							<div class="dow-item">MON</div>
+							<div class="dow-item">TUE</div>
+							<div class="dow-item">WED</div>
+							<div class="dow-item">THU</div>
+							<div class="dow-item">FRI</div>
+							<div class="dow-item">SAT</div>
+						</div>
+						<div class="calendar-grid modern-calendar-grid">
+							<?php
+								$startWeekday = (int)date('N', strtotime($firstDay));
+								for ($i=1;$i<$startWeekday;$i++) echo '<div class="cal-day empty-day"></div>';
+								$daysInMonth = (int)date('t');
+								for ($day=1;$day<=$daysInMonth;$day++):
+									$events = $calEvents[$day] ?? [];
+									$isToday = $day == (int)date('j');
+							?>
+							<div class="cal-day modern-cal-day <?= $isToday ? 'today' : '' ?>">
+								<div class="cal-day-num"><?= $day ?></div>
+								<?php if (!empty($events)): ?>
+									<div class="cal-events">
+										<?php foreach (array_slice($events, 0, 2) as $e): ?>
+											<div class="cal-evt modern-cal-evt">
+												<span class="event-title"><?= htmlspecialchars($e['title'] ?: 'Event') ?></span>
+												<span class="event-organizer"><?= htmlspecialchars($e['organizer_name'] ?: 'Unknown') ?></span>
+											</div>
+										<?php endforeach; ?>
+										<?php if (count($events) > 2): ?>
+											<div class="cal-evt more-events">
+												+<?= count($events) - 2 ?> more
+											</div>
+										<?php endif; ?>
+									</div>
+								<?php endif; ?>
+							</div>
+							<?php endfor; ?>
+						</div>
 					</div>
 				</div>
 			</div>
@@ -413,26 +505,185 @@ $user = current_user();
 
 	<script src="<?= BASE_URL ?>/assets/app.js"></script>
 	<script>
-		// Chart.js - monthly registrations
-		const ctx = document.getElementById('registrationsChart');
-		if (ctx) {
-			new Chart(ctx, {
-				type: 'bar',
-				data: {
-					labels: ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'],
-					datasets: [{
-						label: 'Registrations',
-						data: <?= json_encode($monthlyCounts) ?>,
-						backgroundColor: 'rgba(37, 99, 235, 0.6)'
-					}]
-				},
-				options: {
-					plugins: { legend: { display: false } },
-					maintainAspectRatio: false,
-					scales: { y: { beginAtZero: true, ticks: { precision:0 } } }
+		// Enhanced Chart.js with modern styling
+		let chartInstance = null;
+		
+		function initializeChart() {
+			const ctx = document.getElementById('registrationsChart');
+			const overlay = document.getElementById('chartOverlay');
+			
+			if (!ctx) return;
+			
+			// Show loading overlay
+			if (overlay) {
+				overlay.style.display = 'flex';
+			}
+			
+			// Simulate loading delay for better UX
+			setTimeout(() => {
+				chartInstance = new Chart(ctx, {
+					type: 'bar',
+					data: {
+						labels: ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'],
+						datasets: [{
+							label: 'Registrations',
+							data: <?= json_encode($monthlyCounts) ?>,
+							backgroundColor: 'rgba(30, 58, 138, 0.8)',
+							borderColor: 'rgba(30, 58, 138, 1)',
+							borderWidth: 2,
+							borderRadius: 6,
+							borderSkipped: false,
+						}]
+					},
+					options: {
+						responsive: true,
+						maintainAspectRatio: false,
+						plugins: { 
+							legend: { display: false },
+							tooltip: {
+								backgroundColor: 'rgba(0, 0, 0, 0.8)',
+								titleColor: '#fff',
+								bodyColor: '#fff',
+								borderColor: 'rgba(30, 58, 138, 1)',
+								borderWidth: 1,
+								cornerRadius: 8,
+								displayColors: false,
+								callbacks: {
+									title: function(context) {
+										return context[0].label + ' ' + new Date().getFullYear();
+									},
+									label: function(context) {
+										return context.parsed.y + ' registrations';
+									}
+								}
+							}
+						},
+						scales: { 
+							y: { 
+								beginAtZero: true, 
+								ticks: { 
+									precision: 0,
+									color: '#6b7280',
+									font: {
+										size: 12,
+										weight: '500'
+									}
+								},
+								grid: {
+									color: 'rgba(107, 114, 128, 0.1)',
+									drawBorder: false
+								}
+							},
+							x: {
+								ticks: {
+									color: '#6b7280',
+									font: {
+										size: 12,
+										weight: '500'
+									}
+								},
+								grid: {
+									display: false
+								}
+							}
+						},
+						animation: {
+							duration: 1000,
+							easing: 'easeInOutQuart'
+						}
+					}
+				});
+				
+				// Hide loading overlay
+				if (overlay) {
+					overlay.style.display = 'none';
 				}
-			});
+			}, 800);
 		}
+		
+		// Chart refresh function
+		function refreshChart() {
+			if (chartInstance) {
+				chartInstance.update('active');
+			}
+		}
+		
+		// Chart export function
+		function exportChart() {
+			if (chartInstance) {
+				const link = document.createElement('a');
+				link.download = 'senior-registrations-chart.png';
+				link.href = chartInstance.toBase64Image();
+				link.click();
+			}
+		}
+		
+		// Calendar navigation
+		function changeMonth(direction) {
+			// This would typically make an AJAX call to update the calendar
+			console.log('Change month:', direction);
+			// For now, just show a message
+			alert('Calendar navigation will be implemented in the next update');
+		}
+		
+		// Initialize everything when DOM is loaded
+		document.addEventListener('DOMContentLoaded', function() {
+			initializeChart();
+			
+			// Add hover effects to stat cards
+			document.querySelectorAll('.modern-stat-card').forEach(card => {
+				card.addEventListener('mouseenter', function() {
+					this.style.transform = 'translateY(-4px)';
+					this.style.boxShadow = '0 12px 24px rgba(0, 0, 0, 0.15)';
+				});
+				
+				card.addEventListener('mouseleave', function() {
+					this.style.transform = 'translateY(0)';
+					this.style.boxShadow = '0 4px 6px rgba(0, 0, 0, 0.1)';
+				});
+			});
+			
+			// Add click effects to event items
+			document.querySelectorAll('.modern-event-item').forEach(item => {
+				item.addEventListener('click', function(e) {
+					e.preventDefault();
+					// Add ripple effect
+					const ripple = document.createElement('div');
+					ripple.className = 'ripple-effect';
+					ripple.style.cssText = `
+						position: absolute;
+						border-radius: 50%;
+						background: rgba(30, 58, 138, 0.3);
+						transform: scale(0);
+						animation: ripple 0.6s linear;
+						pointer-events: none;
+					`;
+					
+					const rect = this.getBoundingClientRect();
+					const size = Math.max(rect.width, rect.height);
+					ripple.style.width = ripple.style.height = size + 'px';
+					ripple.style.left = (e.clientX - rect.left - size / 2) + 'px';
+					ripple.style.top = (e.clientY - rect.top - size / 2) + 'px';
+					
+					this.style.position = 'relative';
+					this.appendChild(ripple);
+					
+					setTimeout(() => ripple.remove(), 600);
+				});
+			});
+		});
+		
+		// Add CSS for ripple effect
+		const style = document.createElement('style');
+		style.textContent = `
+			@keyframes ripple {
+				to {
+					transform: scale(4);
+					opacity: 0;
+				}
+			}
+		`;
+		document.head.appendChild(style);
 	</script>
 </body>
 </html>

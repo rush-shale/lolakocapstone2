@@ -555,10 +555,7 @@ $lastEvent = !empty($attendanceHistory) ? $attendanceHistory[0] : null;
                         <i class="fas fa-user-circle"></i>
                     </div>
                     <div class="profile-info">
-                        <h2><?= htmlspecialchars($senior['first_name'] . ' ' . $senior['last_name']) ?></h2>
-                        <?php if ($senior['middle_name']): ?>
-                        <p class="profile-middle"><?= htmlspecialchars($senior['middle_name']) ?></p>
-                        <?php endif; ?>
+                        <h2><?= htmlspecialchars($senior['first_name'] . ' ' . ($senior['middle_name'] ? $senior['middle_name'] . ' ' : '') . $senior['last_name'] . ($senior['ext_name'] ? ' ' . $senior['ext_name'] : '')) ?></h2>
                         <div class="profile-badges">
                             <span class="badge <?= $senior['life_status'] === 'living' ? 'badge-success' : 'badge-danger' ?>">
                                 <?= ucfirst($senior['life_status']) ?>
