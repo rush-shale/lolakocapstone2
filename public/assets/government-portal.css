@@ -261,16 +261,17 @@ a:hover {
 
 /* Modern Login Logo */
 .login-logo-img {
-    width: 60px;
-    height: 60px;
+    width: 80px;
+    height: 80px;
     object-fit: contain;
     border-radius: var(--radius-lg);
     box-shadow: var(--shadow-md);
+    background: transparent;
 }
 
 .login-logo-fallback {
-    width: 60px;
-    height: 60px;
+    width: 80px;
+    height: 80px;
     background: var(--text-white);
     border-radius: var(--radius-lg);
     display: flex;

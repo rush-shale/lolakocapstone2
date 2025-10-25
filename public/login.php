@@ -23,9 +23,7 @@ if ($email === '' || $password === '') {
 }
 
 if (login($email, $password)) {
-	$user = current_user();
-	$target = $user['role'] === 'admin' ? '/admin/dashboard.php' : '/user/dashboard.php';
-	header('Location: ' . BASE_URL . $target);
+	header('Location: ' . BASE_URL . '/welcome.php');
 	exit;
 }
 

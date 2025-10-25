@@ -32,7 +32,7 @@ $csrf = generate_csrf_token();
 		<div class="login-header">
 			<div class="login-header-content">
 				<div class="login-logo">
-					<img src="<?= BASE_URL ?>/images/MANOLO FORTICH LOGO.png" alt="Manolo Fortich Logo" class="login-logo-img" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+					<img src="<?= BASE_URL ?>/images/OSCA LOGO.png" alt="OSCA Logo" class="login-logo-img" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
 					<div class="login-logo-fallback" style="display: none;">🏛️</div>
 				</div>
 				<div>
