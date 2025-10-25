@@ -94,7 +94,31 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 				$pdo->beginTransaction();
 
 				if ($op === 'create') {
-					$stmt = $pdo->prepare('INSERT INTO seniors (first_name, middle_name, last_name, ext_name, age, date_of_birth, sex, place_of_birth, civil_status, educational_attainment, occupation, annual_income, other_skills, barangay, contact, osca_id_no, remarks, health_condition, purok, cellphone, benefits_received, life_status, category, validation_status, validation_date, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())');
+					// Check for duplicate senior based on name and other identifying information
+					$duplicateCheck = $pdo->prepare('
+						SELECT id, first_name, last_name, middle_name, ext_name, date_of_birth, barangay 
+						FROM seniors 
+						WHERE first_name = ? AND last_name = ? 
+						AND (middle_name = ? OR (middle_name IS NULL AND ? IS NULL))
+						AND (ext_name = ? OR (ext_name IS NULL AND ? IS NULL))
+						AND (date_of_birth = ? OR (date_of_birth IS NULL AND ? IS NULL))
+						AND barangay = ?
+					');
+					$duplicateCheck->execute([
+						$first_name, $last_name, 
+						$middle_name ?: null, $middle_name ?: null,
+						$ext_name ?: null, $ext_name ?: null,
+						$date_of_birth ?: null, $date_of_birth ?: null,
+						$barangay
+					]);
+					
+					if ($duplicateCheck->rowCount() > 0) {
+						$existing = $duplicateCheck->fetch(PDO::FETCH_ASSOC);
+						$existingName = trim($existing['first_name'] . ' ' . ($existing['middle_name'] ?: '') . ' ' . $existing['last_name'] . ($existing['ext_name'] ? ' ' . $existing['ext_name'] : ''));
+						$message = "Duplicate entry detected! A senior with the name '{$existingName}' already exists in {$existing['barangay']} barangay.";
+						$pdo->rollback();
+					} else {
+						$stmt = $pdo->prepare('INSERT INTO seniors (first_name, middle_name, last_name, ext_name, age, date_of_birth, sex, place_of_birth, civil_status, educational_attainment, occupation, annual_income, other_skills, barangay, contact, osca_id_no, remarks, health_condition, purok, cellphone, benefits_received, life_status, category, validation_status, validation_date, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())');
 					$stmt->execute([
 						$first_name, $middle_name ?: null, $last_name, $ext_name ?: null, $age,
 						$date_of_birth ?: null, $sex ?: null, $place_of_birth ?: null,
@@ -104,8 +128,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 						$health_condition, $purok, $cellphone,
 						$benefits_received, $life_status, $category, $validation_status, $validation_date
 					]);
-					$senior_id = $pdo->lastInsertId();
-					$message = 'Senior added successfully';
+						$senior_id = $pdo->lastInsertId();
+						$message = 'Senior added successfully';
+					}
 				} else {
 					// If the existing record is still in 'waiting', prevent changing category via generic update.
 					// Only the validate_waiting operation should move a senior out of waiting.
@@ -1284,7 +1309,6 @@ try {
 										<th>CATEGORY</th>
 										<th>VALIDATION STATUS</th>
 										<th>VALIDATED</th>
-										<th>ACTIONS</th>
 									</tr>
 								</thead>
 								<tbody id="seniorsTableBody">
@@ -1341,35 +1365,12 @@ try {
 										<td>
 											<?= $senior['validation_date'] ? date('M d, Y H:i', strtotime($senior['validation_date'])) : '-' ?>
 										</td>
-										<td>
-											<div class="action-buttons">
-								<?php if (($senior['category'] ?? '') === 'waiting'): ?>
-									<form method="post" style="display:inline" onsubmit="event.stopPropagation();">
-										<input type="hidden" name="csrf" value="<?= $csrf ?>">
-										<input type="hidden" name="op" value="validate_waiting">
-										<input type="hidden" name="id" value="<?= (int)$senior['id'] ?>">
-										<button type="submit" class="action-btn view" title="Validate Senior">
-											✅
-										</button>
-									</form>
-								<?php endif; ?>
-												<button class="action-btn view" onclick="event.stopPropagation(); viewSeniorDetails(<?= $senior['id'] ?>)" title="View Details">
-													👁️
-												</button>
-												<button class="action-btn edit" onclick="event.stopPropagation(); editSenior(<?= $senior['id'] ?>)" title="Edit Senior">
-													✏️
-												</button>
-												<button class="action-btn delete" onclick="event.stopPropagation(); deleteSenior(<?= $senior['id'] ?>, '<?= htmlspecialchars($senior['first_name'] . ' ' . $senior['last_name']) ?>')" title="Delete Senior">
-													🗑️
-												</button>
-											</div>
-										</td>
 									</tr>
 									<?php endforeach; ?>
 									<?php endforeach; ?>
 									<?php else: ?>
 									<tr class="no-data">
-										<td colspan="20" style="text-align: center; padding: 2rem; color: var(--gov-text-muted);">
+										<td colspan="19" style="text-align: center; padding: 2rem; color: var(--gov-text-muted);">
 											No seniors found. Click "Add New Senior" to get started.
 										</td>
 									</tr>
@@ -1383,43 +1384,6 @@ try {
 		</div> <!-- Close content-body -->
 	</main>
 
-	<!-- Delete Confirmation Modal -->
-	<div class="modal-overlay" id="deleteModal">
-		<div class="modal">
-			<div class="modal-header">
-				<h2 class="modal-title">
-					<i class="fas fa-exclamation-triangle"></i>
-					Confirm Delete
-				</h2>
-				<button class="modal-close" onclick="closeDeleteModal()" aria-label="Close delete confirmation">&times;</button>
-			</div>
-			<div class="modal-body">
-				<div class="delete-warning">
-					<div class="warning-icon">
-						<i class="fas fa-trash"></i>
-					</div>
-					<h3>Are you sure?</h3>
-					<p>You are about to delete the senior <strong id="deleteSeniorName"></strong>. This action cannot be undone.</p>
-				</div>
-				<form method="post" id="deleteForm">
-					<input type="hidden" name="csrf" value="<?= $csrf ?>">
-					<input type="hidden" name="op" value="delete">
-					<input type="hidden" name="id" id="deleteSeniorId">
-					
-					<div class="form-actions">
-						<button type="button" class="button secondary" onclick="closeDeleteModal()">
-							<i class="fas fa-times"></i>
-							Cancel
-						</button>
-						<button type="submit" class="button danger">
-							<i class="fas fa-trash"></i>
-							Delete Senior
-						</button>
-					</div>
-				</form>
-			</div>
-		</div>
-	</div>
 
 	<!-- Senior Details Modal -->
 	<div class="modal-overlay" id="seniorDetailsModal">
@@ -1443,19 +1407,6 @@ try {
 
 	<script src="<?= BASE_URL ?>/assets/app.js"></script>
 	<script>
-		function openDeleteModal(seniorId, seniorName) {
-			document.getElementById('deleteSeniorId').value = seniorId;
-			document.getElementById('deleteSeniorName').textContent = seniorName;
-			document.getElementById('deleteModal').classList.add('active');
-			document.body.classList.add('modal-active');
-			document.body.style.overflow = 'hidden';
-		}
-
-		function closeDeleteModal() {
-			document.getElementById('deleteModal').classList.remove('active');
-			document.body.classList.remove('modal-active');
-			document.body.style.overflow = '';
-		}
 
 		function viewSeniorDetails(id) {
 			console.log('Loading senior details for ID:', id);
@@ -1630,9 +1581,6 @@ try {
 			document.getElementById('deceasedForm').reset();
 		}
 
-		function deleteSenior(id, name) {
-			openDeleteModal(id, name);
-		}
 
 
 
