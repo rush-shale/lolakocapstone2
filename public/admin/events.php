@@ -10,10 +10,14 @@ $user = current_user();
 $message = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+	error_log("POST request received. CSRF token: " . ($_POST['csrf'] ?? 'not provided'));
 	if (!validate_csrf_token($_POST['csrf'] ?? '')) {
 		$message = 'Invalid session token';
+		error_log("CSRF token validation failed");
 	} else {
+		error_log("CSRF token validation passed");
 		$op = $_POST['op'] ?? 'create';
+		error_log("Operation type: " . $op);
 		$title = trim($_POST['title'] ?? '');
 		$description = trim($_POST['description'] ?? '');
 		$event_date = $_POST['event_date'] ?? '';
@@ -36,10 +40,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 				}
 			} elseif ($op === 'delete') {
 				$id = (int)($_POST['id'] ?? 0);
+				error_log("Delete request received for event ID: " . $id);
 				if ($id > 0) {
 					$stmt = $pdo->prepare('DELETE FROM events WHERE id=? AND scope="admin"');
-					$stmt->execute([$id]);
-					$message = 'Event deleted successfully';
+					$result = $stmt->execute([$id]);
+					$affectedRows = $stmt->rowCount();
+					error_log("Delete query executed. Affected rows: " . $affectedRows);
+					if ($affectedRows > 0) {
+						$message = 'Event deleted successfully';
+					} else {
+						$message = 'Event not found or already deleted';
+					}
+				} else {
+					$message = 'Invalid event ID provided';
 				}
 			}
 		}
@@ -101,6 +114,29 @@ $events = $pdo->query("SELECT * FROM events WHERE scope='admin' ORDER BY event_d
 		top: 5%;
 		left: 50%;
 		transform: translate(-50%, 0);
+	}
+	
+	/* Enhanced delete button styling */
+	.btn-danger {
+		background-color: #dc3545;
+		border-color: #dc3545;
+		color: white;
+		transition: all 0.2s ease;
+	}
+	
+	.btn-danger:hover {
+		background-color: #c82333;
+		border-color: #bd2130;
+		transform: translateY(-1px);
+		box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+	}
+	
+	.btn-danger:disabled {
+		background-color: #6c757d;
+		border-color: #6c757d;
+		cursor: not-allowed;
+		transform: none;
+		box-shadow: none;
 	}
 		.modal-header {
 			display: flex;
@@ -211,8 +247,8 @@ $events = $pdo->query("SELECT * FROM events WHERE scope='admin' ORDER BY event_d
 											<button class="btn btn-secondary btn-sm" onclick="editEvent(<?= htmlspecialchars(json_encode($e)) ?>)">
 												Edit
 											</button>
-											<button class="btn btn-secondary btn-sm" onclick="deleteEvent(<?= $e['id'] ?>)" style="background-color: var(--gov-danger); color: white; border-color: var(--gov-danger);">
-												Delete
+											<button class="btn btn-danger btn-sm" onclick="deleteEvent(<?= $e['id'] ?>, '<?= htmlspecialchars($e['title']) ?>', this)" title="Delete Event">
+												🗑️ Delete
 											</button>
 										</div>
 									</td>
@@ -337,15 +373,32 @@ $events = $pdo->query("SELECT * FROM events WHERE scope='admin' ORDER BY event_d
 			document.getElementById('submit-btn').textContent = 'Create Event';
 		}
 
-		function deleteEvent(eventId) {
-			if (confirm('Are you sure you want to delete this event? This action cannot be undone.')) {
+		function deleteEvent(eventId, eventTitle, element) {
+			// Create a more user-friendly confirmation dialog
+			const confirmMessage = `Are you sure you want to delete the event "${eventTitle}"?\n\nThis action cannot be undone and will permanently remove the event from the system.`;
+			
+			if (confirm(confirmMessage)) {
+				console.log('Deleting event with ID:', eventId);
+				
+				// Show loading state
+				const deleteBtn = element || document.querySelector(`button[onclick*="deleteEvent(${eventId}"]`);
+				if (deleteBtn) {
+					const originalText = deleteBtn.innerHTML;
+					deleteBtn.innerHTML = '⏳ Deleting...';
+					deleteBtn.disabled = true;
+				}
+				
+				// Create and submit form
 				const form = document.createElement('form');
 				form.method = 'POST';
+				form.action = window.location.href; // Ensure we submit to the same page
 				form.innerHTML = `
 					<input type="hidden" name="csrf" value="<?= $csrf ?>">
 					<input type="hidden" name="op" value="delete">
 					<input type="hidden" name="id" value="${eventId}">
 				`;
+				
+				console.log('Submitting delete form for event ID:', eventId);
 				document.body.appendChild(form);
 				form.submit();
 			}
