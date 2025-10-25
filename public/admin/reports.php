@@ -360,7 +360,7 @@ function pdf_render(string $title, array $headers, array $rows, string $report_t
     // Header with logos and official format
     echo '<div class="header">';
     echo '<div class="logos">';
-    echo '<div class="logo logo-left"><img src="' . BASE_URL . '/images/logo.png" alt="DILG Logo" /></div>';
+    echo '<div class="logo logo-left"><img src="' . BASE_URL . '/images/OSCA LOGO.png" alt="OSCA Logo" /></div>';
     echo '<div class="header-text">';
     echo '<h1>Republic of the Philippines</h1>';
     echo '<h2>Province of Bukidnon</h2>';
