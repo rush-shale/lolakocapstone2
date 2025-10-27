@@ -142,8 +142,25 @@ if ($action === 'edit' && $id) {
 							</div>
 							
 							<div class="form-group" id="barangayGroup" style="<?= ($editUser['role'] ?? '') === 'admin' ? 'display: none;' : '' ?>">
-								<label class="form-label">Barangay Assignment</label>
-								<input type="text" name="barangay" class="form-input" value="<?= htmlspecialchars($editUser['barangay'] ?? '') ?>" placeholder="Enter barangay name" <?= ($editUser['role'] ?? '') === 'admin' ? 'disabled' : 'required' ?>>
+								<label class="form-label">Barangay Name</label>
+								<select name="barangay" class="form-input" <?= ($editUser['role'] ?? '') === 'admin' ? 'disabled' : 'required' ?>>
+									<option value="">Select Barangay</option>
+									<?php 
+									$barangays = [
+										'Agusan Canyon', 'Alae', 'Dahilayan', 'Dalirig', 'Damilag', 
+										'Dicklum', 'Guilang-guilang', 'Kalugmanan', 'Lindaban', 'Lingion', 
+										'Lunocan', 'Maluko', 'Mambatangan', 'Mampayag', 'Minsuro', 
+										'Mantibugao', 'Tankulan', 'San Miguel', 'Sankanan', 'Santiago', 
+										'Santo Niño', 'Ticala'
+									];
+									$currentBarangay = $editUser['barangay'] ?? '';
+									foreach ($barangays as $barangay): 
+									?>
+										<option value="<?= htmlspecialchars($barangay) ?>" <?= $currentBarangay === $barangay ? 'selected' : '' ?>>
+											<?= htmlspecialchars($barangay) ?>
+										</option>
+									<?php endforeach; ?>
+								</select>
 							</div>
 							
 							<?php if ($editUser): ?>
