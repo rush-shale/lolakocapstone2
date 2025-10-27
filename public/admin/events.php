@@ -9,7 +9,7 @@ start_app_session();
 $user = current_user();
 $message = '';
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+	if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 	error_log("POST request received. CSRF token: " . ($_POST['csrf'] ?? 'not provided'));
 	if (!validate_csrf_token($_POST['csrf'] ?? '')) {
 		$message = 'Invalid session token';
@@ -18,42 +18,49 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 		error_log("CSRF token validation passed");
 		$op = $_POST['op'] ?? 'create';
 		error_log("Operation type: " . $op);
-		$title = trim($_POST['title'] ?? '');
-		$description = trim($_POST['description'] ?? '');
-		$event_date = $_POST['event_date'] ?? '';
-		$event_time = $_POST['event_time'] ?? null;
-		$contact_number = trim($_POST['contact_number'] ?? '');
-		$exact_location = trim($_POST['exact_location'] ?? '');
-		$scope = 'admin';
 		
-		if ($title && $event_date) {
-			if ($op === 'create') {
-				$stmt = $pdo->prepare('INSERT INTO events (title, description, event_date, event_time, contact_number, exact_location, scope, created_by) VALUES (?,?,?,?,?,?,?,?)');
-				$stmt->execute([$title, $description ?: null, $event_date, $event_time ?: null, $contact_number ?: null, $exact_location ?: null, $scope, $user['id']]);
-				$message = 'Event created successfully';
-			} elseif ($op === 'update') {
-				$id = (int)($_POST['id'] ?? 0);
-				if ($id > 0) {
-					$stmt = $pdo->prepare('UPDATE events SET title=?, description=?, event_date=?, event_time=?, contact_number=?, exact_location=? WHERE id=? AND scope="admin"');
-					$stmt->execute([$title, $description ?: null, $event_date, $event_time ?: null, $contact_number ?: null, $exact_location ?: null, $id]);
-					$message = 'Event updated successfully';
-				}
-			} elseif ($op === 'delete') {
-				$id = (int)($_POST['id'] ?? 0);
-				error_log("Delete request received for event ID: " . $id);
-				if ($id > 0) {
-					$stmt = $pdo->prepare('DELETE FROM events WHERE id=? AND scope="admin"');
-					$result = $stmt->execute([$id]);
-					$affectedRows = $stmt->rowCount();
-					error_log("Delete query executed. Affected rows: " . $affectedRows);
-					if ($affectedRows > 0) {
-						$message = 'Event deleted successfully';
-					} else {
-						$message = 'Event not found or already deleted';
-					}
+		if ($op === 'delete') {
+			// Handle delete operation
+			$id = (int)($_POST['id'] ?? 0);
+			error_log("Delete request received for event ID: " . $id);
+			if ($id > 0) {
+				$stmt = $pdo->prepare('DELETE FROM events WHERE id=? AND scope="admin"');
+				$result = $stmt->execute([$id]);
+				$affectedRows = $stmt->rowCount();
+				error_log("Delete query executed. Affected rows: " . $affectedRows);
+				if ($affectedRows > 0) {
+					$message = 'Event deleted successfully';
 				} else {
-					$message = 'Invalid event ID provided';
+					$message = 'Event not found or already deleted';
 				}
+			} else {
+				$message = 'Invalid event ID provided';
+			}
+		} else {
+			// Handle create and update operations
+			$title = trim($_POST['title'] ?? '');
+			$description = trim($_POST['description'] ?? '');
+			$event_date = $_POST['event_date'] ?? '';
+			$event_time = $_POST['event_time'] ?? null;
+			$contact_number = trim($_POST['contact_number'] ?? '');
+			$exact_location = trim($_POST['exact_location'] ?? '');
+			$scope = 'admin';
+			
+			if ($title && $event_date) {
+				if ($op === 'create') {
+					$stmt = $pdo->prepare('INSERT INTO events (title, description, event_date, event_time, contact_number, exact_location, scope, created_by) VALUES (?,?,?,?,?,?,?,?)');
+					$stmt->execute([$title, $description ?: null, $event_date, $event_time ?: null, $contact_number ?: null, $exact_location ?: null, $scope, $user['id']]);
+					$message = 'Event created successfully';
+				} elseif ($op === 'update') {
+					$id = (int)($_POST['id'] ?? 0);
+					if ($id > 0) {
+						$stmt = $pdo->prepare('UPDATE events SET title=?, description=?, event_date=?, event_time=?, contact_number=?, exact_location=? WHERE id=? AND scope="admin"');
+						$stmt->execute([$title, $description ?: null, $event_date, $event_time ?: null, $contact_number ?: null, $exact_location ?: null, $id]);
+						$message = 'Event updated successfully';
+					}
+				}
+			} else {
+				$message = 'Please fill in all required fields (Title and Event Date)';
 			}
 		}
 	}
@@ -373,7 +380,7 @@ $events = $pdo->query("SELECT * FROM events WHERE scope='admin' ORDER BY event_d
 			document.getElementById('submit-btn').textContent = 'Create Event';
 		}
 
-		function deleteEvent(eventId, eventTitle, element) {
+		function deleteEvent(eventId, eventTitle, buttonElement) {
 			// Create a more user-friendly confirmation dialog
 			const confirmMessage = `Are you sure you want to delete the event "${eventTitle}"?\n\nThis action cannot be undone and will permanently remove the event from the system.`;
 			
@@ -381,17 +388,15 @@ $events = $pdo->query("SELECT * FROM events WHERE scope='admin' ORDER BY event_d
 				console.log('Deleting event with ID:', eventId);
 				
 				// Show loading state
-				const deleteBtn = element || document.querySelector(`button[onclick*="deleteEvent(${eventId}"]`);
-				if (deleteBtn) {
-					const originalText = deleteBtn.innerHTML;
-					deleteBtn.innerHTML = '⏳ Deleting...';
-					deleteBtn.disabled = true;
+				if (buttonElement) {
+					buttonElement.innerHTML = '⏳ Deleting...';
+					buttonElement.disabled = true;
 				}
 				
-				// Create and submit form
+				// Create and submit delete form
 				const form = document.createElement('form');
 				form.method = 'POST';
-				form.action = window.location.href; // Ensure we submit to the same page
+				form.action = window.location.href;
 				form.innerHTML = `
 					<input type="hidden" name="csrf" value="<?= $csrf ?>">
 					<input type="hidden" name="op" value="delete">
