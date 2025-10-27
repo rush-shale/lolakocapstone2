@@ -1287,6 +1287,7 @@ try {
 		}
 		
 		.table-scroll table {
+			width: max-content;
 			min-width: 100%;
 			white-space: nowrap;
 		}
@@ -1297,8 +1298,18 @@ try {
 			white-space: nowrap;
 		}
 		
+		/* Ensure seniors table is wide enough to show all columns */
+		.seniors-table {
+			width: max-content !important;
+			min-width: 2500px;
+		}
+		
 		/* Responsive design for tables */
 		@media (min-width: 769px) and (max-width: 1024px) {
+			.seniors-table {
+				min-width: 2000px !important;
+			}
+			
 			.table-scroll table th,
 			.table-scroll table td {
 				min-width: 100px;
@@ -1315,6 +1326,10 @@ try {
 			.table-scroll {
 				-webkit-overflow-scrolling: touch;
 				position: relative;
+			}
+			
+			.seniors-table {
+				min-width: 1800px !important;
 			}
 			
 			.table-scroll table {
@@ -1339,6 +1354,10 @@ try {
 				position: relative;
 				margin: 0 -0.75rem;
 				padding: 0 0.75rem;
+			}
+			
+			.seniors-table {
+				min-width: 1600px !important;
 			}
 			
 			.table-scroll table {
