@@ -109,13 +109,28 @@ document.addEventListener('DOMContentLoaded', function () {
     
     // Update burger button position based on sidebar state
     const burger = document.getElementById('floating-burger');
+    const content = document.querySelector('.content');
+    
     if (burger) {
       if (collapsed) {
+        // When sidebar is collapsed, show floating burger at left
         burger.style.left = '16px';
         burger.style.display = 'flex';
       } else {
-        burger.style.left = '300px';
+        // When sidebar is visible, hide floating burger and position it near sidebar edge
+        burger.style.left = '280px';
         burger.style.display = 'none';
+      }
+    }
+    
+    // Ensure content adjusts properly
+    if (content) {
+      if (collapsed) {
+        content.style.marginLeft = '0';
+        content.style.width = '100%';
+      } else {
+        content.style.marginLeft = '280px';
+        content.style.width = 'calc(100% - 280px)';
       }
     }
   }

@@ -1278,13 +1278,14 @@ a:hover {
 }
 
 .sidebar-header {
-    padding: var(--space-6);
+    padding: var(--space-4) var(--space-6);
     border-bottom: 1px solid var(--border-light);
     background: linear-gradient(135deg, var(--gov-primary) 0%, var(--gov-primary-dark) 100%);
     color: var(--text-white);
     display: flex;
     justify-content: space-between;
     align-items: center;
+    min-height: 60px;
 }
 
 .sidebar-brand {
@@ -1319,6 +1320,12 @@ a:hover {
     padding: var(--space-2);
     border-radius: var(--radius-md);
     transition: background-color var(--transition-fast);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    margin-left: auto;
 }
 
 .sidebar-toggle:hover {
@@ -1493,7 +1500,8 @@ a:hover {
     background-color: var(--bg-primary);
     position: relative;
     overflow-x: hidden;
-    transition: margin-left 0.3s ease;
+    transition: margin-left 0.3s ease, width 0.3s ease;
+    width: calc(100% - 280px);
 }
 
 .content::before {
@@ -1506,6 +1514,7 @@ a:hover {
     background: none;
     pointer-events: none;
     z-index: -1;
+    transition: left 0.3s ease;
 }
 
 /* Floating burger button */
@@ -1524,17 +1533,30 @@ a:hover {
     line-height: 1;
 }
 
-/* When sidebar is hidden, pull content full width */
-.sidebar-hidden .content { margin-left: 0 !important; }
-.sidebar-hidden .content::before { left: 0 !important; }
-.sidebar { transition: transform 0.3s ease; }
-.sidebar.sidebar-collapsed { transform: translateX(-100%); }
-/* When the sidebar element is immediately followed by .content, expand content */
-.sidebar.sidebar-collapsed + .content { margin-left: 0 !important; }
-/* Ensure main content flexes to available width */
-.content { width: calc(100% - 280px); }
-.sidebar.sidebar-collapsed + .content,
-.sidebar-hidden .content { width: 100% !important; }
+/* When sidebar is collapsed, adjust content to full width */
+body.sidebar-hidden .content { 
+    margin-left: 0 !important; 
+    width: 100% !important;
+}
+body.sidebar-hidden .content::before { 
+    left: 0 !important; 
+}
+
+/* Sidebar transition */
+.sidebar { 
+    transition: transform 0.3s ease; 
+}
+
+/* When sidebar is collapsed, hide it */
+.sidebar.sidebar-collapsed { 
+    transform: translateX(-100%); 
+}
+
+/* Content adjusts when sidebar is visible */
+body:not(.sidebar-hidden) .content {
+    margin-left: 280px;
+    width: calc(100% - 280px);
+}
 /* Floating burger styles (visible while sidebar hidden) */
 .floating-burger {
     position: fixed;
