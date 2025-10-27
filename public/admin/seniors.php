@@ -486,7 +486,7 @@ if ($status === 'active') {
 
 // Additional filters
 $benefits = $_GET['benefits'] ?? 'all'; // all|received|notyet
-$category = $_GET['category'] ?? 'all'; // all|local|national
+$category = $_GET['category'] ?? 'all'; // all|local|national|waiting
 
 $where = [];
 $params = [];
@@ -542,6 +542,17 @@ try {
 		if ($benefits === 'received') { $where[] = 'benefits_received = 1'; }
 		if ($benefits === 'notyet') { $where[] = 'benefits_received = 0'; }
 		if ($category === 'local' || $category === 'national') { $where[] = 'category = ?'; $params[] = $category; }
+		
+		// Handle barangay filter from URL
+		$barangayFilter = $_GET['barangay'] ?? null;
+		if ($barangayFilter && $barangayFilter !== 'all') {
+			$where[] = 'barangay = ?';
+			$params[] = $barangayFilter;
+		}
+		if ($category === 'waiting') {
+			$where[] = 'category = ?';
+			$params[] = 'waiting';
+		}
 
 		$sql = 'SELECT *, validation_status, validation_date, 0 as event_count, "" as events_attended FROM seniors';
 		if (!empty($where)) { $sql .= ' WHERE ' . implode(' AND ', $where); }
@@ -1209,6 +1220,58 @@ try {
 			background-color: #e5e7eb;
 		}
 
+		/* Filter dropdown styling */
+		.table-barangay-filter {
+			margin-left: 0.5rem;
+		}
+		
+		.filter-select {
+			padding: 0.5rem 1rem;
+			border: 1px solid #d1d5db;
+			border-radius: 6px;
+			font-size: 0.875rem;
+			background: white;
+			cursor: pointer;
+			min-width: 150px;
+			transition: all 0.2s ease;
+		}
+		
+		.filter-select:hover {
+			border-color: #2563eb;
+		}
+		
+		.filter-select:focus {
+			outline: none;
+			border-color: #2563eb;
+			box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+		}
+		
+		.filter-btn {
+			padding: 0.5rem 1rem;
+			border: 1px solid #d1d5db;
+			border-radius: 6px;
+			font-size: 0.875rem;
+			background: white;
+			cursor: pointer;
+			transition: all 0.2s ease;
+			color: #374151;
+		}
+		
+		.filter-btn:hover {
+			background: #f3f4f6;
+			border-color: #9ca3af;
+		}
+		
+		.filter-btn.active {
+			background: #2563eb;
+			color: white;
+			border-color: #2563eb;
+		}
+		
+		.filter-btn.active:hover {
+			background: #1d4ed8;
+		}
+		
 		/* Responsive design */
 		@media (max-width: 1024px) {
 			.content-body {
@@ -1267,10 +1330,20 @@ try {
 								<input type="text" id="searchInput" placeholder="Search seniors...">
 							</div>
 							<div class="table-filters">
-								<button class="filter-btn active" data-filter="all">All</button>
-								<button class="filter-btn" data-filter="local">Local</button>
-								<button class="filter-btn" data-filter="national">National</button>
-								<button class="filter-btn" data-filter="waiting">Waiting</button>
+								<button class="filter-btn <?= ($status === 'all' || !isset($_GET['category'])) ? 'active' : '' ?>" onclick="filterByCategory('all')" data-filter="all">All</button>
+								<button class="filter-btn <?= (isset($_GET['category']) && $_GET['category'] === 'local') ? 'active' : '' ?>" onclick="filterByCategory('local')" data-filter="local">Local</button>
+								<button class="filter-btn <?= (isset($_GET['category']) && $_GET['category'] === 'national') ? 'active' : '' ?>" onclick="filterByCategory('national')" data-filter="national">National</button>
+								<button class="filter-btn <?= (isset($_GET['category']) && $_GET['category'] === 'waiting') ? 'active' : '' ?>" onclick="filterByCategory('waiting')" data-filter="waiting">Waiting</button>
+							</div>
+							<div class="table-barangay-filter">
+								<select id="barangayFilter" class="filter-select" onchange="filterByBarangay(this.value)">
+									<option value="all">All Barangays</option>
+									<?php foreach ($barangays as $b): ?>
+										<option value="<?= htmlspecialchars($b['name']) ?>" <?= (isset($_GET['barangay']) && $_GET['barangay'] === $b['name']) ? 'selected' : '' ?>>
+											<?= htmlspecialchars($b['name']) ?>
+										</option>
+									<?php endforeach; ?>
+								</select>
 							</div>
 							<div class="table-actions">
 								<?php if ($status !== 'waiting'): ?>
@@ -1844,6 +1917,36 @@ try {
 			}
 		});
 
+		// Filter by category (Local, National, Waiting)
+		function filterByCategory(category) {
+			const url = new URL(window.location.href);
+			const baseUrl = url.origin + url.pathname;
+			
+			if (category === 'all') {
+				url.searchParams.delete('category');
+			} else {
+				url.searchParams.set('category', category);
+			}
+			
+			// Preserve barangay filter if it exists
+			const barangayFilter = url.searchParams.get('barangay');
+			const finalUrl = baseUrl + (url.search ? url.search : '') + (barangayFilter ? '&barangay=' + barangayFilter : '');
+			
+			window.location.href = url.toString();
+		}
+		
+		// Filter by barangay
+		function filterByBarangay(barangay) {
+			const url = new URL(window.location.href);
+			
+			if (barangay === 'all') {
+				url.searchParams.delete('barangay');
+			} else {
+				url.searchParams.set('barangay', barangay);
+			}
+			
+			window.location.href = url.toString();
+		}
 
 	</script>
 
