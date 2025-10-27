@@ -20,7 +20,8 @@ foreach ($stmt as $row) { $byBarangay[$row['barangay']][] = $row; }
 	<meta charset="utf-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1">
 	<title>Barangays & Seniors | SeniorCare Information System</title>
-	<link rel="stylesheet" href="<?= BASE_URL ?>/assets/government-portal.css">
+	<?php $cssVer = @filemtime(__DIR__ . '/../assets/government-portal.css') ?: time(); ?>
+	<link rel="stylesheet" href="<?= BASE_URL ?>/assets/government-portal.css?v=<?= $cssVer ?>">
 	<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
 	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
@@ -33,9 +34,9 @@ foreach ($stmt as $row) { $byBarangay[$row['barangay']][] = $row; }
 		</header>
 		
 		<div class="content-body">
-			<div class="search-container">
+			<div class="table-controls" style="margin-bottom: 2rem;">
 				<span class="search-icon">🔍</span>
-				<input type="text" placeholder="Search barangays or seniors..." id="searchInput">
+				<input type="text" placeholder="Search barangays or seniors..." id="searchInput" class="form-input">
 			</div>
 
 			<!-- Statistics Cards -->

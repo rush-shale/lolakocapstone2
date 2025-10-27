@@ -100,9 +100,31 @@ $csrf = generate_csrf_token();
 	<meta charset="utf-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1">
 	<title>Attendance Management | SeniorCare Information System</title>
-	<link rel="stylesheet" href="<?= BASE_URL ?>/assets/government-portal.css">
+	<?php $cssVer = @filemtime(__DIR__ . '/../assets/government-portal.css') ?: time(); ?>
+	<link rel="stylesheet" href="<?= BASE_URL ?>/assets/government-portal.css?v=<?= $cssVer ?>">
 	<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
 	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+	<style>
+		/* Attendance table scroll styling */
+		.attendance-table-scroll {
+			overflow-x: auto;
+			overflow-y: visible;
+			-webkit-overflow-scrolling: touch;
+			max-width: 100%;
+		}
+		
+		.attendance-table-scroll table {
+			width: max-content;
+			min-width: 100%;
+			white-space: nowrap;
+		}
+		
+		.attendance-table-scroll table th,
+		.attendance-table-scroll table td {
+			min-width: 120px;
+			white-space: nowrap;
+		}
+	</style>
 </head>
 <body>
 	<?php include __DIR__ . '/../partials/sidebar_user.php'; ?>
@@ -128,32 +150,30 @@ $csrf = generate_csrf_token();
 
 
 			<!-- Seniors Attendance List (Admin-like UI) -->
-			<div class="card animate-fade-in" style="background: #fff; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); border: none; overflow: hidden;">
+			<div class="card animate-fade-in">
 				<form method="post">
 					<input type="hidden" name="csrf" value="<?= $csrf ?>">
 					<input type="hidden" name="op" value="bulk_mark">
-					<div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
-						<div>
-							<h2 class="card-title">All Seniors</h2>
-							<p class="card-subtitle">Check attendees, then save for the selected event</p>
-						</div>
-						<div style="display: flex; align-items: center; gap: 1rem;">
-							<input type="text" id="searchInput" placeholder="Search seniors..." style="padding: 0.5rem; width: 250px; border: 1px solid #ccc; border-radius: 4px; font-size: 1rem;">
-							<select name="event_id" id="event_id" class="form-select" required>
-								<option value="">Choose event...</option>
-								<?php foreach ($events as $e): ?>
-									<option value="<?= (int)$e['id'] ?>">
-										<?= htmlspecialchars($e['event_date']) ?> - <?= htmlspecialchars($e['title']) ?>
-										<?php if ($e['event_time']): ?>(<?= htmlspecialchars($e['event_time']) ?>)<?php endif; ?>
-									</option>
-								<?php endforeach; ?>
-							</select>
-							<button type="submit" class="button primary"><i class="fas fa-save"></i> Save Attendance</button>
-						</div>
+					<div class="card-header">
+						<h2 class="card-title">All Seniors</h2>
+						<p class="card-subtitle">Check attendees, then save for the selected event</p>
+					</div>
+					<div class="table-controls">
+						<input type="text" id="searchInput" placeholder="Search seniors..." class="form-input">
+						<select name="event_id" id="event_id" class="form-select" required>
+							<option value="">Choose event...</option>
+							<?php foreach ($events as $e): ?>
+								<option value="<?= (int)$e['id'] ?>">
+									<?= htmlspecialchars($e['event_date']) ?> - <?= htmlspecialchars($e['title']) ?>
+									<?php if ($e['event_time']): ?>(<?= htmlspecialchars($e['event_time']) ?>)<?php endif; ?>
+								</option>
+							<?php endforeach; ?>
+						</select>
+						<button type="submit" class="button primary"><i class="fas fa-save"></i> Save Attendance</button>
 					</div>
 					<div class="card-body">
-						<div class="table-container">
-							<table class="table">
+						<div class="table-container table-scroll attendance-table-scroll">
+							<table class="modern-table">
 								<thead>
 									<tr>
 										<th>Present</th>

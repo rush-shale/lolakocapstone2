@@ -20,9 +20,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 		if ($title && $event_date) {
 			$stmt = $pdo->prepare('INSERT INTO events (title, description, event_date, event_time, scope, barangay, created_by) VALUES (?,?,?,?,"barangay",?,?)');
 			$stmt->execute([$title,$description ?: null,$event_date,$event_time ?: null,$user['barangay'],$user['id']]);
-			$message = 'Event created';
+			$message = 'Event created successfully';
+			
+			// Redirect to avoid resubmission
+			header('Location: ' . $_SERVER['PHP_SELF'] . '?success=1');
+			exit;
 		}
 	}
+}
+
+// Check for success message
+if (isset($_GET['success']) && $_GET['success'] === '1') {
+	$message = 'Event created successfully';
 }
 
 $csrf = generate_csrf_token();
@@ -37,19 +46,36 @@ $events = $events->fetchAll();
 	<meta charset="utf-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1">
 	<title>My Barangay Events | SeniorCare Information System</title>
-	<link rel="stylesheet" href="<?= BASE_URL ?>/assets/government-portal.css">
+	<?php $cssVer = @filemtime(__DIR__ . '/../assets/government-portal.css') ?: time(); ?>
+	<link rel="stylesheet" href="<?= BASE_URL ?>/assets/government-portal.css?v=<?= $cssVer ?>">
+	<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+	<style>
+		/* Table scroll styling for user events */
+		.events-table-scroll {
+			overflow-x: auto;
+			overflow-y: visible;
+			-webkit-overflow-scrolling: touch;
+			max-width: 100%;
+		}
+		
+		.events-table-scroll table {
+			width: max-content;
+			min-width: 100%;
+		}
+	</style>
 </head>
 <body>
 	<?php include __DIR__ . '/../partials/sidebar_user.php'; ?>
 	<main class="content">
 		<header class="content-header">
 			<h1 class="content-title">My Barangay Events</h1>
-			<p class="content-subtitle">Manage events for your barangay</p>
+			<p class="content-subtitle">Manage events for your barangay (<?= htmlspecialchars($user['barangay']) ?>)</p>
 		</header>
 		
 		<div class="content-body">
 			<?php if ($message): ?>
-			<div class="alert alert-success animate-fade-in">
+			<div class="alert alert-success">
 				<div class="alert-icon">
 					<i class="fas fa-check-circle"></i>
 				</div>
@@ -114,8 +140,8 @@ $events = $events->fetchAll();
 					</div>
 					<div class="card-body">
 						<?php if (!empty($events)): ?>
-						<div class="table-container">
-							<table class="table">
+						<div class="table-container table-scroll events-table-scroll">
+							<table class="modern-table">
 								<thead>
 									<tr>
 										<th>Event Title</th>
@@ -162,5 +188,3 @@ $events = $events->fetchAll();
 	<script src="<?= BASE_URL ?>/assets/app.js"></script>
 </body>
 </html>
-
-
