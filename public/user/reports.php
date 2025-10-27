@@ -442,95 +442,35 @@ if ($type === 'attendance') {
 		</header>
 		
 		<div class="content-body">
-			<div class="grid grid-2">
-				<div class="card">
-					<div class="card-header">
-						<h2 class="card-title">
-							<i class="fas fa-download"></i>
-							Data Export
-						</h2>
-						<p class="card-subtitle">Download your barangay data in CSV format</p>
-					</div>
-					<div class="card-body">
-						<div class="report-options">
-							<div style="border: 2px solid #1e40af; padding: 20px; margin-bottom: 20px; border-radius: 8px; background: #f8fafc;">
-								<div class="mb-2"><strong style="color: #1e40af; font-size: 16px;">📋 Official Government Format</strong></div>
-								<p style="font-size: 12px; color: #64748b; margin: 5px 0;">Seniors data with official government headers and formatting</p>
-								<div style="margin-top: 15px;">
-									<a href="?type=seniors_official" class="button primary">📊 Official CSV Export</a>
-								</div>
-							</div>
-							<div style="border: 2px solid #1e40af; padding: 20px; margin-bottom: 20px; border-radius: 8px; background: #f8fafc;">
-								<div class="mb-2"><strong style="color: #1e40af; font-size: 16px;">👥 Barangay Seniors Data</strong></div>
-								<p style="font-size: 12px; color: #64748b; margin: 5px 0;">Complete seniors information for your barangay</p>
-								<div style="margin-top: 15px;">
-									<a href="?type=seniors" class="button primary">📊 CSV Export</a>
-								</div>
-							</div>
-							<div style="border: 2px solid #1e40af; padding: 20px; margin-bottom: 20px; border-radius: 8px; background: #f8fafc;">
-								<div class="mb-2"><strong style="color: #1e40af; font-size: 16px;">📅 Attendance Records</strong></div>
-								<p style="font-size: 12px; color: #64748b; margin: 5px 0;">Event attendance tracking for your barangay</p>
-								<div style="margin-top: 15px;">
-									<a href="?type=attendance" class="button primary">📊 CSV Export</a>
-								</div>
+			<div class="card">
+				<div class="card-header">
+					<h2 class="card-title">
+						<i class="fas fa-download"></i>
+						Data Export
+					</h2>
+					<p class="card-subtitle">Download your barangay data in CSV format</p>
+				</div>
+				<div class="card-body">
+					<div class="report-options">
+						<div style="border: 2px solid #1e40af; padding: 20px; margin-bottom: 20px; border-radius: 8px; background: #f8fafc;">
+							<div class="mb-2"><strong style="color: #1e40af; font-size: 16px;">📋 Official Government Format</strong></div>
+							<p style="font-size: 12px; color: #64748b; margin: 5px 0;">Seniors data with official government headers and formatting</p>
+							<div style="margin-top: 15px;">
+								<a href="?type=seniors_official" class="button primary">📊 Official CSV Export</a>
 							</div>
 						</div>
-					</div>
-				</div>
-				
-				<div class="card">
-					<div class="card-header">
-						<h2 class="card-title">
-							<i class="fas fa-chart-bar"></i>
-							Quick Statistics
-						</h2>
-						<p class="card-subtitle">Overview of your barangay data</p>
-					</div>
-					<div class="card-body">
-						<?php
-						$totalSeniors = $pdo->prepare("SELECT COUNT(*) FROM seniors WHERE barangay=? AND life_status='living'");
-						$totalSeniors->execute([$user['barangay']]);
-						$totalSeniorsCount = $totalSeniors->fetchColumn();
-						
-						$totalEvents = $pdo->prepare("SELECT COUNT(*) FROM events WHERE scope='barangay' AND barangay=?");
-						$totalEvents->execute([$user['barangay']]);
-						$totalEventsCount = $totalEvents->fetchColumn();
-						
-						$totalAttendance = $pdo->prepare("
-							SELECT COUNT(*) FROM attendance a
-							JOIN events e ON a.event_id = e.id
-							WHERE e.scope='barangay' AND e.barangay=?
-						");
-						$totalAttendance->execute([$user['barangay']]);
-						$totalAttendanceCount = $totalAttendance->fetchColumn();
-						?>
-						<div class="stats">
-							<div class="stat">
-								<div class="stat-icon">
-									<i class="fas fa-users"></i>
-								</div>
-								<div class="stat-content">
-									<h3>Total Seniors</h3>
-									<p class="number"><?= $totalSeniorsCount ?></p>
-								</div>
+						<div style="border: 2px solid #1e40af; padding: 20px; margin-bottom: 20px; border-radius: 8px; background: #f8fafc;">
+							<div class="mb-2"><strong style="color: #1e40af; font-size: 16px;">👥 Barangay Seniors Data</strong></div>
+							<p style="font-size: 12px; color: #64748b; margin: 5px 0;">Complete seniors information for your barangay</p>
+							<div style="margin-top: 15px;">
+								<a href="?type=seniors" class="button primary">📊 CSV Export</a>
 							</div>
-							<div class="stat success">
-								<div class="stat-icon">
-									<i class="fas fa-calendar"></i>
-								</div>
-								<div class="stat-content">
-									<h3>Total Events</h3>
-									<p class="number"><?= $totalEventsCount ?></p>
-								</div>
-							</div>
-							<div class="stat info">
-								<div class="stat-icon">
-									<i class="fas fa-check-circle"></i>
-								</div>
-								<div class="stat-content">
-									<h3>Attendance Records</h3>
-									<p class="number"><?= $totalAttendanceCount ?></p>
-								</div>
+						</div>
+						<div style="border: 2px solid #1e40af; padding: 20px; margin-bottom: 20px; border-radius: 8px; background: #f8fafc;">
+							<div class="mb-2"><strong style="color: #1e40af; font-size: 16px;">📅 Attendance Records</strong></div>
+							<p style="font-size: 12px; color: #64748b; margin: 5px 0;">Event attendance tracking for your barangay</p>
+							<div style="margin-top: 15px;">
+								<a href="?type=attendance" class="button primary">📊 CSV Export</a>
 							</div>
 						</div>
 					</div>
