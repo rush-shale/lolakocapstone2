@@ -1297,6 +1297,68 @@ try {
 			white-space: nowrap;
 		}
 		
+		/* Responsive design for tables */
+		@media (min-width: 769px) and (max-width: 1024px) {
+			.table-scroll table th,
+			.table-scroll table td {
+				min-width: 100px;
+				font-size: 0.875rem;
+				padding: 0.5rem 0.75rem;
+			}
+			
+			.content-body {
+				flex-direction: column;
+			}
+		}
+		
+		@media (min-width: 481px) and (max-width: 768px) {
+			.table-scroll {
+				-webkit-overflow-scrolling: touch;
+				position: relative;
+			}
+			
+			.table-scroll table {
+				min-width: max-content;
+			}
+			
+			.table-scroll table th,
+			.table-scroll table td {
+				min-width: 90px;
+				font-size: 0.8125rem;
+				padding: 0.5rem;
+			}
+			
+			.content-body {
+				flex-direction: column;
+			}
+		}
+		
+		@media (max-width: 480px) {
+			.table-scroll {
+				-webkit-overflow-scrolling: touch;
+				position: relative;
+				margin: 0 -0.75rem;
+				padding: 0 0.75rem;
+			}
+			
+			.table-scroll table {
+				min-width: max-content;
+				width: max-content;
+			}
+			
+			.table-scroll table th,
+			.table-scroll table td {
+				min-width: 80px;
+				font-size: 0.75rem;
+				padding: 0.375rem 0.5rem;
+			}
+			
+			.content-body {
+				flex-direction: column;
+				padding: 0.75rem;
+			}
+		}
+		
 		/* Responsive design */
 		@media (max-width: 1024px) {
 			.content-body {

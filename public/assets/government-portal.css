@@ -1642,10 +1642,43 @@ body:not(.sidebar-hidden) .content {
 .seniors-table th:nth-child(20), .seniors-table td:nth-child(20) { min-width: 140px; text-align: center; }
 
 /* Ensure sticky headers remain visible above content */
-.table-container { position: relative; }
-.table thead th { border-bottom: 1px solid var(--border-light); box-shadow: 0 1px 0 rgba(0,0,0,0.03); }
-.table thead th { padding: 0.75rem 1rem; }
-.table tbody td { padding: 0.75rem 1rem; }
+.table-container { 
+	position: relative;
+	overflow-x: auto;
+	overflow-y: visible;
+	-webkit-overflow-scrolling: touch;
+	max-width: 100%;
+}
+
+/* Universal table scroll styling for all sections */
+.table-scroll {
+	overflow-x: auto;
+	overflow-y: visible;
+	-webkit-overflow-scrolling: touch;
+	max-width: 100%;
+}
+
+.table-scroll table {
+	min-width: 100%;
+}
+
+.table-scroll table th,
+.table-scroll table td {
+	min-width: 120px;
+	white-space: nowrap;
+}
+
+/* General table styling */
+.table thead th { 
+	border-bottom: 1px solid var(--border-light); 
+	box-shadow: 0 1px 0 rgba(0,0,0,0.03); 
+}
+.table thead th { 
+	padding: 0.75rem 1rem; 
+}
+.table tbody td { 
+	padding: 0.75rem 1rem; 
+}
 
 /* Benefit management wide table */
 .benefits-wide { min-width: 1400px; table-layout: auto; }
@@ -1665,6 +1698,24 @@ body:not(.sidebar-hidden) .content {
 	.benefits-wide thead th { padding: 0.6rem 0.6rem; font-size: 0.9rem; }
 	.benefits-wide td { padding: 0.6rem 0.6rem; font-size: 0.95rem; }
 	.table-scroll { max-height: 70vh; }
+}
+
+/* Universal table scroll enhancements */
+@media (max-width: 768px) {
+	.table-container {
+		overflow-x: auto;
+		-webkit-overflow-scrolling: touch;
+	}
+	
+	.table-scroll {
+		overflow-x: auto;
+		-webkit-overflow-scrolling: touch;
+	}
+	
+	.table-container table,
+	.table-scroll table {
+		min-width: max-content;
+	}
 }
 
 @media (max-width: 1024px) {
