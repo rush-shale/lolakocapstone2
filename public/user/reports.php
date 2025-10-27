@@ -397,17 +397,29 @@ function pdf_render(string $title, array $headers, array $rows, string $report_t
 }
 
 $type = $_GET['type'] ?? '';
+$format = $_GET['format'] ?? 'csv';
+
 if ($type === 'seniors') {
 	$stmt = $pdo->prepare("SELECT id, first_name, middle_name, last_name, age, barangay, benefits_received, life_status, category FROM seniors WHERE barangay=? ORDER BY last_name, first_name");
 	$stmt->execute([$user['barangay']]);
 	$rows = $stmt->fetchAll();
-	csv_download('seniors_'.strtolower($user['barangay']).'.csv', ['ID','First Name','Middle Name','Last Name','Age','Barangay','Benefits Received','Life Status','Category'], $rows, 'seniors');
+	$headers = ['ID','First Name','Middle Name','Last Name','Age','Barangay','Benefits Received','Life Status','Category'];
+	if ($format === 'csv') {
+		csv_download('seniors_'.strtolower($user['barangay']).'.csv', $headers, $rows, 'seniors');
+	} elseif ($format === 'pdf') {
+		pdf_render('Barangay Seniors Data Report', $headers, $rows, 'seniors');
+	}
 }
 if ($type === 'seniors_official') {
 	$stmt = $pdo->prepare("SELECT last_name, first_name, COALESCE(middle_name,'') AS middle_name, COALESCE(ext_name,'') AS ext_name, barangay, age, sex, civil_status, date_of_birth, osca_id_no, COALESCE(remarks,'') AS remarks, COALESCE(health_condition,'') AS health_condition, COALESCE(purok,'') AS purok, COALESCE(place_of_birth,'') AS place_of_birth, COALESCE(cellphone,'') AS cellphone, life_status, category FROM seniors WHERE barangay=? AND life_status='living' ORDER BY last_name, first_name");
 	$stmt->execute([$user['barangay']]);
 	$rows = $stmt->fetchAll();
-	csv_download('seniors_official_'.strtolower($user['barangay']).'.csv', ['Last Name','First Name','Middle Name','Ext','Barangay','Age','Sex','Civil Status','Birthdate','OSCA ID No','Remarks','Health Condition','Purok','Place of Birth','Cellphone #','Life Status','Category'], $rows, 'seniors_official');
+	$headers = ['Last Name','First Name','Middle Name','Ext','Barangay','Age','Sex','Civil Status','Birthdate','OSCA ID No','Remarks','Health Condition','Purok','Place of Birth','Cellphone #','Life Status','Category'];
+	if ($format === 'csv') {
+		csv_download('seniors_official_'.strtolower($user['barangay']).'.csv', $headers, $rows, 'seniors_official');
+	} elseif ($format === 'pdf') {
+		pdf_render('Social Pension Program Potential List of Beneficiaries', $headers, $rows, 'seniors_official');
+	}
 }
 if ($type === 'attendance') {
 	$stmt = $pdo->prepare("SELECT a.id, s.last_name, s.first_name, e.title, e.event_date, a.marked_at
@@ -418,7 +430,12 @@ if ($type === 'attendance') {
 		ORDER BY e.event_date DESC, a.marked_at DESC");
 	$stmt->execute([$user['barangay']]);
 	$rows = $stmt->fetchAll();
-	csv_download('attendance_'.strtolower($user['barangay']).'.csv', ['ID','Senior Last Name','Senior First Name','Event Title','Event Date','Marked At'], $rows, 'attendance');
+	$headers = ['ID','Senior Last Name','Senior First Name','Event Title','Event Date','Marked At'];
+	if ($format === 'csv') {
+		csv_download('attendance_'.strtolower($user['barangay']).'.csv', $headers, $rows, 'attendance');
+	} elseif ($format === 'pdf') {
+		pdf_render('Attendance Records Report', $headers, $rows, 'attendance');
+	}
 }
 
 ?>
@@ -448,29 +465,32 @@ if ($type === 'attendance') {
 						<i class="fas fa-download"></i>
 						Data Export
 					</h2>
-					<p class="card-subtitle">Download your barangay data in CSV format</p>
+					<p class="card-subtitle">Download your barangay data in CSV or PDF format</p>
 				</div>
 				<div class="card-body">
 					<div class="report-options">
 						<div style="border: 2px solid #1e40af; padding: 20px; margin-bottom: 20px; border-radius: 8px; background: #f8fafc;">
 							<div class="mb-2"><strong style="color: #1e40af; font-size: 16px;">📋 Official Government Format</strong></div>
 							<p style="font-size: 12px; color: #64748b; margin: 5px 0;">Seniors data with official government headers and formatting</p>
-							<div style="margin-top: 15px;">
-								<a href="?type=seniors_official" class="button primary">📊 Official CSV Export</a>
+							<div style="margin-top: 15px; display: flex; gap: 10px;">
+								<a href="?type=seniors_official&format=csv" class="button primary">📊 CSV Export</a>
+								<a href="?type=seniors_official&format=pdf" class="button secondary">📄 PDF Report</a>
 							</div>
 						</div>
 						<div style="border: 2px solid #1e40af; padding: 20px; margin-bottom: 20px; border-radius: 8px; background: #f8fafc;">
 							<div class="mb-2"><strong style="color: #1e40af; font-size: 16px;">👥 Barangay Seniors Data</strong></div>
 							<p style="font-size: 12px; color: #64748b; margin: 5px 0;">Complete seniors information for your barangay</p>
-							<div style="margin-top: 15px;">
-								<a href="?type=seniors" class="button primary">📊 CSV Export</a>
+							<div style="margin-top: 15px; display: flex; gap: 10px;">
+								<a href="?type=seniors&format=csv" class="button primary">📊 CSV Export</a>
+								<a href="?type=seniors&format=pdf" class="button secondary">📄 PDF Report</a>
 							</div>
 						</div>
 						<div style="border: 2px solid #1e40af; padding: 20px; margin-bottom: 20px; border-radius: 8px; background: #f8fafc;">
 							<div class="mb-2"><strong style="color: #1e40af; font-size: 16px;">📅 Attendance Records</strong></div>
 							<p style="font-size: 12px; color: #64748b; margin: 5px 0;">Event attendance tracking for your barangay</p>
-							<div style="margin-top: 15px;">
-								<a href="?type=attendance" class="button primary">📊 CSV Export</a>
+							<div style="margin-top: 15px; display: flex; gap: 10px;">
+								<a href="?type=attendance&format=csv" class="button primary">📊 CSV Export</a>
+								<a href="?type=attendance&format=pdf" class="button secondary">📄 PDF Report</a>
 							</div>
 						</div>
 					</div>
