@@ -141,13 +141,48 @@ document.addEventListener('DOMContentLoaded', function () {
   // Default state: show the sidebar on load (user can hide it with burger button)
   (function setDefaultVisible(){
     const sidebar = document.querySelector('.sidebar');
-    if (sidebar) {
-      sidebar.classList.remove('sidebar-collapsed');
-      document.body.classList.remove('sidebar-hidden');
-    }
     const burger = document.getElementById('floating-burger');
-    if (burger) burger.style.display = 'none';
+    
+    if (sidebar) {
+      // Check if we're on mobile
+      const isMobile = window.innerWidth <= 480;
+      
+      if (isMobile) {
+        // On mobile, sidebar starts collapsed
+        sidebar.classList.add('sidebar-collapsed');
+        document.body.classList.add('sidebar-hidden');
+        if (burger) burger.style.display = 'flex';
+      } else {
+        // On desktop/tablet, sidebar starts visible
+        sidebar.classList.remove('sidebar-collapsed');
+        document.body.classList.remove('sidebar-hidden');
+        if (burger) burger.style.display = 'none';
+      }
+    }
   })();
+  
+  // Handle window resize for responsive behavior
+  window.addEventListener('resize', function() {
+    const sidebar = document.querySelector('.sidebar');
+    const burger = document.getElementById('floating-burger');
+    
+    if (!sidebar || !burger) return;
+    
+    const isMobile = window.innerWidth <= 480;
+    
+    if (isMobile) {
+      // On mobile: sidebar should be hidden by default
+      burger.style.display = 'flex';
+      // Don't force collapse on resize if user has it open
+    } else {
+      // On larger screens: manage burger visibility based on sidebar state
+      if (sidebar.classList.contains('sidebar-collapsed')) {
+        burger.style.display = 'flex';
+      } else {
+        burger.style.display = 'none';
+      }
+    }
+  });
 
   // No global click hijacking needed for header burger
 });

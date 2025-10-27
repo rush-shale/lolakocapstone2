@@ -5122,3 +5122,420 @@ body.modal-active .table-container {
 .action-buttons .button i {
 	font-size: var(--text-sm);
 }
+
+/* ============================================
+   COMPREHENSIVE RESPONSIVE DESIGN
+   ============================================ */
+
+/* Mobile First - Base Styles Already Defined */
+
+/* Small Tablets and Large Phones (481px - 768px) */
+@media (min-width: 481px) and (max-width: 768px) {
+	/* Sidebar adjustments */
+	.sidebar {
+		width: 240px;
+	}
+	
+	.content {
+		margin-left: 240px;
+		width: calc(100% - 240px);
+	}
+	
+	.content::before {
+		left: 240px;
+	}
+	
+	body:not(.sidebar-hidden) .content {
+		margin-left: 240px;
+		width: calc(100% - 240px);
+	}
+	
+	body.sidebar-hidden .content {
+		margin-left: 0;
+		width: 100%;
+	}
+	
+	/* Floating burger positioning */
+	.floating-burger {
+		left: 240px;
+	}
+	
+	/* Content padding */
+	.content-header {
+		padding: var(--space-4) var(--space-6);
+	}
+	
+	/* Card adjustments */
+	.card-header {
+		padding: var(--space-4) var(--space-6);
+	}
+	
+	.card-body {
+		padding: var(--space-6);
+	}
+	
+	/* Table adjustments */
+	.table-container {
+		overflow-x: auto;
+	}
+	
+	/* Modal adjustments */
+	.modal {
+		max-width: 90%;
+		padding: var(--space-4);
+	}
+	
+	/* Form adjustments */
+	.form-row {
+		grid-template-columns: 1fr;
+		gap: var(--space-3);
+	}
+	
+	/* Button adjustments */
+	.button {
+		padding: var(--space-3) var(--space-4);
+		font-size: var(--text-base);
+	}
+}
+
+/* Large Tablets (769px - 1024px) */
+@media (min-width: 769px) and (max-width: 1024px) {
+	/* Sidebar stays at 280px */
+	.sidebar {
+		width: 280px;
+	}
+	
+	.content {
+		margin-left: 280px;
+		width: calc(100% - 280px);
+	}
+	
+	body:not(.sidebar-hidden) .content {
+		margin-left: 280px;
+		width: calc(100% - 280px);
+	}
+	
+	body.sidebar-hidden .content {
+		margin-left: 0;
+		width: 100%;
+	}
+	
+	/* Grid adjustments */
+	.grid-2 {
+		grid-template-columns: 1fr;
+	}
+	
+	.grid-3 {
+		grid-template-columns: repeat(2, 1fr);
+	}
+	
+	.grid-4 {
+		grid-template-columns: repeat(2, 1fr);
+	}
+	
+	/* Table styling */
+	.modern-table {
+		font-size: 0.875rem;
+	}
+	
+	.modern-table th,
+	.modern-table td {
+		padding: var(--space-2) var(--space-3);
+	}
+	
+	/* Modal adjustments */
+	.modal {
+		max-width: 90%;
+	}
+}
+
+/* Mobile Phones (320px - 480px) */
+@media (max-width: 480px) {
+	/* Sidebar - mobile behavior */
+	.sidebar {
+		width: 270px;
+		transform: translateX(-100%);
+	}
+	
+	.sidebar:not(.sidebar-collapsed) {
+		transform: translateX(0);
+	}
+	
+	.content {
+		margin-left: 0;
+		width: 100%;
+	}
+	
+	body:not(.sidebar-hidden) .content {
+		margin-left: 0;
+		width: 100%;
+	}
+	
+	body.sidebar-hidden .content {
+		margin-left: 0;
+		width: 100%;
+	}
+	
+	/* Floating burger always visible on mobile */
+	.floating-burger {
+		display: flex !important;
+		left: 16px;
+		top: 16px;
+		width: 40px;
+		height: 40px;
+	}
+	
+	/* Header adjustments */
+	.content-header {
+		padding: var(--space-3) var(--space-4);
+	}
+	
+	.content-title {
+		font-size: var(--text-xl);
+	}
+	
+	.content-subtitle {
+		font-size: var(--text-sm);
+	}
+	
+	/* Card adjustments */
+	.card {
+		margin-bottom: var(--space-4);
+	}
+	
+	.card-header {
+		padding: var(--space-3) var(--space-4);
+	}
+	
+	.card-body {
+		padding: var(--space-4);
+	}
+	
+	/* Table controls - stack vertically */
+	.table-controls {
+		flex-direction: column;
+		gap: var(--space-3);
+	}
+	
+	.table-filters {
+		flex-wrap: wrap;
+	}
+	
+	.table-barangay-filter {
+		width: 100%;
+		margin-left: 0;
+	}
+	
+	.table-barangay-filter .filter-select {
+		width: 100%;
+	}
+	
+	/* Button adjustments */
+	.filter-btn {
+		font-size: var(--text-xs);
+		padding: var(--space-2) var(--space-3);
+	}
+	
+	.table-btn {
+		font-size: var(--text-xs);
+		padding: var(--space-2);
+	}
+	
+	/* Modal full screen on mobile */
+	.modal-overlay {
+		padding: 0;
+	}
+	
+	.modal {
+		border-radius: 0;
+		width: 100%;
+		max-width: 100%;
+		max-height: 100vh;
+		height: 100vh;
+	}
+	
+	.modal-header {
+		padding: var(--space-4);
+	}
+	
+	.modal-body {
+		padding: var(--space-4);
+	}
+	
+	/* Form adjustments */
+	.form-row {
+		flex-direction: column;
+		gap: var(--space-3);
+	}
+	
+	.form-group {
+		width: 100%;
+	}
+	
+	/* Button groups */
+	.form-actions {
+		flex-direction: column;
+		gap: var(--space-2);
+	}
+	
+	.form-actions .btn {
+		width: 100%;
+	}
+	
+	/* Search adjustments */
+	.search-container {
+		min-width: 100%;
+	}
+	
+	/* Table scroll adjustments */
+	.table-scroll {
+		-webkit-overflow-scrolling: touch;
+	}
+	
+	/* Stats grid */
+	.stats-grid {
+		grid-template-columns: 1fr;
+		gap: var(--space-3);
+	}
+	
+	.stat-card {
+		padding: var(--space-4);
+	}
+	
+	/* Modern table container */
+	.modern-table-container {
+		margin: var(--space-3);
+	}
+	
+	.modern-table-header {
+		padding: var(--space-3);
+		flex-direction: column;
+		gap: var(--space-3);
+	}
+	
+	.table-title-section h2 {
+		font-size: var(--text-xl);
+	}
+	
+	/* Action buttons */
+	.action-buttons {
+		flex-direction: column;
+		gap: var(--space-2);
+	}
+	
+	.action-buttons .button {
+		width: 100%;
+	}
+	
+	/* Content body padding */
+	.content-body {
+		padding: var(--space-3);
+	}
+	
+	/* Grid adjustments */
+	.grid {
+		grid-template-columns: 1fr;
+		gap: var(--space-4);
+	}
+	
+	.grid-2,
+	.grid-3,
+	.grid-4 {
+		grid-template-columns: 1fr;
+	}
+}
+
+/* Extra Small Phones (max-width: 320px) */
+@media (max-width: 320px) {
+	/* Even tighter spacing for very small screens */
+	.content-header {
+		padding: var(--space-2) var(--space-3);
+	}
+	
+	.card-body {
+		padding: var(--space-3);
+	}
+	
+	.modal-header {
+		padding: var(--space-3);
+	}
+	
+	.modal-body {
+		padding: var(--space-3);
+	}
+	
+	.button {
+		font-size: var(--text-sm);
+		padding: var(--space-2) var(--space-3);
+	}
+	
+	.content-title {
+		font-size: var(--text-lg);
+	}
+}
+
+/* Touch device improvements */
+@media (hover: none) and (pointer: coarse) {
+	/* Larger touch targets */
+	.nav-link {
+		padding: var(--space-4);
+	}
+	
+	.button,
+	.btn {
+		min-height: 44px;
+	}
+	
+	.filter-btn,
+	.table-btn {
+		min-height: 36px;
+	}
+	
+	/* Modal close button */
+	.modal-close {
+		width: 44px;
+		height: 44px;
+	}
+	
+	/* Input improvements */
+	.form-input,
+	.form-select,
+	.form-textarea {
+		font-size: 16px; /* Prevents zoom on iOS */
+	}
+}
+
+/* Landscape phone orientation */
+@media (max-width: 768px) and (orientation: landscape) {
+	.modal {
+		max-height: 90vh;
+	}
+	
+	.content-header {
+		padding: var(--space-2) var(--space-4);
+	}
+	
+	.table-controls {
+		flex-direction: row;
+		flex-wrap: wrap;
+	}
+}
+
+/* Print styles */
+@media print {
+	.sidebar,
+	.floating-burger,
+	.filter-btn,
+	.table-btn {
+		display: none !important;
+	}
+	
+	.content {
+		margin-left: 0 !important;
+		width: 100% !important;
+	}
+	
+	.page-header::before {
+		display: none;
+	}
+}

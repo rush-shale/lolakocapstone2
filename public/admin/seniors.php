@@ -1272,6 +1272,31 @@ try {
 			background: #1d4ed8;
 		}
 		
+		/* Table scroll styling */
+		.table-container {
+			overflow-x: auto;
+			overflow-y: visible;
+			-webkit-overflow-scrolling: touch;
+			max-width: 100%;
+		}
+		
+		.table-scroll {
+			overflow-x: auto;
+			overflow-y: visible;
+			-webkit-overflow-scrolling: touch;
+		}
+		
+		.table-scroll table {
+			min-width: 100%;
+			white-space: nowrap;
+		}
+		
+		.table-scroll table th,
+		.table-scroll table td {
+			min-width: 120px;
+			white-space: nowrap;
+		}
+		
 		/* Responsive design */
 		@media (max-width: 1024px) {
 			.content-body {
