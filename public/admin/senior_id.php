@@ -545,7 +545,7 @@ function h($v){ return htmlspecialchars((string)$v, ENT_QUOTES | ENT_SUBSTITUTE,
 			</div>
 			<div class="bottom-row">
 				<div class="signature" title="Signature / Thumbmark"></div>
-				<div class="control-number">Control No: 19349</div>
+				<div class="control-number">Control No: <?= h($s['osca_id_no'] ?? 'N/A') ?></div>
 			</div>
 			<div class="note">This Card is Non-Transferable</div>
 		</div>
