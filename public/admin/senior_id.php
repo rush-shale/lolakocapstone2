@@ -10,183 +10,191 @@ $id = isset($_GET['id']) ? (int)$_GET['id'] : 0;
 // If no ID provided, show selection interface
 if (!$id) {
 	$seniors = $pdo->query("SELECT * FROM seniors WHERE life_status='living' ORDER BY last_name, first_name")->fetchAll();
+	// ... existing code ...
+	if (isset($_GET['print']) && isset($_GET['ids']) && is_array($_GET['ids'])) {
+		$ids = array_filter(array_map('intval', $_GET['ids']));
+		if (!empty($ids)) {
+			$in  = str_repeat('?,', count($ids) - 1) . '?';
+			$stmt = $pdo->prepare("SELECT * FROM seniors WHERE id IN ($in) ORDER BY last_name, first_name");
+			$stmt->execute($ids);
+			$selected = $stmt->fetchAll();
+			$side = ($_GET['side'] ?? 'front') === 'back' ? 'back' : 'front';
+			$capacity = 8; // 2 columns x 4 rows per A4 (95x60mm)
+			if (count($selected) > $capacity) { $selected = array_slice($selected, 0, $capacity); }
+			?>
+			<!doctype html>
+			<html lang="en">
+			<head>
+				<meta charset="utf-8" />
+				<meta name="viewport" content="width=device-width, initial-scale=1" />
+				<title>Print IDs (<?= htmlspecialchars(strtoupper($side)) ?>)</title>
+				<style>
+					@page { size: A4; margin: 5mm; }
+					html, body { margin: 0; padding: 0; }
+					.sheet {
+						display: grid;
+						grid-template-columns: repeat(2, 95mm);
+						grid-auto-rows: 60mm;
+						gap: 5mm;
+						justify-content: center;
+					}
+					.card {
+						width: 95mm; height: 60mm; border: 0.8mm solid #1e88e5; box-sizing: border-box; padding: 4mm; position: relative; font-family: Arial, sans-serif; overflow: hidden; border-radius: 2mm; background:#fff;
+					}
+                    .front .header-row { position:absolute; top:5mm; left:8mm; right:8mm; display:grid; grid-template-columns: 10mm 1fr 10mm; align-items:center; column-gap: 4mm; z-index:2; }
+                    .front .logo { width:10mm; height:10mm; background: transparent; }
+                    .front .center { position:absolute; top:18mm; left:6mm; right:28mm; z-index:2; }
+                    .front .hdr { text-align:center; line-height:1.12; color:#000; }
+					.front .hdr .l1 { font-weight:900; font-size: 9pt; }
+					.front .hdr .l2 { font-weight:800; font-size: 7.4pt; }
+					.front .hdr .l3 { font-weight:700; font-size: 6.6pt; }
+					.front .photo { position:absolute; right:6mm; top:18mm; width:18mm; height:22mm; border:0.22mm solid #cfd4da; display:flex; align-items:center; justify-content:center; font-size:6.2pt; border-radius: 2mm; background:#e6ecf2; z-index:1; }
+					.front .left { width:100%; margin-top: 7mm; position:relative; z-index:2; background:#fff; }
+                    .front .field { display:grid; grid-template-columns: 15mm 1fr; align-items:center; column-gap: 0.6mm; font-size: 6.4pt; margin-top: 1.8mm; color:#000; }
+					.front .label { color:#000; font-weight:900; text-align:left; }
+					.front .uline { width: 100%; border-bottom: 0.2mm solid #000; padding-bottom: 0.7mm; line-height: 1.14; font-weight:700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color:#000; display:block; }
+                    .front .triple-topline { display:none; }
+                    .front .triple-labels { display:grid; grid-template-columns: 1fr 1fr 1fr; column-gap: 5mm; margin-top: 0; margin-bottom: 0.4mm; font-size:6pt; color:#000; font-weight:900; align-items:end; }
+                    .front .triple-labels span { display:block; text-align:left; }
+                    .front .triple-values { display:grid; grid-template-columns: 1fr 1fr 1fr; column-gap: 5mm; margin-top: 0; margin-bottom: 2mm; font-size: 6.4pt; color:#000; align-items:end; }
+                    .front .triple-values .uline { display:block; width:100%; text-align:left; padding: 0.1mm 0 0.6mm 0; min-height: 4mm; line-height: 1.2; border-bottom: 0.18mm solid #000; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight:700; }
+                    .front .red-box { padding: 1.5mm 2mm 1.5mm 0; margin-top: 1mm; margin-bottom: 1mm; }
+                    .front .red-box .triple-labels { font-size: 5pt; margin-bottom: 0.3mm; text-align: left; }
+                    .front .red-box .triple-labels span { text-align: left; }
+                    .front .red-box .triple-values { font-size: 5.5pt; margin-bottom: 0; text-align: left; border-bottom: 0.18mm solid #000; padding-bottom: 0.4mm; position: relative; }
+                    .front .red-box .triple-values .uline { padding: 0.1mm 0 0; min-height: 3mm; line-height: 1.1; text-align: left; border-bottom: none; }
+                    .front .sig { width: 58mm; border-bottom: none; height: 0; margin-top: 0; }
+                    .front .sig-label { font-size: 5.6pt; font-weight:700; display:block; margin-top: 1mm; text-align:center; }
+                    .front .sig-row { display:flex; justify-content:center; align-items:center; margin-top: 4mm; }
+                    .front .sig-block { width: 58mm; text-align:center; margin-left: 20mm; }
+                    .front .sig-block .sig-line { border-top: 0.16mm solid #000; margin: 0 0 1mm 0; }
+                    .front .ctrl-inline { display:flex; align-items:center; gap: 2mm; font-weight:900; font-size:6.8pt; white-space: nowrap; }
+                    .front .ctrl { position:absolute; right:6mm; top:42mm; display:flex; align-items:center; gap: 0.8mm; font-weight:700; font-size:5.6pt; z-index:3; background:#fff; padding: 0 0.3mm; }
+                    /* removed underline next to Control No. */
+                    .front .footer-note { position:absolute; left:0; right:0; bottom:2mm; text-align:center; font-size:6.4pt; font-weight:900; text-transform:none; z-index:3; background:#fff; }
+					.back { display:flex; align-items:center; justify-content:center; font-size:9pt; text-align:center; padding: 3mm; }
+					@media print { .noprint { display:none; } }
+				</style>
+			</head>
+			<body>
+				<div class="noprint" style="margin:10px 0; text-align:center;">
+					<button onclick="window.print()">Print</button>
+				</div>
+				<div class="sheet <?= $side ?>">
+					<?php foreach ($selected as $item): ?>
+						<div class="card">
+                            <?php if ($side === 'front'): ?>
+                                <div class="header-row">
+                                    <img class="logo" src="<?= BASE_URL ?>/images/OSCA LOGO.png" alt="OSCA">
+                                    <div class="hdr">
+                                        <div class="l1">Republic of the Philippines</div>
+                                        <div class="l2">Office of the Senior Citizens Affairs (OSCA)</div>
+                                        <div class="l3">Municipality of Manolo Fortich Bukidnon</div>
+                                    </div>
+                                    <img class="logo" src="<?= BASE_URL ?>/images/MANOLO FORTICH LOGO.png" alt="MF">
+                                </div>
+                                <div class="center">
+                                    <div class="left">
+										<div class="field"><span class="label">Name:</span><span class="uline"><?= htmlspecialchars(strtoupper($item['last_name'] . ', ' . $item['first_name'] . ($item['middle_name'] ? ' ' . $item['middle_name'] : ''))) ?></span></div>
+                                        <div class="field"><span class="label">Address:</span><span class="uline"><?= htmlspecialchars(ucwords(strtolower(trim(($item['barangay'] ?? '') . ', Manolo Fortich, Bukidnon.')))) ?></span></div>
+                                        <?php 
+                                            $dobField = $item['birthdate'] ?? ($item['date_of_birth'] ?? null);
+                                            $sexField = $item['sex'] ?? ($item['gender'] ?? '');
+                                        ?>
+                                        <div class="red-box">
+                                            <div class="triple-labels">
+                                                <span>Date of Birth</span>
+                                                <span>Sex</span>
+                                                <span>Date Issued</span>
+                                            </div>
+                                            <div class="triple-values">
+                                                <span class="uline"><?= $dobField ? date('m-d-Y', strtotime($dobField)) : '' ?></span>
+                                                <span class="uline"><?= htmlspecialchars(strtoupper($sexField)) ?></span>
+                                                <span class="uline"><?= date('m-d-Y') ?></span>
+                                            </div>
+                                        </div>
+                                        <div class="sig-row">
+                                            <div class="sig-block">
+                                                <div class="sig-line"></div>
+                                                <span class="sig-label">Signature/Thumbmark:</span>
+                                            </div>
+                                        </div>
+									</div>
+								</div>
+                                <div class="photo">Photo</div>
+                                <div class="ctrl"><span>Control No. </span><span><?= htmlspecialchars($item['osca_id_no'] ?? '') ?></span></div>
+								<div class="footer-note">This Card is Non-Transferable</div>
+							<?php else: ?>
+								<div class="back">
+									<div>
+										<div><strong>Control No:</strong> <?= htmlspecialchars($item['osca_id_no'] ?? '') ?></div>
+										<div style="margin-top:4mm;">This card is non-transferable.</div>
+									</div>
+								</div>
+							<?php endif; ?>
+						</div>
+					<?php endforeach; ?>
+				</div>
+			</body>
+			</html>
+			<?php exit; }
+	}
 	?>
 	<!doctype html>
 	<html lang="en">
 	<head>
 		<meta charset="utf-8">
 		<meta name="viewport" content="width=device-width, initial-scale=1">
-		<title>Generate Senior ID | SeniorCare Information System</title>
+		<title>Generate Senior IDs | SeniorCare</title>
 		<link rel="stylesheet" href="<?= BASE_URL ?>/assets/government-portal.css">
 		<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
 		<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 		<style>
-			/* Custom styles for Generate ID page */
-			.senior-info {
-				display: flex;
-				flex-direction: column;
-				gap: 0.5rem;
-			}
-			
-			.senior-name {
-				display: flex;
-				align-items: center;
-				gap: 0.5rem;
-				font-weight: 600;
-			}
-			
-			.senior-name i {
-				color: var(--primary);
-				font-size: 0.875rem;
-			}
-			
-			.middle-name {
-				color: var(--muted);
-				font-weight: 400;
-			}
-			
-			.senior-contact {
-				display: flex;
-				align-items: center;
-				gap: 0.5rem;
-				font-size: 0.875rem;
-				color: var(--muted);
-			}
-			
-			.senior-contact i {
-				color: var(--success);
-				font-size: 0.75rem;
-			}
-			
-			.age-badge {
-				background: var(--primary-light);
-				color: var(--primary);
-				padding: 0.25rem 0.75rem;
-				border-radius: 1rem;
-				font-weight: 600;
-				font-size: 0.875rem;
-			}
-			
-			.barangay-info {
-				display: flex;
-				align-items: center;
-				gap: 0.5rem;
-				font-weight: 500;
-			}
-			
-			.barangay-info i {
-				color: var(--info);
-				font-size: 0.875rem;
-			}
-			
-			.action-buttons {
-				display: flex;
-				gap: 0.5rem;
-			}
-			
-			.action-buttons .button {
-				display: inline-flex;
-				align-items: center;
-				gap: 0.5rem;
-				text-decoration: none;
-				font-size: 0.875rem;
-				padding: 0.5rem 1rem;
-			}
-			
-			.badge i {
-				margin-right: 0.25rem;
-			}
-			
-			/* Enhanced table styling */
-			.table tbody tr:hover {
-				background: var(--bg-secondary);
-				transform: translateY(-1px);
-				box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-			}
-			
-			/* Search container styling */
-			.search-container {
-				position: relative;
-				display: flex;
-				align-items: center;
-				background: var(--bg-secondary);
-				border: 1px solid var(--border);
-				border-radius: 0.5rem;
-				padding: 0.5rem 1rem;
-				min-width: 300px;
-			}
-			
-			.search-icon {
-				color: var(--muted);
-				margin-right: 0.5rem;
-			}
-			
-			.search-container input {
-				border: none;
-				background: transparent;
-				outline: none;
-				flex: 1;
-				font-size: 0.875rem;
-			}
-			
-			.search-container input::placeholder {
-				color: var(--muted);
-			}
-			
-			/* Animation for stats */
-			.stats .stat {
-				transition: all 0.3s ease;
-			}
-			
-			.stats .stat:hover {
-				transform: translateY(-2px);
-				box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-			}
+			.capacity-badge { font-weight: 600; color:#111827; }
+			.table td, .table th { vertical-align: middle; }
 		</style>
 	</head>
 	<body>
 		<?php include __DIR__ . '/../partials/sidebar_admin.php'; ?>
-		
-	<main class="content">
+		<main class="content">
 			<header class="content-header">
-				<h1 class="content-title">Generate Senior ID</h1>
-				<p class="content-subtitle">Select a senior citizen to generate their official ID card</p>
+				<h1 class="content-title">Generate Senior IDs</h1>
+				<p class="content-subtitle">Select up to 8 seniors per A4 sheet (95×60mm)</p>
 			</header>
-			
 			<div class="content-body">
-				<!-- Statistics Cards -->
-				<!-- Removed statistics cards as per user request -->
-
-				<!-- Senior Selection Card -->
-				<div class="card animate-fade-in">
-					<div class="card-header">
-						<h2 class="card-title">
-							<i class="fas fa-users"></i>
-							Select Senior Citizen
-						</h2>
-						<div class="card-actions">
-							<div class="search-container" style="max-width: 300px;">
-								<input type="text" placeholder="Search seniors..." id="searchSeniors" style="width: 100%; padding: 8px 12px; border: 1px solid #ccc; border-radius: 12px; outline: none; font-size: 0.9rem;">
-							</div>
+				<div class="card">
+					<div class="card-header" style="display:flex; justify-content:space-between; align-items:center;">
+						<h2 class="card-title"><i class="fas fa-id-card"></i> Selection</h2>
+						<div style="display:flex; gap:.5rem; align-items:center;">
+							<span class="capacity-badge"><span id="selectedCount">0</span>/8 selected</span>
+							<button form="printForm" type="submit" name="side" value="front" class="button primary" title="Print Front" formaction="<?= BASE_URL ?>/admin/senior_id.php">
+								<i class="fas fa-print"></i> Front
+							</button>
+							<button form="printForm" type="submit" name="side" value="back" class="button secondary" title="Print Back" formaction="<?= BASE_URL ?>/admin/senior_id.php">
+								<i class="fas fa-print"></i> Back
+							</button>
 						</div>
 					</div>
 					<div class="card-body">
-						<?php if (!empty($seniors)): ?>
-						<div class="table-container">
-							<table class="table">
-								<thead>
-									<tr>
-										<th>Senior Information</th>
-										<th>Age</th>
-										<th>Barangay</th>
-										<th>Category</th>
-										<th>Benefits Status</th>
-										<th>Actions</th>
-									</tr>
-								</thead>
-								<tbody id="seniorsTable">
-									<?php foreach ($seniors as $s): ?>
+						<form id="printForm" method="get" target="_blank">
+							<input type="hidden" name="print" value="1">
+							<div class="table-container">
+								<table class="table">
+									<thead>
 										<tr>
+											<th>Select</th>
+											<th>Senior Information</th>
+											<th>Age</th>
+											<th>Barangay</th>
+											<th>Category</th>
+											<th>Benefits Status</th>
+											<th>Actions</th>
+										</tr>
+									</thead>
+									<tbody>
+										<?php foreach ($seniors as $s): ?>
+										<tr>
+											<td><input type="checkbox" class="select-senior" name="ids[]" value="<?= (int)$s['id'] ?>"></td>
 											<td>
 												<div class="senior-info">
 													<div class="senior-name">
@@ -204,118 +212,36 @@ if (!$id) {
 													<?php endif; ?>
 												</div>
 											</td>
+											<td><span class="age-badge"><?= (int)$s['age'] ?> years</span></td>
+											<td><div class="barangay-info"><i class="fas fa-map-marker-alt"></i><?= htmlspecialchars($s['barangay']) ?></div></td>
+											<td><span class="badge <?= $s['category'] === 'local' ? 'badge-primary' : 'badge-warning' ?>"><?= $s['category'] === 'local' ? 'Local' : 'National' ?></span></td>
+											<td><span class="badge <?= $s['benefits_received'] ? 'badge-success' : 'badge-warning' ?>"><i class="fas fa-<?= $s['benefits_received'] ? 'check' : 'clock' ?>"></i><?= $s['benefits_received'] ? 'Received' : 'Pending' ?></span></td>
 											<td>
-												<span class="age-badge">
-													<?= (int)$s['age'] ?> years
-												</span>
-											</td>
-											<td>
-												<div class="barangay-info">
-													<i class="fas fa-map-marker-alt"></i>
-													<?= htmlspecialchars($s['barangay']) ?>
-												</div>
-											</td>
-											<td>
-												<span class="badge <?= $s['category'] === 'local' ? 'badge-primary' : 'badge-warning' ?>">
-													<?= $s['category'] === 'local' ? 'Local' : 'National' ?>
-												</span>
-											</td>
-											<td>
-												<span class="badge <?= $s['benefits_received'] ? 'badge-success' : 'badge-warning' ?>">
-													<i class="fas fa-<?= $s['benefits_received'] ? 'check' : 'clock' ?>"></i>
-													<?= $s['benefits_received'] ? 'Received' : 'Pending' ?>
-												</span>
-											</td>
-											<td>
-													<div class="action-buttons">
-														<a href="<?= BASE_URL ?>/admin/senior_id.php?id=<?= (int)$s['id'] ?>" target="_blank" class="button primary">
-															<i class="fas fa-id-card"></i>
-															Generate ID
-														</a>
-													</div>
+												<a href="<?= BASE_URL ?>/admin/senior_id.php?id=<?= (int)$s['id'] ?>" target="_blank" class="button primary"><i class="fas fa-id-card"></i> Preview</a>
 											</td>
 										</tr>
-									<?php endforeach; ?>
-								</tbody>
-							</table>
-						</div>
-						<?php else: ?>
-						<div class="empty-state">
-							<div class="empty-icon">
-								<i class="fas fa-users"></i>
+										<?php endforeach; ?>
+									</tbody>
+								</table>
 							</div>
-							<h3>No Seniors Found</h3>
-							<p>No living seniors are currently registered in the system.</p>
-							<a href="<?= BASE_URL ?>/admin/seniors.php" class="button primary">
-								<i class="fas fa-plus"></i>
-								Add Seniors
-							</a>
-						</div>
-						<?php endif; ?>
+						</form>
 					</div>
 				</div>
 			</div>
 		</main>
-		
-		<script src="<?= BASE_URL ?>/assets/app.js"></script>
 		<script>
-			// Initialize functionality on page load
-			document.addEventListener('DOMContentLoaded', function() {
-				initializeSearch();
-			});
-
-			// Search functionality
-			function initializeSearch() {
-				const searchInput = document.getElementById('searchSeniors');
-				const table = document.getElementById('seniorsTable');
-				
-				if (searchInput && table) {
-					searchInput.addEventListener('input', function() {
-						const searchTerm = this.value.toLowerCase();
-						const rows = table.querySelectorAll('tr');
-						let visibleCount = 0;
-						
-						rows.forEach(row => {
-							const text = row.textContent.toLowerCase();
-							const isVisible = text.includes(searchTerm);
-							row.style.display = isVisible ? '' : 'none';
-							if (isVisible) visibleCount++;
-						});
-						
-						// Update search results indicator
-						updateSearchResults(searchInput, visibleCount, rows.length);
-					});
+			(function(){
+				const capacity = 8; // A4 capacity based on 95x60mm cards
+				const checkboxes = Array.from(document.querySelectorAll('.select-senior'));
+				const counter = document.getElementById('selectedCount');
+				function update(){
+					const selected = checkboxes.filter(cb => cb.checked);
+					counter.textContent = selected.length;
+					checkboxes.forEach(cb => { if (!cb.checked) cb.disabled = selected.length >= capacity; });
 				}
-			}
-
-			function updateSearchResults(input, visible, total) {
-				let indicator = input.parentNode.querySelector('.search-results');
-				if (!indicator) {
-					indicator = document.createElement('div');
-					indicator.className = 'search-results';
-					indicator.style.cssText = `
-						position: absolute;
-						right: 1rem;
-						top: 50%;
-						transform: translateY(-50%);
-						font-size: var(--font-size-xs);
-						color: var(--muted);
-						font-weight: 600;
-						background: var(--bg-secondary);
-						padding: var(--space-xs) var(--space-sm);
-						border-radius: var(--radius-sm);
-					`;
-					input.parentNode.style.position = 'relative';
-					input.parentNode.appendChild(indicator);
-				}
-				
-				if (total > visible) {
-					indicator.textContent = `${visible} of ${total}`;
-					indicator.style.color = 'var(--warning)';
-				} else {
-					indicator.textContent = '';
-				}
-			}
+				checkboxes.forEach(cb => cb.addEventListener('change', update));
+				update();
+			})();
 		</script>
 	</body>
 	</html>
@@ -367,12 +293,12 @@ function h($v){ return htmlspecialchars((string)$v, ENT_QUOTES | ENT_SUBSTITUTE,
 			flex-direction: column;
 			justify-content: space-between;
 		}
-		.header {
-			display: flex;
-			justify-content: space-between;
-			align-items: center;
-			margin-bottom: 8px;
-		}
+        .header {
+            display: grid;
+            grid-template-columns: 60px 1fr 60px;
+            align-items: center;
+            margin-bottom: 8px;
+        }
 		.logo {
 			width: 60px;
 			height: 60px;
@@ -414,10 +340,10 @@ function h($v){ return htmlspecialchars((string)$v, ENT_QUOTES | ENT_SUBSTITUTE,
 			font-size: 13px;
 		}
 		.content {
-			margin-top: 8px;
+			margin-top: 4px;
 			flex: 1;
 			display: flex;
-			gap: 12px;
+			gap: 10px;
 		}
 		.photo {
 			width: 100px;
@@ -441,51 +367,57 @@ function h($v){ return htmlspecialchars((string)$v, ENT_QUOTES | ENT_SUBSTITUTE,
 			font-size: 13px;
 			color: #000;
 		}
-		.info .field {
-			display: flex;
-			justify-content: flex-start;
-			align-items: center;
-			gap: 0;
-			border-bottom: 1px solid #000;
-			padding: 2px 0;
-			font-weight: 700;
-			letter-spacing: 0.05em;
-		}
-		.info .field.field-spaced {
-			justify-content: space-between;
-		}
-		.info .field label {
+        .info .field {
+            display: grid;
+            grid-template-columns: 78px 1fr;
+            align-items: center;
+            column-gap: 6px;
+            border-bottom: none;
+            padding: 0;
+            font-weight: 700;
+            letter-spacing: 0.05em;
+        }
+        .info .field.field-spaced {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            column-gap: 6px;
+            border-bottom: none;
+            padding: 0;
+        }
+        .info .field label {
 			font-weight: 600;
 			font-size: 11px;
 			color: #555;
 			user-select: none;
 			flex-shrink: 0;
-			margin-right: 0.25rem;
+            margin-right: 0;
 		}
 		.info .field.field-spaced label {
 			margin-right: 0;
 		}
-		.info .field .value {
-			text-transform: uppercase;
-		}
-		.info .field.field-spaced .value {
-			text-align: center;
-		}
+        .info .field .value {
+            text-transform: uppercase;
+            border-bottom: 1px solid #000;
+            padding-bottom: 1px;
+            display: block;
+        }
+        .info .field.field-spaced .value {
+            text-align: left;
+            border-bottom: 1px solid #000;
+            padding: 2px 0 1px 0;
+        }
 		.bottom-row {
 			display: flex;
 			justify-content: space-between;
 			align-items: center;
-			margin-top: 12px;
+			margin-top: 8px;
 			font-size: 11px;
 			color: #555;
 			user-select: none;
 		}
-		.signature {
-			flex: 1;
-			border-bottom: 1px solid #000;
-			margin-right: 12px;
-			height: 20px;
-		}
+		.signature-block { flex: 1; display: flex; flex-direction: column; align-items: flex-start; margin-right: 8px; }
+		.signature { width: 100%; border-bottom: 1px solid #000; height: 0; margin-bottom: 4px; }
+		.signature-label { font-size: 11px; font-weight: 600; }
 		.control-number {
 			font-weight: 700;
 			font-size: 14px;
@@ -524,11 +456,7 @@ function h($v){ return htmlspecialchars((string)$v, ENT_QUOTES | ENT_SUBSTITUTE,
 					</div>
 					<div class="field">
 						<label>Address:</label>
-						<div class="value"><?= h(strtoupper($s['barangay'])) ?></div>
-					</div>
-					<div class="field">
-						<label>&nbsp;</label>
-						<div class="value"><?= h('Manolo Fortich, Bukidnon') ?></div>
+						<div class="value"><?= h(ucwords(strtolower(trim(($s['barangay'] ?? '') . ', Manolo Fortich, Bukidnon.')))) ?></div>
 					</div>
 					<div class="field field-spaced" style="margin-top: 12px;">
 						<label>Date of Birth</label>
@@ -544,8 +472,11 @@ function h($v){ return htmlspecialchars((string)$v, ENT_QUOTES | ENT_SUBSTITUTE,
 				<div class="photo">📷<br>Photo</div>
 			</div>
 			<div class="bottom-row">
-				<div class="signature" title="Signature / Thumbmark"></div>
-				<div class="control-number">Control No: <?= h($s['osca_id_no'] ?? 'N/A') ?></div>
+				<div class="signature-block">
+					<div class="signature" title="Signature / Thumbmark"></div>
+					<div class="signature-label">Signature/Thumbmark:</div>
+				</div>
+				<div class="control-number">Control No. <?= h($s['osca_id_no'] ?? 'N/A') ?></div>
 			</div>
 			<div class="note">This Card is Non-Transferable</div>
 		</div>
