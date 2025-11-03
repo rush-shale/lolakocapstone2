@@ -7,16 +7,9 @@ require_role('admin');
 $pdo = get_db_connection();
 start_app_session();
 
-// Handle search
-$search = $_GET['search'] ?? '';
+// Get all transferred seniors (client-side filtering will handle search)
 $whereClause = "WHERE (s.category = 'transferred' OR st_any.id IS NOT NULL)";
 $params = [];
-
-if (!empty($search)) {
-    $whereClause .= " AND (s.first_name LIKE ? OR s.last_name LIKE ? OR s.barangay LIKE ? OR s.osca_id_no LIKE ?)";
-    $searchTerm = "%$search%";
-    $params = [$searchTerm, $searchTerm, $searchTerm, $searchTerm];
-}
 
 // Debug: Check all seniors with transferred category
 $debugStmt = $pdo->prepare("SELECT id, first_name, last_name, category FROM seniors WHERE category = 'transferred'");
@@ -63,157 +56,178 @@ $transferredThisMonth = array_filter($transferredSeniors, function($senior) {
 $transferredThisMonthCount = count($transferredThisMonth);
 ?>
 
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Transferred Seniors - OSCA Management System</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <link rel="stylesheet" href="<?= BASE_URL ?>/assets/government-portal.css">
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>Transferred Seniors | SeniorCare Information System</title>
+	<link rel="stylesheet" href="<?= BASE_URL ?>/assets/government-portal.css">
+	<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+	<style>
+		/* Search container */
+		.search-container {
+			display: flex;
+			align-items: center;
+			background: white;
+			border: 1px solid #d1d5db;
+			border-radius: 6px;
+			padding: 0.5rem 0.75rem;
+			min-width: 250px;
+		}
+		
+		.search-container input {
+			border: none;
+			outline: none;
+			background: transparent;
+			flex: 1;
+			font-size: 0.875rem;
+		}
+		
+		.search-icon {
+			color: #6b7280;
+			margin-right: 0.5rem;
+		}
+		
+		.table-search {
+			display: flex;
+			align-items: center;
+			background: white;
+			border: 1px solid #d1d5db;
+			border-radius: 6px;
+			padding: 0.5rem 0.75rem;
+			min-width: 250px;
+		}
+		
+		.table-search-icon {
+			margin-right: 0.5rem;
+			color: #6b7280;
+		}
+		
+		.table-search input {
+			border: none;
+			outline: none;
+			background: transparent;
+			flex: 1;
+			font-size: 0.875rem;
+		}
+		
+		.clickable-row {
+			cursor: pointer;
+		}
+		
+		.clickable-row:hover {
+			background: var(--bg-secondary);
+		}
+	</style>
 </head>
 <body>
-    <?php include __DIR__ . '/../partials/sidebar_admin.php'; ?>
+	<?php include __DIR__ . '/../partials/sidebar_admin.php'; ?>
 
-    <main class="content">
-        <div class="page-header">
-            <div class="header-content">
-                <h1><i class="fas fa-exchange-alt"></i> Transferred Seniors</h1>
-                <p>Manage seniors who have been transferred to other locations</p>
-            </div>
-        </div>
+	<main class="content">
+		<header class="content-header">
+			<h1 class="content-title">Transferred Seniors</h1>
+			<p class="content-subtitle">Manage seniors who have been transferred to other locations</p>
+		</header>
 
-        <?php if (isset($_GET['transfer_success'])): ?>
-        <div class="alert alert-success">
-            <i class="fas fa-check-circle"></i>
-            Senior has been successfully transferred!
-        </div>
-        <?php endif; ?>
+		<?php if (isset($_GET['transfer_success'])): ?>
+		<div class="alert alert-success" style="margin: 1rem 0; padding: 0.75rem 1rem; background: #d1fae5; color: #065f46; border-radius: 6px; display: flex; align-items: center; gap: 0.5rem;">
+			<i class="fas fa-check-circle"></i>
+			Senior has been successfully transferred!
+		</div>
+		<?php endif; ?>
 
-        <!-- Statistics Cards -->
-        <div class="stats-grid">
-            <div class="stat-card">
-                <div class="stat-icon">
-                    <i class="fas fa-exchange-alt"></i>
-                </div>
-                <div class="stat-content">
-                    <h3>Total Transferred</h3>
-                    <p class="stat-number"><?= $totalTransferred ?></p>
-                </div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-icon">
-                    <i class="fas fa-calendar-alt"></i>
-                </div>
-                <div class="stat-content">
-                    <h3>This Month</h3>
-                    <p class="stat-number"><?= $transferredThisMonthCount ?></p>
-                </div>
-            </div>
-        </div>
+		<div class="content-body">
+			<div class="main-content-area">
+				<div class="card">
+					<div class="card-header">
+						<h2 class="card-title">Transferred Seniors List</h2>
+						<div class="card-actions">
+							<div class="table-search">
+								<span class="table-search-icon">🔍</span>
+								<input type="text" id="searchInput" placeholder="Search seniors...">
+							</div>
+						</div>
+					</div>
+					<div class="card-body">
+						<table class="table">
+							<thead>
+								<tr>
+									<th>Name</th>
+									<th>Age</th>
+									<th>New Address</th>
+									<th>Transfer Date</th>
+									<th>Transfer Reason</th>
+									<th>Actions</th>
+								</tr>
+							</thead>
+							<tbody id="transferredSeniorsTable">
+								<?php if (!empty($transferredSeniors)): ?>
+									<?php foreach ($transferredSeniors as $senior): ?>
+										<tr class="clickable-row" onclick="window.location.href='senior_details.php?id=<?= (int)$senior['id'] ?>&noedit=1'" style="cursor:pointer;">
+											<td>
+												<div class="senior-info">
+													<strong><?= htmlspecialchars(ucfirst(strtolower($senior['last_name'] . ', ' . $senior['first_name']))) ?></strong>
+													<?php if ($senior['middle_name']): ?>
+														<br><small style="color: #6b7280;"><?= htmlspecialchars($senior['middle_name']) ?></small>
+													<?php endif; ?>
+													<?php if ($senior['osca_id_no']): ?>
+														<br><small style="color: #6b7280; font-size: 0.75rem;">OSCA ID: <?= htmlspecialchars($senior['osca_id_no']) ?></small>
+													<?php endif; ?>
+												</div>
+											</td>
+											<td><?= (int)$senior['age'] ?></td>
+											<td><?= htmlspecialchars($senior['new_address']) ?></td>
+											<td>
+												<?php if ($senior['effective_date'] && $senior['effective_date'] !== '0000-00-00'): ?>
+													<?= date('M d, Y', strtotime($senior['effective_date'])) ?>
+												<?php else: ?>
+													<span style="color: #6b7280;">Not specified</span>
+												<?php endif; ?>
+											</td>
+											<td>
+												<?php if ($senior['transfer_reason'] && $senior['transfer_reason'] !== 'Not specified'): ?>
+													<?= htmlspecialchars($senior['transfer_reason']) ?>
+												<?php else: ?>
+													<span style="color: #6b7280;">Not specified</span>
+												<?php endif; ?>
+											</td>
+											<td>
+												<div class="action-buttons">
+													<a class="button small" href="senior_details.php?id=<?= (int)$senior['id'] ?>&noedit=1" title="View Details" onclick="event.stopPropagation();">
+														<i class="fas fa-eye"></i>
+													</a>
+												</div>
+											</td>
+										</tr>
+									<?php endforeach; ?>
+								<?php else: ?>
+									<tr>
+										<td colspan="6" style="text-align: center;">No transferred seniors found.</td>
+									</tr>
+								<?php endif; ?>
+							</tbody>
+						</table>
+					</div>
+				</div>
+			</div>
+		</div>
+	</main>
 
-        <!-- Search and Filters -->
-        <div class="content-card">
-            <div class="card-header">
-                <h2><i class="fas fa-search"></i> Search Transferred Seniors</h2>
-            </div>
-            <div class="card-content">
-                <form method="GET" class="search-form">
-                    <div class="search-group">
-                        <input type="text" name="search" placeholder="Search by name, barangay, or OSCA ID..." 
-                               value="<?= htmlspecialchars($search) ?>" class="search-input">
-                        <button type="submit" class="search-btn" aria-label="Search transferred seniors" title="Search">
-                            <i class="fas fa-search"></i>
-                        </button>
-                        <?php if (!empty($search)): ?>
-                        <a href="transferred_seniors.php" class="clear-btn">
-                            <i class="fas fa-times"></i> Clear
-                        </a>
-                        <?php endif; ?>
-                    </div>
-                </form>
-            </div>
-        </div>
-
-        <!-- Transferred Seniors List -->
-        <div class="content-card">
-            <div class="card-header">
-                <h2><i class="fas fa-list"></i> Transferred Seniors List</h2>
-                <div class="card-actions">
-                    <span class="result-count"><?= $totalTransferred ?> transferred senior<?= $totalTransferred !== 1 ? 's' : '' ?></span>
-                </div>
-            </div>
-            <div class="card-content">
-                <?php if (empty($transferredSeniors)): ?>
-                <div class="empty-state">
-                    <div class="empty-icon">
-                        <i class="fas fa-exchange-alt"></i>
-                    </div>
-                    <h3>No Transferred Seniors</h3>
-                    <p><?= !empty($search) ? 'No transferred seniors found matching your search criteria.' : 'No seniors have been transferred yet.' ?></p>
-                </div>
-                <?php else: ?>
-                <div class="table-container">
-                    <table class="data-table">
-                        <thead>
-                            <tr>
-                                <th>Name</th>
-                                <th>Age</th>
-                                <th>New Address</th>
-                                <th>Transfer Date</th>
-                                <th>Transfer Reason</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <?php foreach ($transferredSeniors as $senior): ?>
-                            <tr>
-                                <td>
-                                    <div class="senior-info">
-                                        <div class="senior-name">
-                                            <?= htmlspecialchars($senior['first_name'] . ' ' . $senior['last_name']) ?>
-                                            <?php if ($senior['middle_name']): ?>
-                                            <span class="middle-name"><?= htmlspecialchars($senior['middle_name']) ?></span>
-                                            <?php endif; ?>
-                                        </div>
-                                        <?php if ($senior['osca_id_no']): ?>
-                                        <div class="senior-id">OSCA ID: <?= htmlspecialchars($senior['osca_id_no']) ?></div>
-                                        <?php endif; ?>
-                                    </div>
-                                </td>
-                                <td><?= $senior['age'] ?> years</td>
-                                <td><?= htmlspecialchars($senior['new_address']) ?></td>
-                                <td>
-                                    <?php if ($senior['effective_date'] && $senior['effective_date'] !== '0000-00-00'): ?>
-                                        <?= date('M d, Y', strtotime($senior['effective_date'])) ?>
-                                    <?php else: ?>
-                                        <span class="text-muted">Not specified</span>
-                                    <?php endif; ?>
-                                </td>
-                                <td>
-                                    <?php if ($senior['transfer_reason'] && $senior['transfer_reason'] !== 'Not specified'): ?>
-                                        <?= htmlspecialchars($senior['transfer_reason']) ?>
-                                    <?php else: ?>
-                                        <span class="text-muted">Not specified</span>
-                                    <?php endif; ?>
-                                </td>
-                                <td>
-                                    <div class="action-buttons">
-                                        <a href="senior_details.php?id=<?= $senior['id'] ?>&noedit=1" class="btn btn-sm btn-primary" title="View Details">
-                                            <i class="fas fa-eye"></i>
-                                        </a>
-                                    </div>
-                                </td>
-                            </tr>
-                            <?php endforeach; ?>
-                        </tbody>
-                    </table>
-                </div>
-                <?php endif; ?>
-            </div>
-        </div>
-    </main>
-
-    <script src="<?= BASE_URL ?>/assets/app.js"></script>
+	<script src="<?= BASE_URL ?>/assets/app.js"></script>
+	<script>
+		// Search filter for transferred seniors table (matching All Seniors functionality)
+		document.getElementById('searchInput').addEventListener('input', function() {
+			const filter = this.value.toLowerCase();
+			const rows = document.querySelectorAll('#transferredSeniorsTable tr');
+			
+			rows.forEach(row => {
+				const text = row.textContent.toLowerCase();
+				const isVisible = text.includes(filter);
+				row.style.display = isVisible ? '' : 'none';
+			});
+		});
+	</script>
 </body>
 </html>
