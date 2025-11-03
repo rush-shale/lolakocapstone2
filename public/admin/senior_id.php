@@ -376,14 +376,19 @@ function h($v){ return htmlspecialchars((string)$v, ENT_QUOTES | ENT_SUBSTITUTE,
 		.logo {
 			width: 60px;
 			height: 60px;
-			background: #ddd;
+			background: #fff;
 			border-radius: 8px;
 			display: flex;
 			align-items: center;
 			justify-content: center;
-			font-size: 12px;
-			color: #666;
+			overflow: hidden;
 			user-select: none;
+			padding: 4px;
+		}
+		.logo img {
+			width: 100%;
+			height: 100%;
+			object-fit: contain;
 		}
 		.title {
 			flex: 1;
@@ -438,23 +443,33 @@ function h($v){ return htmlspecialchars((string)$v, ENT_QUOTES | ENT_SUBSTITUTE,
 		}
 		.info .field {
 			display: flex;
-			justify-content: space-between;
+			justify-content: flex-start;
 			align-items: center;
+			gap: 0;
 			border-bottom: 1px solid #000;
 			padding: 2px 0;
 			font-weight: 700;
 			letter-spacing: 0.05em;
+		}
+		.info .field.field-spaced {
+			justify-content: space-between;
 		}
 		.info .field label {
 			font-weight: 600;
 			font-size: 11px;
 			color: #555;
 			user-select: none;
+			flex-shrink: 0;
+			margin-right: 0.25rem;
+		}
+		.info .field.field-spaced label {
+			margin-right: 0;
 		}
 		.info .field .value {
-			flex: 1;
-			text-align: right;
 			text-transform: uppercase;
+		}
+		.info .field.field-spaced .value {
+			text-align: center;
 		}
 		.bottom-row {
 			display: flex;
@@ -489,13 +504,17 @@ function h($v){ return htmlspecialchars((string)$v, ENT_QUOTES | ENT_SUBSTITUTE,
 	<div class="wrapper">
 		<div class="card" id="senior-id-card">
 			<div class="header">
-				<div class="logo" title="Logo 1">Logo 1</div>
+				<div class="logo" title="OSCA Logo">
+					<img src="<?= BASE_URL ?>/images/OSCA LOGO.png" alt="OSCA Logo">
+				</div>
 				<div class="title">
 					<div class="line1">Republic of the Philippines</div>
 					<div class="line2">Office of the Senior Citizens Affairs (OSCA)</div>
 					<div class="line3">Municipality of Manolo Fortich Bukidnon</div>
 				</div>
-				<div class="logo" title="Logo 2">Logo 2</div>
+				<div class="logo" title="Manolo Fortich Logo">
+					<img src="<?= BASE_URL ?>/images/MANOLO FORTICH LOGO.png" alt="Manolo Fortich Logo">
+				</div>
 			</div>
 			<div class="content">
 				<div class="info">
@@ -511,12 +530,12 @@ function h($v){ return htmlspecialchars((string)$v, ENT_QUOTES | ENT_SUBSTITUTE,
 						<label>&nbsp;</label>
 						<div class="value"><?= h('Manolo Fortich, Bukidnon') ?></div>
 					</div>
-					<div class="field" style="margin-top: 12px;">
+					<div class="field field-spaced" style="margin-top: 12px;">
 						<label>Date of Birth</label>
 						<label>Sex</label>
 						<label>Date Issued</label>
 					</div>
-					<div class="field" style="font-weight: 700;">
+					<div class="field field-spaced" style="font-weight: 700;">
 						<div class="value"><?= h(date('m-d-Y', strtotime($s['birthdate'] ?? ''))) ?></div>
 						<div class="value"><?= h(strtoupper($s['sex'] ?? '')) ?></div>
 						<div class="value"><?= h(date('m-d-Y')) ?></div>
