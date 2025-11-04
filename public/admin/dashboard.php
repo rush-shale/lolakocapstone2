@@ -58,7 +58,13 @@ $user = current_user();
 <head>
 	<meta charset="utf-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1">
-	<title>Admin Dashboard | SeniorCare Information System</title>
+	<meta name="theme-color" content="#1e88e5">
+	<meta name="apple-mobile-web-app-capable" content="yes">
+	<meta name="apple-mobile-web-app-status-bar-style" content="default">
+	<meta name="apple-mobile-web-app-title" content="OSCA MANOLO">
+	<title>Admin Dashboard | OSCA MANOLO</title>
+	<link rel="manifest" href="<?= BASE_URL ?>/manifest.json">
+	<link rel="apple-touch-icon" href="<?= BASE_URL ?>/images/OSCA LOGO.png">
 	<link rel="stylesheet" href="<?= BASE_URL ?>/assets/government-portal.css">
 	<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
 	<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
@@ -684,6 +690,20 @@ $user = current_user();
 			}
 		`;
 		document.head.appendChild(style);
+	</script>
+	<script>
+		// Register Service Worker for PWA
+		if ('serviceWorker' in navigator) {
+			window.addEventListener('load', () => {
+				navigator.serviceWorker.register('<?= BASE_URL ?>/sw.js')
+					.then((registration) => {
+						console.log('Service Worker registered:', registration);
+					})
+					.catch((error) => {
+						console.log('Service Worker registration failed:', error);
+					});
+			});
+		}
 	</script>
 </body>
 </html>
