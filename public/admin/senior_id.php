@@ -577,8 +577,7 @@ function h($v){ return htmlspecialchars((string)$v, ENT_QUOTES | ENT_SUBSTITUTE,
 			<div class="note">This Card is Non-Transferable</div>
 		</div>
 		<div class="controls">
-			<button class="back-btn" onclick="window.close()">← Back</button>
-			<button onclick="window.print()">🖨️ Print / Save PDF</button>
+			<a href="<?= BASE_URL ?>/admin/senior_id.php" class="back-btn" style="display: inline-block; padding: 10px 20px; background: #6c757d; color: white; text-decoration: none; border-radius: 4px; font-weight: 600;">← Back to Generate Senior IDs</a>
 		</div>
 		<div class="upload-section" style="margin-top: 20px; padding: 20px; background: #fff; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
 			<h3 style="margin-top: 0; margin-bottom: 15px;">Upload Photo for ID Card</h3>
