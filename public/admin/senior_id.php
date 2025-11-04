@@ -142,7 +142,13 @@ if (!$id) {
                                         </div>
 									</div>
 								</div>
-                                <div class="photo">Photo</div>
+                                <div class="photo">
+									<?php if (!empty($item['photo'])): ?>
+										<img src="<?= htmlspecialchars($item['photo']) ?>" alt="Photo" style="width: 100%; height: 100%; object-fit: cover; border-radius: 2mm;">
+									<?php else: ?>
+										Photo
+									<?php endif; ?>
+								</div>
                                 <div class="ctrl"><span>Control No. </span><span><?= htmlspecialchars($item['osca_id_no'] ?? '') ?></span></div>
 								<div class="footer-note">This Card is Non-Transferable</div>
 							<?php else: ?>
@@ -235,7 +241,7 @@ if (!$id) {
 											<td><span class="badge <?= $s['category'] === 'local' ? 'badge-primary' : 'badge-warning' ?>"><?= $s['category'] === 'local' ? 'Local' : 'National' ?></span></td>
 											<td><span class="badge <?= $s['benefits_received'] ? 'badge-success' : 'badge-warning' ?>"><i class="fas fa-<?= $s['benefits_received'] ? 'check' : 'clock' ?>"></i><?= $s['benefits_received'] ? 'Received' : 'Pending' ?></span></td>
 											<td>
-												<a href="<?= BASE_URL ?>/admin/senior_id.php?id=<?= (int)$s['id'] ?>" target="_blank" class="button primary"><i class="fas fa-id-card"></i> Preview</a>
+												<a href="<?= BASE_URL ?>/admin/senior_id.php?id=<?= (int)$s['id'] ?>" target="_blank" class="button primary"><i class="fas fa-camera"></i> Attach Photo</a>
 											</td>
 										</tr>
 										<?php endforeach; ?>
@@ -275,6 +281,72 @@ if (!$s) {
 	header('HTTP/1.1 404 Not Found');
 	echo 'Senior not found';
 	exit;
+}
+
+// Handle photo upload
+$uploadSuccess = false;
+$uploadError = '';
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_photo'])) {
+	// Delete photo
+	if (!empty($s['photo'])) {
+		$oldPhotoPath = __DIR__ . '/../../public/uploads/photos/' . basename($s['photo']);
+		if (file_exists($oldPhotoPath)) {
+			unlink($oldPhotoPath);
+		}
+		$stmt = $pdo->prepare("UPDATE seniors SET photo = NULL WHERE id = ?");
+		$stmt->execute([$id]);
+		$s['photo'] = null;
+		$uploadSuccess = true;
+	}
+} elseif ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['photo']) && $_FILES['photo']['error'] === UPLOAD_ERR_OK) {
+	// Check if photo column exists, if not add it
+	try {
+		$pdo->query("SELECT photo FROM seniors LIMIT 1");
+	} catch (PDOException $e) {
+		// Column doesn't exist, add it
+		try {
+			$pdo->exec("ALTER TABLE seniors ADD COLUMN photo VARCHAR(255) DEFAULT NULL");
+		} catch (PDOException $ex) {
+			// Ignore if already exists
+		}
+	}
+	
+	$uploadDir = __DIR__ . '/../../public/uploads/photos/';
+	if (!is_dir($uploadDir)) {
+		mkdir($uploadDir, 0755, true);
+	}
+	
+	$file = $_FILES['photo'];
+	$allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif'];
+	$maxSize = 5 * 1024 * 1024; // 5MB
+	
+	if (!in_array($file['type'], $allowedTypes)) {
+		$uploadError = 'Invalid file type. Please upload JPEG, PNG, or GIF images only.';
+	} elseif ($file['size'] > $maxSize) {
+		$uploadError = 'File size too large. Maximum size is 5MB.';
+	} else {
+		$extension = pathinfo($file['name'], PATHINFO_EXTENSION);
+		$filename = 'senior_' . $id . '_' . time() . '.' . $extension;
+		$filepath = $uploadDir . $filename;
+		
+		// Delete old photo if exists
+		if (!empty($s['photo'])) {
+			$oldPhotoPath = __DIR__ . '/../../public/uploads/photos/' . basename($s['photo']);
+			if (file_exists($oldPhotoPath)) {
+				unlink($oldPhotoPath);
+			}
+		}
+		
+		if (move_uploaded_file($file['tmp_name'], $filepath)) {
+			$photoUrl = BASE_URL . '/uploads/photos/' . $filename;
+			$stmt = $pdo->prepare("UPDATE seniors SET photo = ? WHERE id = ?");
+			$stmt->execute([$photoUrl, $id]);
+			$s['photo'] = $photoUrl;
+			$uploadSuccess = true;
+		} else {
+			$uploadError = 'Failed to upload photo. Please try again.';
+		}
+	}
 }
 
 function h($v){ return htmlspecialchars((string)$v, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8'); }
@@ -487,7 +559,13 @@ function h($v){ return htmlspecialchars((string)$v, ENT_QUOTES | ENT_SUBSTITUTE,
 						<div class="value"><?= h(date('m-d-Y')) ?></div>
 					</div>
 				</div>
-				<div class="photo">📷<br>Photo</div>
+				<div class="photo">
+					<?php if (!empty($s['photo'])): ?>
+						<img src="<?= h($s['photo']) ?>" alt="Senior Photo" style="width: 100%; height: 100%; object-fit: cover; border-radius: 8px;">
+					<?php else: ?>
+						📷<br>Photo
+					<?php endif; ?>
+				</div>
 			</div>
 			<div class="bottom-row">
 				<div class="signature-block">
@@ -501,6 +579,33 @@ function h($v){ return htmlspecialchars((string)$v, ENT_QUOTES | ENT_SUBSTITUTE,
 		<div class="controls">
 			<button class="back-btn" onclick="window.close()">← Back</button>
 			<button onclick="window.print()">🖨️ Print / Save PDF</button>
+		</div>
+		<div class="upload-section" style="margin-top: 20px; padding: 20px; background: #fff; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+			<h3 style="margin-top: 0; margin-bottom: 15px;">Upload Photo for ID Card</h3>
+			<?php if ($uploadSuccess): ?>
+				<div style="padding: 10px; background: #d4edda; color: #155724; border-radius: 4px; margin-bottom: 15px;">
+					Photo uploaded successfully!
+				</div>
+			<?php endif; ?>
+			<?php if ($uploadError): ?>
+				<div style="padding: 10px; background: #f8d7da; color: #721c24; border-radius: 4px; margin-bottom: 15px;">
+					<?= h($uploadError) ?>
+				</div>
+			<?php endif; ?>
+			<form method="POST" enctype="multipart/form-data" style="display: flex; flex-direction: column; gap: 10px;">
+				<input type="file" name="photo" accept="image/jpeg,image/jpg,image/png,image/gif" required style="padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+				<button type="submit" style="padding: 10px 20px; background: #1e88e5; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: 600;">
+					📷 Upload Photo
+				</button>
+			</form>
+			<?php if (!empty($s['photo'])): ?>
+				<form method="POST" style="margin-top: 10px;">
+					<input type="hidden" name="delete_photo" value="1">
+					<button type="submit" onclick="return confirm('Are you sure you want to remove this photo?')" style="padding: 8px 16px; background: #dc3545; color: white; border: none; border-radius: 4px; cursor: pointer;">
+						🗑️ Remove Photo
+					</button>
+				</form>
+			<?php endif; ?>
 		</div>
 	</div>
 </body>
