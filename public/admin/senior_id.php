@@ -37,10 +37,20 @@ if (!$id) {
 						grid-auto-rows: 60mm;
 						gap: 5mm;
 						justify-content: center;
+						align-content: start;
+					}
+					.sheet.front, .sheet.back {
+						display: grid;
+						grid-template-columns: repeat(2, 95mm);
+						grid-auto-rows: 60mm;
+						gap: 5mm;
+						justify-content: center;
+						align-content: start;
 					}
 					.card {
-						width: 95mm; height: 60mm; border: 0.8mm solid #1e88e5; box-sizing: border-box; padding: 4mm; position: relative; font-family: Arial, sans-serif; overflow: hidden; border-radius: 2mm; background:#fff;
+						width: 95mm; height: 60mm; border: 0.8mm solid #1e88e5; box-sizing: border-box; padding: 4mm; position: relative; font-family: Arial, sans-serif; overflow: hidden; border-radius: 2mm; background:#fff; min-width: 95mm; max-width: 95mm; min-height: 60mm; max-height: 60mm;
 					}
+					.sheet.back .card { padding: 0; }
                     .front .header-row { position:absolute; top:5mm; left:8mm; right:8mm; display:grid; grid-template-columns: 10mm 1fr 10mm; align-items:center; column-gap: 4mm; z-index:2; }
                     .front .logo { width:10mm; height:10mm; background: transparent; }
                     .front .center { position:absolute; top:18mm; left:6mm; right:28mm; z-index:2; }
@@ -72,7 +82,18 @@ if (!$id) {
                     .front .ctrl { position:absolute; right:6mm; top:42mm; display:flex; align-items:center; gap: 0.8mm; font-weight:700; font-size:5.6pt; z-index:3; background:#fff; padding: 0 0.3mm; }
                     /* removed underline next to Control No. */
                     .front .footer-note { position:absolute; left:0; right:0; bottom:2mm; text-align:center; font-size:6.4pt; font-weight:900; text-transform:none; z-index:3; background:#fff; }
-					.back { display:flex; align-items:center; justify-content:center; font-size:9pt; text-align:center; padding: 3mm; }
+					.back { padding: 0; font-family: Arial, sans-serif; overflow: hidden; display: flex; align-items: center; justify-content: center; height: 100%; width: 100%; position: relative; box-sizing: border-box; }
+					.back img { width: 100%; height: 100%; object-fit: contain; display: block; }
+					.back .title { font-weight: 900; font-size: 6.4pt; text-align: left; margin-bottom: 1mm; color: #000; line-height: 1.1; padding-left: 0; }
+					.back .benefits-list { flex: 1; overflow: hidden; text-align: left; font-size: 5.5pt; line-height: 1.25; color: #000; margin-bottom: 0.5mm; padding-left: 0; padding-bottom: 6mm; }
+					.back .benefits-list ul { margin: 0; padding-left: 4mm; list-style-type: square; }
+					.back .benefits-list li { margin-bottom: 0.35mm; }
+					.back .signatures { display: grid; grid-template-columns: 1fr 1fr; gap: 6mm; margin-top: 0.5mm; margin-bottom: 0; padding-left: 0; position: absolute; bottom: 8mm; left: 4mm; right: 4mm; }
+					.back .signature-block { display: flex; flex-direction: column; align-items: center; }
+					.back .sig-space { height: 6mm; margin-bottom: 0.5mm; }
+					.back .sig-name { font-weight: 900; font-size: 5.6pt; text-transform: uppercase; text-align: center; border-bottom: 0.18mm solid #000; padding-bottom: 0.3mm; margin-bottom: 0.3mm; width: 100%; }
+					.back .sig-title { font-weight: 900; font-size: 5pt; text-transform: uppercase; text-align: center; color: #000; }
+					.back .disclaimer { font-size: 5pt; font-style: italic; text-align: left; margin-top: 0; color: #000; padding: 0.5mm 0; padding-left: 0; position: absolute; bottom: 2mm; left: 4mm; right: 4mm; z-index: 100; background: #fff; }
 					@media print { .noprint { display:none; } }
 				</style>
 			</head>
@@ -126,10 +147,7 @@ if (!$id) {
 								<div class="footer-note">This Card is Non-Transferable</div>
 							<?php else: ?>
 								<div class="back">
-									<div>
-										<div><strong>Control No:</strong> <?= htmlspecialchars($item['osca_id_no'] ?? '') ?></div>
-										<div style="margin-top:4mm;">This card is non-transferable.</div>
-									</div>
+									<img src="<?= BASE_URL ?>/images/BACK ID.png?v=<?= time() ?>" alt="Senior ID Back">
 								</div>
 							<?php endif; ?>
 						</div>
