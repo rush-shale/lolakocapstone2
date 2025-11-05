@@ -53,12 +53,12 @@ if (!$id) {
 					.sheet.back .card { padding: 0; }
                     .front .header-row { position:absolute; top:5mm; left:8mm; right:8mm; display:grid; grid-template-columns: 10mm 1fr 10mm; align-items:center; column-gap: 4mm; z-index:2; }
                     .front .logo { width:10mm; height:10mm; background: transparent; }
-                    .front .center { position:absolute; top:18mm; left:4mm; right:32mm; z-index:2; }
+                    .front .center { position:absolute; top:18mm; left:4mm; right:30mm; z-index:2; }
                     .front .hdr { text-align:center; line-height:1.12; color:#000; }
 					.front .hdr .l1 { font-weight:900; font-size: 9pt; }
 					.front .hdr .l2 { font-weight:800; font-size: 7.4pt; }
 					.front .hdr .l3 { font-weight:700; font-size: 6.6pt; }
-					.front .photo { position:absolute; right:6mm; top:18mm; width:25.4mm; height:25.4mm; border:0.22mm solid #cfd4da; display:flex; align-items:center; justify-content:center; font-size:6.2pt; border-radius: 2mm; background:#e6ecf2; z-index:1; }
+					.front .photo { position:absolute; right:4mm; top:18mm; width:25.4mm; height:25.4mm; border:0.22mm solid #cfd4da; display:flex; align-items:center; justify-content:center; font-size:6.2pt; border-radius: 2mm; background:#e6ecf2; z-index:1; }
 					.front .left { width:100%; margin-top: 7mm; position:relative; z-index:2; background:#fff; }
                     .front .field { display:grid; grid-template-columns: 15mm 1fr; align-items:center; column-gap: 0.6mm; font-size: 6.4pt; margin-top: 1.8mm; color:#000; }
 					.front .label { color:#000; font-weight:900; text-align:left; }
@@ -109,7 +109,7 @@ if (!$id) {
                                     <img class="logo" src="<?= BASE_URL ?>/images/OSCA LOGO.png" alt="OSCA">
                                     <div class="hdr">
                                         <div class="l1">Republic of the Philippines</div>
-                                        <div class="l2">Office of the Senior Citizens Affairs (OSCA)</div>
+                                        <div class="l2">Office for the Senior Citizens Affairs (OSCA)</div>
                                         <div class="l3">Municipality of Manolo Fortich Bukidnon</div>
                                     </div>
                                     <img class="logo" src="<?= BASE_URL ?>/images/MANOLO FORTICH LOGO.png" alt="MF">
