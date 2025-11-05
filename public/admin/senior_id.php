@@ -55,7 +55,7 @@ if (!$id) {
                     .front .logo { width:14mm; height:14mm; background: transparent; }
                     .front .center { position:absolute; top:18mm; left:4mm; right:30mm; z-index:2; }
                     .front .hdr { text-align:center; line-height:1.12; color:#000; }
-					.front .hdr .l1 { font-weight:900; font-size: 9pt; }
+					.front .hdr .l1 { font-weight:900; font-size: 9pt; white-space: nowrap; }
 					.front .hdr .l2 { font-weight:800; font-size: 7.4pt; }
 					.front .hdr .l3 { font-weight:700; font-size: 6.6pt; }
 					.front .photo { position:absolute; right:4mm; top:20mm; width:25.4mm; height:25.4mm; border:0.22mm solid #cfd4da; display:flex; align-items:center; justify-content:center; font-size:6.2pt; border-radius: 2mm; background:#e6ecf2; z-index:1; }
