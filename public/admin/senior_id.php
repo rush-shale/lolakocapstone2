@@ -82,7 +82,7 @@ if (!$id) {
                     .front .ctrl-inline { display:flex; align-items:center; gap: 2mm; font-weight:900; font-size:6.8pt; white-space: nowrap; }
                     .front .ctrl { position:absolute; right:6mm; top:46mm; display:flex; align-items:center; gap: 0.8mm; font-weight:700; font-size:6.8pt; z-index:3; background:#fff; padding: 0 0.3mm; }
                     /* removed underline next to Control No. */
-                    .front .footer-note { position:absolute; left:0; right:0; bottom:1mm; text-align:center; font-size:6.4pt; font-weight:900; text-transform:none; z-index:3; background:#fff; border-top: 0.2mm solid #000; padding-top: 1mm; }
+                    .front .footer-note { position:absolute; left:0; right:0; bottom:0.5mm; text-align:center; font-size:6.4pt; font-weight:900; text-transform:none; z-index:3; background:#fff; border-top: 0.2mm solid #000; padding-top: 0.5mm; }
 					.back { padding: 0; font-family: Arial, sans-serif; overflow: hidden; display: flex; align-items: center; justify-content: center; height: 100%; width: 100%; position: relative; box-sizing: border-box; }
 					.back img { width: 100%; height: 100%; object-fit: contain; display: block; }
 					.back .title { font-weight: 900; font-size: 6.4pt; text-align: left; margin-bottom: 1mm; color: #000; line-height: 1.1; padding-left: 0; }
