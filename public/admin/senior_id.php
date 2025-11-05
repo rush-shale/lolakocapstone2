@@ -151,7 +151,7 @@ if (!$id) {
 										Photo
 									<?php endif; ?>
 								</div>
-                                <div class="ctrl"><span>Control No. </span><span><?= htmlspecialchars($item['osca_id_no'] ?? '') ?></span></div>
+                                <div class="ctrl"><span>OSCA No. </span><span><?= htmlspecialchars($item['osca_id_no'] ?? '') ?></span></div>
 								<div class="footer-note">This Card is Non-Transferable</div>
 							<?php else: ?>
 								<div class="back">
