@@ -80,7 +80,7 @@ if (!$id) {
                     .front .sig-block { width: 58mm; text-align:center; margin-left: 20mm; }
                     .front .sig-block .sig-line { border-top: 0.16mm solid #000; margin: 0 0 1mm 0; }
                     .front .ctrl-inline { display:flex; align-items:center; gap: 2mm; font-weight:900; font-size:6.8pt; white-space: nowrap; }
-                    .front .ctrl { position:absolute; right:6mm; top:47mm; display:flex; align-items:center; gap: 0.8mm; font-weight:700; font-size:5.6pt; z-index:3; background:#fff; padding: 0 0.3mm; }
+                    .front .ctrl { position:absolute; right:6mm; top:46mm; display:flex; align-items:center; gap: 0.8mm; font-weight:700; font-size:6.8pt; z-index:3; background:#fff; padding: 0 0.3mm; }
                     /* removed underline next to Control No. */
                     .front .footer-note { position:absolute; left:0; right:0; bottom:2mm; text-align:center; font-size:6.4pt; font-weight:900; text-transform:none; z-index:3; background:#fff; }
 					.back { padding: 0; font-family: Arial, sans-serif; overflow: hidden; display: flex; align-items: center; justify-content: center; height: 100%; width: 100%; position: relative; box-sizing: border-box; }
