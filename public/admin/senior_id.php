@@ -77,7 +77,7 @@ if (!$id) {
                     .front .sig { width: 58mm; border-bottom: none; height: 0; margin-top: 0; }
                     .front .sig-label { font-size: 5.6pt; font-weight:700; display:block; margin-top: 1mm; text-align:center; }
                     .front .sig-row { display:flex; justify-content:center; align-items:center; margin-top: 4mm; }
-                    .front .sig-block { width: 58mm; text-align:center; margin-left: 20mm; }
+                    .front .sig-block { width: 58mm; text-align:center; margin-left: 15mm; }
                     .front .sig-block .sig-line { border-top: 0.16mm solid #000; margin: 0 0 1mm 0; }
                     .front .ctrl-inline { display:flex; align-items:center; gap: 2mm; font-weight:900; font-size:6.8pt; white-space: nowrap; }
                     .front .ctrl { position:absolute; right:6mm; top:46mm; display:flex; align-items:center; gap: 0.8mm; font-weight:700; font-size:6.8pt; z-index:3; background:#fff; padding: 0 0.3mm; }
