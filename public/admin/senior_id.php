@@ -51,7 +51,7 @@ if (!$id) {
 						width: 95mm; height: 60mm; border: 0.8mm solid #1e88e5; box-sizing: border-box; padding: 4mm; position: relative; font-family: Arial, sans-serif; overflow: hidden; border-radius: 2mm; background:#fff; min-width: 95mm; max-width: 95mm; min-height: 60mm; max-height: 60mm;
 					}
 					.sheet.back .card { padding: 0; }
-                    .front .header-row { position:absolute; top:3mm; left:8mm; right:8mm; display:grid; grid-template-columns: 14mm 1fr 14mm; align-items:center; column-gap: 4mm; z-index:2; }
+                    .front .header-row { position:absolute; top:1.5mm; left:8mm; right:8mm; display:grid; grid-template-columns: 14mm 1fr 14mm; align-items:center; column-gap: 4mm; z-index:2; }
                     .front .logo { width:14mm; height:14mm; background: transparent; }
                     .front .center { position:absolute; top:18mm; left:4mm; right:30mm; z-index:2; }
                     .front .hdr { text-align:center; line-height:1.12; color:#000; }
