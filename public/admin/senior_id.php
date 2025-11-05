@@ -56,7 +56,8 @@ if (!$id) {
                     .front .center { position:absolute; top:18mm; left:4mm; right:30mm; z-index:2; }
                     .front .hdr { text-align:center; line-height:1.12; color:#000; }
 					.front .hdr .l1 { font-weight:900; font-size: 9pt; white-space: nowrap; }
-					.front .hdr .l2 { font-weight:800; font-size: 7.4pt; }
+					.front .hdr .l2 { font-weight:800; font-size: 7.4pt; white-space: nowrap; }
+					.front .hdr .l2-osca { font-weight:800; font-size: 7.4pt; white-space: nowrap; }
 					.front .hdr .l3 { font-weight:700; font-size: 6.6pt; }
 					.front .photo { position:absolute; right:4mm; top:20mm; width:25.4mm; height:25.4mm; border:0.22mm solid #cfd4da; display:flex; align-items:center; justify-content:center; font-size:6.2pt; border-radius: 2mm; background:#e6ecf2; z-index:1; }
 					.front .left { width:100%; margin-top: 7mm; position:relative; z-index:2; background:#fff; }
@@ -109,7 +110,8 @@ if (!$id) {
                                     <img class="logo" src="<?= BASE_URL ?>/images/OSCA LOGO.png" alt="OSCA">
                                     <div class="hdr">
                                         <div class="l1">Republic of the Philippines</div>
-                                        <div class="l2">Office for the Senior Citizens Affairs (OSCA)</div>
+                                        <div class="l2">Office for the Senior Citizens Affairs</div>
+                                        <div class="l2-osca">(OSCA)</div>
                                         <div class="l3">Municipality of Manolo Fortich Bukidnon</div>
                                     </div>
                                     <img class="logo" src="<?= BASE_URL ?>/images/MANOLO FORTICH LOGO.png" alt="MF">
