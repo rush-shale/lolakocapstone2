@@ -53,12 +53,12 @@ if (!$id) {
 					.sheet.back .card { padding: 0; }
                     .front .header-row { position:absolute; top:5mm; left:8mm; right:8mm; display:grid; grid-template-columns: 10mm 1fr 10mm; align-items:center; column-gap: 4mm; z-index:2; }
                     .front .logo { width:10mm; height:10mm; background: transparent; }
-                    .front .center { position:absolute; top:18mm; left:6mm; right:28mm; z-index:2; }
+                    .front .center { position:absolute; top:18mm; left:4mm; right:32mm; z-index:2; }
                     .front .hdr { text-align:center; line-height:1.12; color:#000; }
 					.front .hdr .l1 { font-weight:900; font-size: 9pt; }
 					.front .hdr .l2 { font-weight:800; font-size: 7.4pt; }
 					.front .hdr .l3 { font-weight:700; font-size: 6.6pt; }
-					.front .photo { position:absolute; right:6mm; top:18mm; width:18mm; height:22mm; border:0.22mm solid #cfd4da; display:flex; align-items:center; justify-content:center; font-size:6.2pt; border-radius: 2mm; background:#e6ecf2; z-index:1; }
+					.front .photo { position:absolute; right:6mm; top:18mm; width:25.4mm; height:25.4mm; border:0.22mm solid #cfd4da; display:flex; align-items:center; justify-content:center; font-size:6.2pt; border-radius: 2mm; background:#e6ecf2; z-index:1; }
 					.front .left { width:100%; margin-top: 7mm; position:relative; z-index:2; background:#fff; }
                     .front .field { display:grid; grid-template-columns: 15mm 1fr; align-items:center; column-gap: 0.6mm; font-size: 6.4pt; margin-top: 1.8mm; color:#000; }
 					.front .label { color:#000; font-weight:900; text-align:left; }
@@ -79,7 +79,7 @@ if (!$id) {
                     .front .sig-block { width: 58mm; text-align:center; margin-left: 20mm; }
                     .front .sig-block .sig-line { border-top: 0.16mm solid #000; margin: 0 0 1mm 0; }
                     .front .ctrl-inline { display:flex; align-items:center; gap: 2mm; font-weight:900; font-size:6.8pt; white-space: nowrap; }
-                    .front .ctrl { position:absolute; right:6mm; top:42mm; display:flex; align-items:center; gap: 0.8mm; font-weight:700; font-size:5.6pt; z-index:3; background:#fff; padding: 0 0.3mm; }
+                    .front .ctrl { position:absolute; right:6mm; top:47mm; display:flex; align-items:center; gap: 0.8mm; font-weight:700; font-size:5.6pt; z-index:3; background:#fff; padding: 0 0.3mm; }
                     /* removed underline next to Control No. */
                     .front .footer-note { position:absolute; left:0; right:0; bottom:2mm; text-align:center; font-size:6.4pt; font-weight:900; text-transform:none; z-index:3; background:#fff; }
 					.back { padding: 0; font-family: Arial, sans-serif; overflow: hidden; display: flex; align-items: center; justify-content: center; height: 100%; width: 100%; position: relative; box-sizing: border-box; }
