@@ -197,7 +197,7 @@ $events = $events->fetchAll();
 			</div>
 			<div class="modal-body">
 				<p id="eventModalSubtitle" class="text-muted" style="margin-bottom: .75rem;"></p>
-				<div class="table-container table-scroll">
+				<div class="table-container table-scroll modal-table">
 					<table class="modern-table">
 						<thead>
 							<tr>
@@ -286,5 +286,9 @@ $events = $events->fetchAll();
 			});
 		})();
 	</script>
+	<style>
+		/* Ensure modal table is not blurred by global modal-active rule */
+		body.modal-active #eventAttendeesModal .modal-table { opacity: 1 !important; filter: none !important; pointer-events: auto !important; }
+	</style>
 </body>
 </html>
