@@ -235,6 +235,35 @@ $csrf = generate_csrf_token();
 				</form>
 			</div>
 
+			<!-- Attendees for Selected Event -->
+			<div class="card animate-fade-in" id="attendeesCard" style="display:none;">
+				<div class="card-header">
+					<h2 class="card-title">Attendees for Selected Event</h2>
+					<p class="card-subtitle" id="attendeesEventSubtitle"></p>
+				</div>
+				<div class="card-body">
+					<div class="table-container table-scroll">
+						<table class="modern-table">
+							<thead>
+								<tr>
+									<th>Last Name</th>
+									<th>First Name</th>
+									<th>Middle</th>
+									<th>Ext</th>
+									<th>Age</th>
+									<th>Sex</th>
+									<th>OSCA ID</th>
+									<th>Marked At</th>
+								</tr>
+							</thead>
+							<tbody id="attendeesTableBody">
+								<tr class="no-data"><td colspan="8" style="text-align:center; padding: 1rem;">No attendees yet.</td></tr>
+							</tbody>
+						</table>
+					</div>
+				</div>
+			</div>
+
 			</div>
 
 
@@ -259,6 +288,67 @@ $csrf = generate_csrf_token();
 				}
 			});
 		});
+
+		// Load attendees for selected event
+		const eventSelect = document.getElementById('event_id');
+		const attendeesCard = document.getElementById('attendeesCard');
+		const attendeesSubtitle = document.getElementById('attendeesEventSubtitle');
+		const attendeesTableBody = document.getElementById('attendeesTableBody');
+
+		function renderAttendees(data) {
+			if (!data || !Array.isArray(data.attendees)) {
+				attendeesCard.style.display = 'none';
+				return;
+			}
+			attendeesCard.style.display = '';
+			const e = data.event || {};
+			const when = e.event_time ? `${e.event_date} ${e.event_time}` : e.event_date;
+			attendeesSubtitle.textContent = `${e.title || ''} — ${when || ''}`;
+			attendeesTableBody.innerHTML = '';
+			if (data.attendees.length === 0) {
+				attendeesTableBody.innerHTML = '<tr class="no-data"><td colspan="8" style="text-align:center; padding: 1rem;">No attendees yet.</td></tr>';
+				return;
+			}
+			for (const a of data.attendees) {
+				const tr = document.createElement('tr');
+				tr.innerHTML = `
+					<td>${a.last_name ? a.last_name : ''}</td>
+					<td>${a.first_name ? a.first_name : ''}</td>
+					<td>${a.middle_name ? a.middle_name : ''}</td>
+					<td>${a.ext_name ? a.ext_name : ''}</td>
+					<td>${a.age ? a.age : ''}</td>
+					<td>${a.sex ? (a.sex.charAt(0).toUpperCase()+a.sex.slice(1)) : ''}</td>
+					<td>${a.osca_id_no ? a.osca_id_no : ''}</td>
+					<td>${a.marked_at ? a.marked_at : ''}</td>
+				`;
+				attendeesTableBody.appendChild(tr);
+			}
+		}
+
+		async function loadAttendeesByEventId(eventId) {
+			if (!eventId) {
+				attendeesCard.style.display = 'none';
+				return;
+			}
+			try {
+				const res = await fetch(`${BASE_URL}/user/fetch_event_attendees.php?event_id=${encodeURIComponent(eventId)}`, {
+					credentials: 'same-origin'
+				});
+				const data = await res.json();
+				renderAttendees(data);
+			} catch (e) {
+				attendeesCard.style.display = 'none';
+			}
+		}
+
+		eventSelect?.addEventListener('change', function() {
+			loadAttendeesByEventId(this.value);
+		});
+
+		// If a value is pre-selected (e.g., after postback if preserved in future), load attendees
+		if (eventSelect && eventSelect.value) {
+			loadAttendeesByEventId(eventSelect.value);
+		}
 	</script>
 </body>
 </html>
