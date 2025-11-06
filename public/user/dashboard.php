@@ -39,18 +39,7 @@ if ($latestEvent) {
 	$latestEventAttendees = $attStmt->fetchAll();
 }
 
-// Stats: totals and counts for widgets
-$totalSeniors = (int)$pdo->prepare("SELECT COUNT(*) FROM seniors WHERE barangay=? AND life_status='living'")->execute([$user['barangay']]) ? (int)$pdo->query("SELECT COUNT(*) FROM seniors WHERE barangay='" . str_replace("'", "''", $user['barangay']) . "' AND life_status='living'")->fetchColumn() : 0;
 
-$upcomingBarangayCountStmt = $pdo->prepare("SELECT COUNT(*) FROM events WHERE scope='barangay' AND barangay=? AND event_date >= CURDATE()");
-$upcomingBarangayCountStmt->execute([$user['barangay']]);
-$upcomingBarangayCount = (int)$upcomingBarangayCountStmt->fetchColumn();
-
-$upcomingAdminCount = (int)$pdo->query("SELECT COUNT(*) FROM events WHERE scope='admin' AND event_date >= CURDATE()")->fetchColumn();
-
-$last7DaysAttendeesStmt = $pdo->prepare("SELECT COUNT(a.id) FROM attendance a JOIN events e ON a.event_id = e.id WHERE e.scope='barangay' AND e.barangay=? AND e.event_date >= DATE_SUB(CURDATE(), INTERVAL 7 DAY)");
-$last7DaysAttendeesStmt->execute([$user['barangay']]);
-$last7DaysAttendees = (int)$last7DaysAttendeesStmt->fetchColumn();
 
 ?>
 <!doctype html>
@@ -73,53 +62,6 @@ $last7DaysAttendees = (int)$last7DaysAttendeesStmt->fetchColumn();
 		</header>
 		
 		<div class="content-body">
-			<!-- Stats Widgets -->
-			<div class="stats" style="margin-bottom: var(--space-6);">
-				<div class="card modern-stat-card">
-					<div class="card-body">
-						<div style="display:flex; align-items:center; justify-content:space-between; gap: 1rem;">
-							<div>
-								<div class="text-muted" style="font-weight:600;">Total Seniors</div>
-								<div style="font-size:2rem; font-weight:800;"><?= number_format($totalSeniors) ?></div>
-							</div>
-							<i class="fas fa-users" style="font-size:1.75rem; color: var(--gov-primary);"></i>
-						</div>
-					</div>
-				</div>
-				<div class="card modern-stat-card">
-					<div class="card-body">
-						<div style="display:flex; align-items:center; justify-content:space-between; gap: 1rem;">
-							<div>
-								<div class="text-muted" style="font-weight:600;">Upcoming Barangay Events</div>
-								<div style="font-size:2rem; font-weight:800;"><?= number_format($upcomingBarangayCount) ?></div>
-							</div>
-							<i class="fas fa-calendar-alt" style="font-size:1.75rem; color: #0ea5e9;"></i>
-						</div>
-					</div>
-				</div>
-				<div class="card modern-stat-card">
-					<div class="card-body">
-						<div style="display:flex; align-items:center; justify-content:space-between; gap: 1rem;">
-							<div>
-								<div class="text-muted" style="font-weight:600;">Upcoming OSCA Events</div>
-								<div style="font-size:2rem; font-weight:800;"><?= number_format($upcomingAdminCount) ?></div>
-							</div>
-							<i class="fas fa-building" style="font-size:1.75rem; color: #10b981;"></i>
-						</div>
-					</div>
-				</div>
-				<div class="card modern-stat-card">
-					<div class="card-body">
-						<div style="display:flex; align-items:center; justify-content:space-between; gap: 1rem;">
-							<div>
-								<div class="text-muted" style="font-weight:600;">Attendees (Last 7 Days)</div>
-								<div style="font-size:2rem; font-weight:800;"><?= number_format($last7DaysAttendees) ?></div>
-							</div>
-							<i class="fas fa-user-check" style="font-size:1.75rem; color: #f59e0b;"></i>
-						</div>
-					</div>
-				</div>
-			</div>
 
 			<div class="grid-2">
 				<div class="card">
