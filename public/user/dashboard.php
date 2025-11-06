@@ -143,8 +143,8 @@ $last7DaysAttendees = (int)$last7DaysAttendeesStmt->fetchColumn();
 									</tr>
 								</thead>
 								<tbody>
-									<?php foreach ($barangayEvents as $e): ?>
-									<tr>
+							<?php foreach ($barangayEvents as $e): ?>
+							<tr class="clickable-event-row" data-event-id="<?= (int)$e['id'] ?>" title="View attendees">
 										<td><strong><?= htmlspecialchars($e['title']) ?></strong></td>
 										<td><?= date('M d, Y', strtotime($e['event_date'])) ?></td>
 										<td><?= $e['event_time'] ? date('g:i A', strtotime($e['event_time'])) : 'All Day' ?></td>
@@ -236,8 +236,8 @@ $last7DaysAttendees = (int)$last7DaysAttendeesStmt->fetchColumn();
 									</tr>
 								</thead>
 								<tbody>
-									<?php foreach ($adminEvents as $e): ?>
-									<tr>
+							<?php foreach ($adminEvents as $e): ?>
+							<tr class="clickable-event-row" data-event-id="<?= (int)$e['id'] ?>" title="View attendees">
 										<td><strong><?= htmlspecialchars($e['title']) ?></strong></td>
 										<td><?= date('M d, Y', strtotime($e['event_date'])) ?></td>
 										<td><?= $e['event_time'] ? date('g:i A', strtotime($e['event_time'])) : 'All Day' ?></td>
@@ -282,8 +282,8 @@ $last7DaysAttendees = (int)$last7DaysAttendeesStmt->fetchColumn();
 									</tr>
 								</thead>
 								<tbody>
-									<?php foreach ($recentPastEvents as $e): ?>
-									<tr>
+							<?php foreach ($recentPastEvents as $e): ?>
+							<tr class="clickable-event-row" data-event-id="<?= (int)$e['id'] ?>" title="View attendees">
 										<td><strong><?= htmlspecialchars($e['title']) ?></strong></td>
 										<td><?= date('M d, Y', strtotime($e['event_date'])) ?></td>
 										<td><?= $e['event_time'] ? date('g:i A', strtotime($e['event_time'])) : 'All Day' ?></td>
@@ -338,7 +338,112 @@ $last7DaysAttendees = (int)$last7DaysAttendeesStmt->fetchColumn();
 				</div>
 			</div>
 		</div>
+	<!-- Event Attendees Modal -->
+	<div id="eventAttendeesModal" class="modal-overlay" aria-hidden="true">
+		<div class="modal large" role="dialog" aria-modal="true" aria-labelledby="eventModalTitle">
+			<div class="modal-header">
+				<h3 class="modal-title" id="eventModalTitle">Event Attendees</h3>
+				<button type="button" class="modal-close" id="closeEventModal" aria-label="Close">
+					<i class="fas fa-times"></i>
+				</button>
+			</div>
+			<div class="modal-body">
+				<p id="eventModalSubtitle" class="text-muted" style="margin-bottom: .75rem;"></p>
+				<div class="table-container table-scroll">
+					<table class="modern-table">
+						<thead>
+							<tr>
+								<th>Last Name</th>
+								<th>First Name</th>
+								<th>Middle</th>
+								<th>Ext</th>
+								<th>Marked At</th>
+							</tr>
+						</thead>
+						<tbody id="eventAttendeesBody">
+							<tr class="no-data"><td colspan="5" style="text-align:center; padding:1rem;">No attendees yet.</td></tr>
+						</tbody>
+					</table>
+				</div>
+			</div>
+		</div>
+	</div>
+
 	</main>
 	<script src="<?= BASE_URL ?>/assets/app.js"></script>
+	<script>
+		(function(){
+			const modal = document.getElementById('eventAttendeesModal');
+			const modalTitle = document.getElementById('eventModalTitle');
+			const modalSubtitle = document.getElementById('eventModalSubtitle');
+			const modalBodyTbody = document.getElementById('eventAttendeesBody');
+			const closeBtn = document.getElementById('closeEventModal');
+
+			function openModal() {
+				modal.classList.add('active');
+				modal.setAttribute('aria-hidden', 'false');
+				document.body.classList.add('modal-active');
+			}
+
+			function closeModal() {
+				modal.classList.remove('active');
+				modal.setAttribute('aria-hidden', 'true');
+				document.body.classList.remove('modal-active');
+			}
+
+			closeBtn?.addEventListener('click', closeModal);
+			modal.addEventListener('click', (e) => {
+				if (e.target === modal) closeModal();
+			});
+
+			async function loadEventAttendees(eventId) {
+				try {
+					const res = await fetch(`${BASE_URL}/user/fetch_event_attendees.php?event_id=${encodeURIComponent(eventId)}`, { credentials: 'same-origin' });
+					const data = await res.json();
+					const e = data.event || {};
+					modalTitle.textContent = e.title ? `Event Attendees — ${e.title}` : 'Event Attendees';
+					const when = e.event_time ? `${e.event_date} • ${e.event_time}` : (e.event_date || '');
+					modalSubtitle.textContent = when;
+					modalBodyTbody.innerHTML = '';
+					const list = Array.isArray(data.attendees) ? data.attendees : [];
+					if (list.length === 0) {
+						modalBodyTbody.innerHTML = '<tr class="no-data"><td colspan="5" style="text-align:center; padding:1rem;">No attendees yet.</td></tr>';
+						return;
+					}
+					for (const a of list) {
+						const tr = document.createElement('tr');
+						tr.innerHTML = `
+							<td>${a.last_name ? a.last_name : ''}</td>
+							<td>${a.first_name ? a.first_name : ''}</td>
+							<td>${a.middle_name ? a.middle_name : ''}</td>
+							<td>${a.ext_name ? a.ext_name : ''}</td>
+							<td>${a.marked_at ? a.marked_at : ''}</td>
+						`;
+						modalBodyTbody.appendChild(tr);
+					}
+				} catch (err) {
+					modalBodyTbody.innerHTML = '<tr class="no-data"><td colspan="5" style="text-align:center; padding:1rem;">Failed to load attendees.</td></tr>';
+				}
+			}
+
+			function onRowClick(e) {
+				const tr = e.target.closest('tr.clickable-event-row');
+				if (!tr) return;
+				const eventId = tr.getAttribute('data-event-id');
+				if (!eventId) return;
+				openModal();
+				modalTitle.textContent = 'Event Attendees';
+				modalSubtitle.textContent = '';
+				modalBodyTbody.innerHTML = '<tr class="no-data"><td colspan="5" style="text-align:center; padding:1rem;">Loading…</td></tr>';
+				loadEventAttendees(eventId);
+			}
+
+			document.addEventListener('click', function(ev) {
+				if (ev.target.closest('tr.clickable-event-row')) {
+					onRowClick(ev);
+				}
+			});
+		})();
+	</script>
 </body>
 </html>
