@@ -261,35 +261,6 @@ $last7DaysAttendees = (int)$last7DaysAttendeesStmt->fetchColumn();
 					</div>
 				</div>
 
-				<div class="card">
-					<div class="card-header">
-						<h2 class="card-title">
-							<i class="fas fa-bolt"></i>
-							Quick Actions
-						</h2>
-						<p class="card-subtitle">Frequently used tasks</p>
-					</div>
-					<div class="card-body">
-						<div style="display: flex; flex-direction: column; gap: 0.75rem;">
-							<a href="<?= BASE_URL ?>/user/events.php" class="button primary">
-								<i class="fas fa-plus-circle"></i>
-								Create Event
-							</a>
-							<a href="<?= BASE_URL ?>/user/osca_events.php" class="button primary">
-								<i class="fas fa-building"></i>
-								View OSCA Events
-							</a>
-							<a href="<?= BASE_URL ?>/user/attendance.php" class="button secondary">
-								<i class="fas fa-check-circle"></i>
-								Mark Attendance
-							</a>
-							<a href="<?= BASE_URL ?>/user/seniors.php" class="button secondary">
-								<i class="fas fa-users"></i>
-								Manage Seniors
-							</a>
-						</div>
-					</div>
-				</div>
 			</div>
 		</div>
 	</main>
