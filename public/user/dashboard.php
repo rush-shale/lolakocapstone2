@@ -396,9 +396,9 @@ $last7DaysAttendees = (int)$last7DaysAttendeesStmt->fetchColumn();
 				if (e.target === modal) closeModal();
 			});
 
-			async function loadEventAttendees(eventId) {
+					async function loadEventAttendees(eventId) {
 				try {
-					const res = await fetch(`${BASE_URL}/user/fetch_event_attendees.php?event_id=${encodeURIComponent(eventId)}`, { credentials: 'same-origin' });
+						const res = await fetch(`fetch_event_attendees.php?event_id=${encodeURIComponent(eventId)}`, { credentials: 'same-origin' });
 					const data = await res.json();
 					const e = data.event || {};
 					modalTitle.textContent = e.title ? `Event Attendees — ${e.title}` : 'Event Attendees';

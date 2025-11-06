@@ -331,7 +331,7 @@ $csrf = generate_csrf_token();
 				return;
 			}
 			try {
-				const res = await fetch(`${BASE_URL}/user/fetch_event_attendees.php?event_id=${encodeURIComponent(eventId)}`, {
+				const res = await fetch(`fetch_event_attendees.php?event_id=${encodeURIComponent(eventId)}`, {
 					credentials: 'same-origin'
 				});
 				const data = await res.json();
