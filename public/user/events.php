@@ -134,7 +134,7 @@ $events = $events->fetchAll();
 					<div class="card-header">
 						<h2 class="card-title">
 							<i class="fas fa-calendar-alt"></i>
-							All Barangay Events
+							Barangay Events
 						</h2>
 						<p class="card-subtitle">Events created for your barangay</p>
 					</div>
