@@ -168,52 +168,6 @@ $last7DaysAttendees = (int)$last7DaysAttendeesStmt->fetchColumn();
 					</div>
 				</div>
 
-				<div class="card">
-					<div class="card-header">
-						<h2 class="card-title">
-							<i class="fas fa-users"></i>
-							Recent Event Attendees
-						</h2>
-						<p class="card-subtitle">Latest barangay event within 7 days</p>
-					</div>
-					<div class="card-body">
-						<?php if (!empty($latestEvent) && is_array($latestEvent)): ?>
-							<p style="margin-bottom: .75rem;"><strong><?= htmlspecialchars($latestEvent['title']) ?></strong> — <?= date('M d, Y', strtotime($latestEvent['event_date'])) ?><?= $latestEvent['event_time'] ? ' • ' . date('g:i A', strtotime($latestEvent['event_time'])) : '' ?></p>
-							<?php if (!empty($latestEventAttendees)): ?>
-								<div class="table-container table-scroll">
-									<table class="modern-table">
-										<thead>
-											<tr>
-												<th>Name</th>
-												<th>Marked At</th>
-											</tr>
-										</thead>
-										<tbody>
-											<?php foreach ($latestEventAttendees as $a): ?>
-											<tr>
-												<td><?= htmlspecialchars(trim(($a['last_name'] ?? '') . ', ' . ($a['first_name'] ?? '') . ' ' . ($a['middle_name'] ?? '') . ' ' . ($a['ext_name'] ?? ''))) ?></td>
-												<td><?= htmlspecialchars($a['marked_at']) ?></td>
-											</tr>
-											<?php endforeach; ?>
-										</tbody>
-									</table>
-								</div>
-							<?php else: ?>
-								<div class="empty-state">
-									<div class="empty-icon"><i class="fas fa-user-check"></i></div>
-									<h3>No Attendees Recorded</h3>
-									<p>No attendance has been recorded for the latest event.</p>
-								</div>
-							<?php endif; ?>
-						<?php else: ?>
-							<div class="empty-state">
-								<div class="empty-icon"><i class="fas fa-user-clock"></i></div>
-								<h3>No Recent Events</h3>
-								<p>No barangay events found within the last 7 days.</p>
-							</div>
-						<?php endif; ?>
-					</div>
-				</div>
 
 				<div class="card">
 					<div class="card-header">
