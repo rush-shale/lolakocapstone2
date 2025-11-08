@@ -125,7 +125,7 @@ if ($id) {
 			.logo-seal {
 				position: absolute;
 				top: 60px;
-				right: 60px;
+				right: 100px;
 				width: 160px;
 				height: 160px;
 				z-index: 10;
