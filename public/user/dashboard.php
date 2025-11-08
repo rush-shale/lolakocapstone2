@@ -97,96 +97,113 @@ $totalAttendances = (int)$stmtTotalAttendances->fetchColumn();
 	<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
 	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 	<style>
-		/* Responsive Dashboard Styles - Matching Admin Dashboard */
+		/* Responsive Dashboard Styles - Enhanced with Bigger Cards */
 		.dashboard-grid {
 			display: grid;
 			grid-template-columns: 1fr 1fr 1fr;
 			grid-template-rows: auto auto auto;
-			gap: 1.5rem;
-			padding: 1.5rem;
-			height: calc(100vh - 100px);
-			max-height: calc(100vh - 100px);
-			overflow: hidden;
+			gap: 2rem;
+			padding: 2rem;
+			min-height: 100vh;
 			width: 100%;
+			max-width: 100%;
 			box-sizing: border-box;
+			margin: 0;
 		}
 
 		.dash-stats {
 			grid-column: 1 / 4;
 			grid-row: 1;
-			min-height: 0;
-			overflow: hidden;
+			min-height: 200px;
+			width: 100%;
+			min-width: 0;
 		}
 
 		.dash-barangay {
 			grid-column: 1;
 			grid-row: 2;
-			min-height: 0;
-			overflow: hidden;
+			min-height: 500px;
+			width: 100%;
+			min-width: 0;
 		}
 
 		.dash-osca {
 			grid-column: 2;
 			grid-row: 2;
-			min-height: 0;
-			overflow: hidden;
+			min-height: 500px;
+			width: 100%;
+			min-width: 0;
 		}
 
 		.dash-active-seniors {
 			grid-column: 3;
 			grid-row: 2;
-			min-height: 0;
-			overflow: hidden;
+			min-height: 500px;
+			width: 100%;
+			min-width: 0;
 		}
 
 		.dash-past {
 			grid-column: 1 / 4;
 			grid-row: 3;
-			min-height: 0;
-			overflow: hidden;
+			min-height: 400px;
+			width: 100%;
+			min-width: 0;
 		}
 
-		/* Modern Card Styling */
+		/* Modern Card Styling - Enhanced */
 		.modern-card {
 			background: #ffffff;
-			border: 1px solid rgba(30, 58, 138, 0.1);
-			box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+			border: 1px solid #e5e7eb;
+			box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
 			border-radius: 12px;
 			overflow: hidden;
 			display: flex;
 			flex-direction: column;
 			height: 100%;
 			width: 100%;
-			transition: all 0.3s ease;
+			min-width: 0;
+			transition: box-shadow 0.3s ease;
 		}
 
 		.modern-card:hover {
-			box-shadow: 0 8px 12px rgba(0, 0, 0, 0.15);
+			box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
 		}
 
 		.modern-card-header {
 			display: flex;
-			justify-content: space-between;
 			align-items: center;
-			padding: 1rem;
-			border-bottom: 1px solid rgba(30, 58, 138, 0.1);
-			background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+			padding: 1.75rem 2rem;
+			border-bottom: 1px solid #e5e7eb;
+			background: linear-gradient(to right, #f9fafb, #ffffff);
 		}
 
 		.card-title-section {
 			flex: 1;
+			display: flex;
+			align-items: center;
+			gap: 1rem;
+		}
+
+		.card-title-section::before {
+			content: '';
+			width: 10px;
+			height: 10px;
+			background: #3b82f6;
+			border-radius: 3px;
+			flex-shrink: 0;
 		}
 
 		.card-title-section h2 {
-			font-size: 1.1rem;
-			font-weight: 600;
-			color: var(--text-primary);
+			font-size: 1.375rem;
+			font-weight: 700;
+			color: #1e3a8a;
 			margin: 0 0 0.25rem 0;
 		}
 
 		.card-title-section p {
-			font-size: 0.85rem;
-			color: var(--text-muted);
+			font-size: 1rem;
+			color: #6b7280;
 			margin: 0;
 		}
 
@@ -196,44 +213,90 @@ $totalAttendances = (int)$stmtTotalAttendances->fetchColumn();
 			overflow: hidden;
 			display: flex;
 			flex-direction: column;
+			width: 100%;
+			min-width: 0;
 		}
 
 		.table-container {
 			flex: 1;
 			overflow-y: auto;
-			overflow-x: hidden;
+			overflow-x: auto;
 			-webkit-overflow-scrolling: touch;
+			padding: 1rem;
+			min-width: 0;
 		}
 
 		.table-container table {
 			width: 100%;
-			table-layout: fixed;
+			table-layout: auto;
+			min-width: 100%;
 		}
 
 		.table-container th,
 		.table-container td {
+			padding: 1.125rem 1.25rem;
+			font-size: 1rem;
 			word-wrap: break-word;
 			overflow-wrap: break-word;
 		}
 
+		.table-container th {
+			font-weight: 600;
+			font-size: 1.0625rem;
+		}
+
+		.table-container th,
+		.table-container td {
+			white-space: nowrap;
+		}
+
 		.table-container th:nth-child(1),
 		.table-container td:nth-child(1) {
-			width: 35%;
+			min-width: 180px;
 		}
 
 		.table-container th:nth-child(2),
 		.table-container td:nth-child(2) {
-			width: 25%;
+			min-width: 140px;
 		}
 
 		.table-container th:nth-child(3),
 		.table-container td:nth-child(3) {
-			width: 20%;
+			min-width: 120px;
 		}
 
 		.table-container th:nth-child(4),
 		.table-container td:nth-child(4) {
-			width: 20%;
+			min-width: 120px;
+		}
+
+		/* Empty State Styling - Enhanced */
+		.empty-state {
+			display: flex;
+			flex-direction: column;
+			align-items: center;
+			justify-content: center;
+			padding: 4rem 2rem;
+			text-align: center;
+			min-height: 350px;
+		}
+
+		.empty-icon {
+			font-size: 4rem;
+			color: #d1d5db;
+			margin-bottom: 1.5rem;
+		}
+
+		.empty-state h3 {
+			font-size: 1.5rem;
+			font-weight: 600;
+			color: #374151;
+			margin-bottom: 0.75rem;
+		}
+
+		.empty-state p {
+			font-size: 1.125rem;
+			color: #6b7280;
 		}
 
 		/* Hide content-header on dashboard view */
@@ -245,180 +308,104 @@ $totalAttendances = (int)$stmtTotalAttendances->fetchColumn();
 		body {
 			margin: 0;
 			padding: 0;
+			background: #f3f4f6;
 		}
 
-		/* Ensure main content takes full height */
+		/* Ensure main content takes full height and width */
 		main.content {
-			height: 100vh;
-			overflow: hidden;
-			display: flex;
-			flex-direction: column;
-			padding: 0;
-			margin: 0;
-			width: 100%;
+			min-height: 100vh !important;
+			overflow-y: auto !important;
+			overflow-x: hidden !important;
+			display: flex !important;
+			flex-direction: column !important;
+			padding: 0 !important;
+			margin-left: 280px !important;
+			margin-right: 0 !important;
+			margin-top: 0 !important;
+			margin-bottom: 0 !important;
+			width: calc(100% - 280px) !important;
+			max-width: none !important;
+		}
+
+		/* Override any global content-body constraints */
+		main.content > * {
+			width: 100% !important;
+			max-width: 100% !important;
 		}
 
 		.content-body {
 			flex: 1;
-			overflow: hidden;
-			padding: 0;
-			margin: 0;
-			width: 100%;
+			overflow: visible;
+			padding: 0 !important;
+			margin: 0 !important;
+			width: 100% !important;
+			max-width: 100% !important;
 		}
 
-		/* Responsive Design */
-		@media (max-width: 1200px) {
-			.dashboard-grid {
-				grid-template-columns: 1fr 1fr;
-				grid-template-rows: auto auto auto auto;
-				gap: 1.5rem;
-				padding: 1.5rem;
-			}
-
-			.dash-stats {
-				grid-column: 1 / 3;
-				grid-row: 1;
-			}
-
-			.dash-barangay {
-				grid-column: 1;
-				grid-row: 2;
-			}
-
-			.dash-osca {
-				grid-column: 2;
-				grid-row: 2;
-			}
-
-			.dash-active-seniors {
-				grid-column: 1 / 3;
-				grid-row: 3;
-			}
-
-			.dash-past {
-				grid-column: 1 / 3;
-				grid-row: 4;
-			}
+		/* Ensure dashboard grid extends to right edge */
+		.dashboard-grid {
+			margin: 0 !important;
+			padding: 2rem !important;
+			width: 100% !important;
+			max-width: 100% !important;
+			box-sizing: border-box !important;
+			margin-right: 0 !important;
 		}
 
-		@media (max-width: 768px) {
-			.dashboard-grid {
-				grid-template-columns: 1fr;
-				grid-template-rows: auto auto auto auto auto;
-				gap: 1rem;
-				padding: 1rem;
-				height: auto;
-				max-height: none;
-				overflow: visible;
-			}
-
-			.dash-stats {
-				grid-column: 1;
-				grid-row: 1;
-			}
-
-			.dash-barangay {
-				grid-column: 1;
-				grid-row: 2;
-			}
-
-			.dash-osca {
-				grid-column: 1;
-				grid-row: 3;
-			}
-
-			.dash-active-seniors {
-				grid-column: 1;
-				grid-row: 4;
-			}
-
-			.dash-past {
-				grid-column: 1;
-				grid-row: 5;
-			}
-
-			.modern-card-header {
-				padding: 1rem;
-			}
-
-			.card-title-section h2 {
-				font-size: 1rem;
-			}
-
-			.card-title-section p {
-				font-size: 0.8rem;
-			}
+		/* Override any global container constraints */
+		body > main.content,
+		body > main.content > .dashboard-grid {
+			width: 100% !important;
+			max-width: 100% !important;
 		}
 
-		@media (max-width: 480px) {
-			.dashboard-grid {
-				padding: 0.5rem;
-				gap: 0.5rem;
-			}
-
-			.modern-card-header {
-				padding: 0.75rem;
-			}
-
-			.card-title-section h2 {
-				font-size: 0.9rem;
-			}
-
-			.card-title-section p {
-				font-size: 0.75rem;
-			}
+		/* Force full width - override any global CSS max-width constraints */
+		main.content {
+			margin: 0 0 0 280px !important;
 		}
 
-		/* Tablet landscape */
-		@media (min-width: 769px) and (max-width: 1024px) {
-			.dashboard-grid {
-				grid-template-columns: 1fr 1fr;
-				grid-template-rows: auto auto auto auto;
-				gap: 1.5rem;
-				padding: 1.5rem;
-			}
-
-			.dash-stats {
-				grid-column: 1 / 3;
-				grid-row: 1;
-			}
-
-			.dash-barangay {
-				grid-column: 1;
-				grid-row: 2;
-			}
-
-			.dash-osca {
-				grid-column: 2;
-				grid-row: 2;
-			}
-
-			.dash-active-seniors {
-				grid-column: 1 / 3;
-				grid-row: 3;
-			}
-
-			.dash-past {
-				grid-column: 1 / 3;
-				grid-row: 4;
-			}
+		/* Ensure no centering or max-width constraints from global CSS */
+		.content,
+		main.content,
+		main.content .dashboard-grid {
+			max-width: 100% !important;
+			margin-left: 280px !important;
+			margin-right: 0 !important;
 		}
 
-		/* Large screens optimization */
-		@media (min-width: 1400px) {
-			.dashboard-grid {
-				max-width: 1400px;
-				margin: 0 auto;
-			}
+		/* Enhanced Statistics Card */
+		.stats-grid {
+			display: grid;
+			grid-template-columns: repeat(3, 1fr);
+			gap: 3rem;
+			padding: 3rem 2.5rem;
 		}
 
-		/* Mobile adjustments for main content */
-		@media (max-width: 768px) {
-			main.content {
-				height: auto;
-				overflow: visible;
-			}
+		.stat-item {
+			text-align: center;
+			padding: 1rem;
+			border-radius: 8px;
+			background: #f9fafb;
+			transition: transform 0.2s ease;
 		}
+
+		.stat-item:hover {
+			transform: translateY(-4px);
+		}
+
+		.stat-value {
+			font-size: 4.5rem;
+			font-weight: 700;
+			margin-bottom: 1rem;
+			line-height: 1;
+		}
+
+		.stat-label {
+			font-size: 1.25rem;
+			color: #374151;
+			font-weight: 500;
+		}
+
 	</style>
 </head>
 <body>
@@ -429,23 +416,25 @@ $totalAttendances = (int)$stmtTotalAttendances->fetchColumn();
 			<div class="card dash-stats modern-card">
 				<div class="card-header modern-card-header">
 					<div class="card-title-section">
-						<h2 class="card-title">📊 Barangay Overview</h2>
-						<p class="card-subtitle">Summary statistics for <?= htmlspecialchars($user['barangay']) ?></p>
+						<div>
+							<h2 class="card-title">Barangay Overview</h2>
+							<p class="card-subtitle">Summary Statistics of <?= htmlspecialchars($user['barangay']) ?></p>
+						</div>
 					</div>
 				</div>
 				<div class="card-body modern-card-body">
-					<div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 2rem; padding: 2rem;">
-						<div style="text-align: center;">
-							<div style="font-size: 3rem; font-weight: 700; color: var(--gov-primary); margin-bottom: 0.5rem;"><?= $totalSeniors ?></div>
-							<div style="font-size: 1rem; color: var(--text-muted);">Total Seniors</div>
+					<div class="stats-grid">
+						<div class="stat-item">
+							<div class="stat-value" style="color: #7c3aed;"><?= $totalSeniors ?></div>
+							<div class="stat-label">Total Seniors</div>
 						</div>
-						<div style="text-align: center;">
-							<div style="font-size: 3rem; font-weight: 700; color: var(--gov-secondary); margin-bottom: 0.5rem;"><?= $totalEvents ?></div>
-							<div style="font-size: 1rem; color: var(--text-muted);">Total Events</div>
+						<div class="stat-item">
+							<div class="stat-value" style="color: #10b981;"><?= $totalEvents ?></div>
+							<div class="stat-label">Total Events</div>
 						</div>
-						<div style="text-align: center;">
-							<div style="font-size: 3rem; font-weight: 700; color: var(--gov-info); margin-bottom: 0.5rem;"><?= $totalAttendances ?></div>
-							<div style="font-size: 1rem; color: var(--text-muted);">Total Attendances</div>
+						<div class="stat-item">
+							<div class="stat-value" style="color: #3b82f6;"><?= $totalAttendances ?></div>
+							<div class="stat-label">Total Attendance</div>
 						</div>
 					</div>
 				</div>
@@ -455,8 +444,10 @@ $totalAttendances = (int)$stmtTotalAttendances->fetchColumn();
 			<div class="card dash-barangay modern-card">
 				<div class="card-header modern-card-header">
 					<div class="card-title-section">
-						<h2 class="card-title">📅 My Barangay Events</h2>
-						<p class="card-subtitle">Upcoming events for <?= htmlspecialchars($user['barangay']) ?></p>
+						<div>
+							<h2 class="card-title">My Barangay Events</h2>
+							<p class="card-subtitle">Upcoming events for <?= strtolower(htmlspecialchars($user['barangay'])) ?></p>
+						</div>
 					</div>
 				</div>
 				<div class="card-body modern-card-body">
@@ -501,8 +492,10 @@ $totalAttendances = (int)$stmtTotalAttendances->fetchColumn();
 			<div class="card dash-osca modern-card">
 				<div class="card-header modern-card-header">
 					<div class="card-title-section">
-						<h2 class="card-title">🏛️ OSCA Head Events</h2>
-						<p class="card-subtitle">Events created by the OSCA Head</p>
+						<div>
+							<h2 class="card-title">OSCA Head Events</h2>
+							<p class="card-subtitle">Events created by OSCA Head</p>
+						</div>
 					</div>
 				</div>
 				<div class="card-body modern-card-body">
@@ -547,8 +540,10 @@ $totalAttendances = (int)$stmtTotalAttendances->fetchColumn();
 			<div class="card dash-active-seniors modern-card">
 				<div class="card-header modern-card-header">
 					<div class="card-title-section">
-						<h2 class="card-title">⭐ Top Active Seniors</h2>
-						<p class="card-subtitle">Most active seniors in <?= htmlspecialchars($user['barangay']) ?></p>
+						<div>
+							<h2 class="card-title">Top Active Seniors</h2>
+							<p class="card-subtitle">Most Active Senior in <?= htmlspecialchars($user['barangay']) ?></p>
+						</div>
 					</div>
 				</div>
 				<div class="card-body modern-card-body">
@@ -560,8 +555,8 @@ $totalAttendances = (int)$stmtTotalAttendances->fetchColumn();
 										<th>Rank</th>
 										<th>Name</th>
 										<th>Age</th>
-										<th>Attendances</th>
-										<th>Last Attendance</th>
+										<th>Attendance</th>
+										<th>Last Atten.</th>
 									</tr>
 								</thead>
 								<tbody>
@@ -612,8 +607,10 @@ $totalAttendances = (int)$stmtTotalAttendances->fetchColumn();
 			<div class="card dash-past modern-card">
 				<div class="card-header modern-card-header">
 					<div class="card-title-section">
-						<h2 class="card-title">📜 Past Events</h2>
-						<p class="card-subtitle">Past events for your barangay</p>
+						<div>
+							<h2 class="card-title">Past Events</h2>
+							<p class="card-subtitle">Past events for your baragay</p>
+						</div>
 					</div>
 				</div>
 				<div class="card-body modern-card-body">
