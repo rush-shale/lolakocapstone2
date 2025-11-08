@@ -52,28 +52,297 @@ if ($latestEvent) {
 	<link rel="stylesheet" href="<?= BASE_URL ?>/assets/government-portal.css?v=<?= $cssVer ?>">
 	<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
 	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+	<style>
+		/* Responsive Dashboard Styles - Matching Admin Dashboard */
+		.dashboard-grid {
+			display: grid;
+			grid-template-columns: 1.8fr 2.2fr;
+			grid-template-rows: 1fr 1fr;
+			gap: 0.75rem;
+			padding: 0.75rem;
+			height: calc(100vh - 50px);
+			max-height: calc(100vh - 50px);
+			overflow: hidden;
+		}
+
+		.dash-barangay {
+			grid-column: 1;
+			grid-row: 1 / 3;
+			min-height: 0;
+			overflow: hidden;
+		}
+
+		.dash-osca {
+			grid-column: 2;
+			grid-row: 1;
+			min-height: 0;
+			overflow: hidden;
+		}
+
+		.dash-past {
+			grid-column: 2;
+			grid-row: 2;
+			min-height: 0;
+			overflow: hidden;
+		}
+
+		/* Modern Card Styling */
+		.modern-card {
+			background: #ffffff;
+			border: 1px solid rgba(30, 58, 138, 0.1);
+			box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+			border-radius: 12px;
+			overflow: hidden;
+			display: flex;
+			flex-direction: column;
+			height: 100%;
+			width: 100%;
+			transition: all 0.3s ease;
+		}
+
+		.modern-card:hover {
+			box-shadow: 0 8px 12px rgba(0, 0, 0, 0.15);
+		}
+
+		.modern-card-header {
+			display: flex;
+			justify-content: space-between;
+			align-items: center;
+			padding: 1rem;
+			border-bottom: 1px solid rgba(30, 58, 138, 0.1);
+			background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+		}
+
+		.card-title-section {
+			flex: 1;
+		}
+
+		.card-title-section h2 {
+			font-size: 1.1rem;
+			font-weight: 600;
+			color: var(--text-primary);
+			margin: 0 0 0.25rem 0;
+		}
+
+		.card-title-section p {
+			font-size: 0.85rem;
+			color: var(--text-muted);
+			margin: 0;
+		}
+
+		.modern-card-body {
+			padding: 0;
+			flex: 1;
+			overflow: hidden;
+			display: flex;
+			flex-direction: column;
+		}
+
+		.table-container {
+			flex: 1;
+			overflow-y: auto;
+			overflow-x: hidden;
+			-webkit-overflow-scrolling: touch;
+		}
+
+		.table-container table {
+			width: 100%;
+			table-layout: fixed;
+		}
+
+		.table-container th,
+		.table-container td {
+			word-wrap: break-word;
+			overflow-wrap: break-word;
+		}
+
+		.table-container th:nth-child(1),
+		.table-container td:nth-child(1) {
+			width: 35%;
+		}
+
+		.table-container th:nth-child(2),
+		.table-container td:nth-child(2) {
+			width: 25%;
+		}
+
+		.table-container th:nth-child(3),
+		.table-container td:nth-child(3) {
+			width: 20%;
+		}
+
+		.table-container th:nth-child(4),
+		.table-container td:nth-child(4) {
+			width: 20%;
+		}
+
+		/* Hide content-header on dashboard view */
+		.content-header {
+			display: none;
+		}
+
+		/* Ensure main content takes full height */
+		main.content {
+			height: 100vh;
+			overflow: hidden;
+			display: flex;
+			flex-direction: column;
+			padding: 0;
+		}
+
+		.content-body {
+			flex: 1;
+			overflow: hidden;
+			padding: 0;
+		}
+
+		/* Responsive Design */
+		@media (max-width: 1200px) {
+			.dashboard-grid {
+				grid-template-columns: 1.8fr 2.2fr;
+				grid-template-rows: 1fr 1fr;
+				gap: 0.75rem;
+				padding: 0.75rem;
+				height: calc(100vh - 50px);
+				max-height: calc(100vh - 50px);
+			}
+
+			.dash-barangay {
+				grid-column: 1;
+				grid-row: 1 / 3;
+			}
+
+			.dash-osca {
+				grid-column: 2;
+				grid-row: 1;
+				min-height: 0;
+				overflow: hidden;
+			}
+
+			.dash-past {
+				grid-column: 2;
+				grid-row: 2;
+				min-height: 0;
+				overflow: hidden;
+			}
+		}
+
+		@media (max-width: 768px) {
+			.dashboard-grid {
+				grid-template-columns: 1fr;
+				grid-template-rows: auto auto auto;
+				gap: 0.75rem;
+				padding: 0.75rem;
+				height: auto;
+				max-height: none;
+				overflow: visible;
+			}
+
+			.dash-barangay {
+				grid-column: 1;
+				grid-row: 1;
+			}
+
+			.dash-osca {
+				grid-column: 1;
+				grid-row: 2;
+			}
+
+			.dash-past {
+				grid-column: 1;
+				grid-row: 3;
+			}
+
+			.modern-card-header {
+				padding: 1rem;
+			}
+
+			.card-title-section h2 {
+				font-size: 1rem;
+			}
+
+			.card-title-section p {
+				font-size: 0.8rem;
+			}
+		}
+
+		@media (max-width: 480px) {
+			.dashboard-grid {
+				padding: 0.5rem;
+				gap: 0.5rem;
+			}
+
+			.modern-card-header {
+				padding: 0.75rem;
+			}
+
+			.card-title-section h2 {
+				font-size: 0.9rem;
+			}
+
+			.card-title-section p {
+				font-size: 0.75rem;
+			}
+		}
+
+		/* Tablet landscape */
+		@media (min-width: 769px) and (max-width: 1024px) {
+			.dashboard-grid {
+				grid-template-columns: 1.8fr 2.2fr;
+				grid-template-rows: 1fr 1fr;
+				gap: 0.75rem;
+				padding: 0.75rem;
+				height: calc(100vh - 50px);
+				max-height: calc(100vh - 50px);
+			}
+
+			.dash-barangay {
+				grid-column: 1;
+				grid-row: 1 / 3;
+			}
+
+			.dash-osca {
+				grid-column: 2;
+				grid-row: 1;
+			}
+
+			.dash-past {
+				grid-column: 2;
+				grid-row: 2;
+			}
+		}
+
+		/* Large screens optimization */
+		@media (min-width: 1400px) {
+			.dashboard-grid {
+				max-width: 1400px;
+				margin: 0 auto;
+			}
+		}
+
+		/* Mobile adjustments for main content */
+		@media (max-width: 768px) {
+			main.content {
+				height: auto;
+				overflow: visible;
+			}
+		}
+	</style>
 </head>
 <body>
 	<?php include __DIR__ . '/../partials/sidebar_user.php'; ?>
 	<main class="content">
-		<header class="content-header">
-			<h1 class="content-title">Welcome back, <?= htmlspecialchars($user['name']) ?></h1>
-			<p class="content-subtitle">SeniorCare Information System - Staff Portal for <?= htmlspecialchars($user['barangay']) ?></p>
-		</header>
-		
-		<div class="content-body">
-
-			<div class="grid-2">
-				<div class="card">
-					<div class="card-header">
-						<h2 class="card-title">
-							<i class="fas fa-calendar-alt"></i>
-							My Barangay Events
-						</h2>
+		<div class="dashboard-grid">
+			<!-- My Barangay Events Card -->
+			<div class="card dash-barangay modern-card">
+				<div class="card-header modern-card-header">
+					<div class="card-title-section">
+						<h2 class="card-title">📅 My Barangay Events</h2>
 						<p class="card-subtitle">Upcoming events for <?= htmlspecialchars($user['barangay']) ?></p>
 					</div>
-					<div class="card-body">
-						<?php if (!empty($barangayEvents)): ?>
+				</div>
+				<div class="card-body modern-card-body">
+					<?php if (!empty($barangayEvents)): ?>
 						<div class="table-container table-scroll">
 							<table class="modern-table">
 								<thead>
@@ -85,20 +354,20 @@ if ($latestEvent) {
 									</tr>
 								</thead>
 								<tbody>
-							<?php foreach ($barangayEvents as $e): ?>
-							<tr>
-										<td><strong><?= htmlspecialchars($e['title']) ?></strong></td>
-										<td><?= date('M d, Y', strtotime($e['event_date'])) ?></td>
-										<td><?= $e['event_time'] ? date('g:i A', strtotime($e['event_time'])) : 'All Day' ?></td>
-										<td>
-											<span class="badge badge-success">Upcoming</span>
-										</td>
-									</tr>
+									<?php foreach ($barangayEvents as $e): ?>
+										<tr>
+											<td><strong><?= htmlspecialchars($e['title']) ?></strong></td>
+											<td><?= date('M d, Y', strtotime($e['event_date'])) ?></td>
+											<td><?= $e['event_time'] ? date('g:i A', strtotime($e['event_time'])) : 'All Day' ?></td>
+											<td>
+												<span class="badge badge-success">Upcoming</span>
+											</td>
+										</tr>
 									<?php endforeach; ?>
 								</tbody>
 							</table>
 						</div>
-						<?php else: ?>
+					<?php else: ?>
 						<div class="empty-state">
 							<div class="empty-icon">
 								<i class="fas fa-calendar-alt"></i>
@@ -106,21 +375,20 @@ if ($latestEvent) {
 							<h3>No Upcoming Events</h3>
 							<p>No upcoming barangay events scheduled.</p>
 						</div>
-						<?php endif; ?>
-					</div>
+					<?php endif; ?>
 				</div>
+			</div>
 
-
-				<div class="card">
-					<div class="card-header">
-						<h2 class="card-title">
-							<i class="fas fa-building"></i>
-							OSCA Head Events
-						</h2>
+			<!-- OSCA Head Events Card -->
+			<div class="card dash-osca modern-card">
+				<div class="card-header modern-card-header">
+					<div class="card-title-section">
+						<h2 class="card-title">🏛️ OSCA Head Events</h2>
 						<p class="card-subtitle">Events created by the OSCA Head</p>
 					</div>
-					<div class="card-body">
-						<?php if (!empty($adminEvents)): ?>
+				</div>
+				<div class="card-body modern-card-body">
+					<?php if (!empty($adminEvents)): ?>
 						<div class="table-container table-scroll">
 							<table class="modern-table">
 								<thead>
@@ -132,20 +400,20 @@ if ($latestEvent) {
 									</tr>
 								</thead>
 								<tbody>
-							<?php foreach ($adminEvents as $e): ?>
-							<tr>
-										<td><strong><?= htmlspecialchars($e['title']) ?></strong></td>
-										<td><?= date('M d, Y', strtotime($e['event_date'])) ?></td>
-										<td><?= $e['event_time'] ? date('g:i A', strtotime($e['event_time'])) : 'All Day' ?></td>
-										<td>
-											<span class="badge badge-success">Upcoming</span>
-										</td>
-									</tr>
+									<?php foreach ($adminEvents as $e): ?>
+										<tr>
+											<td><strong><?= htmlspecialchars($e['title']) ?></strong></td>
+											<td><?= date('M d, Y', strtotime($e['event_date'])) ?></td>
+											<td><?= $e['event_time'] ? date('g:i A', strtotime($e['event_time'])) : 'All Day' ?></td>
+											<td>
+												<span class="badge badge-success">Upcoming</span>
+											</td>
+										</tr>
 									<?php endforeach; ?>
 								</tbody>
 							</table>
 						</div>
-						<?php else: ?>
+					<?php else: ?>
 						<div class="empty-state">
 							<div class="empty-icon">
 								<i class="fas fa-building"></i>
@@ -153,20 +421,20 @@ if ($latestEvent) {
 							<h3>No Upcoming Events</h3>
 							<p>No upcoming OSCA events scheduled.</p>
 						</div>
-						<?php endif; ?>
-					</div>
+					<?php endif; ?>
 				</div>
+			</div>
 
-				<div class="card">
-					<div class="card-header">
-						<h2 class="card-title">
-							<i class="fas fa-history"></i>
-							Recent Past Events
-						</h2>
+			<!-- Past Events Card -->
+			<div class="card dash-past modern-card">
+				<div class="card-header modern-card-header">
+					<div class="card-title-section">
+						<h2 class="card-title">📜 Past Events</h2>
 						<p class="card-subtitle">Past events for your barangay</p>
 					</div>
-					<div class="card-body">
-						<?php if (!empty($recentPastEvents)): ?>
+				</div>
+				<div class="card-body modern-card-body">
+					<?php if (!empty($recentPastEvents)): ?>
 						<div class="table-container table-scroll">
 							<table class="modern-table">
 								<thead>
@@ -178,20 +446,20 @@ if ($latestEvent) {
 									</tr>
 								</thead>
 								<tbody>
-							<?php foreach ($recentPastEvents as $e): ?>
-							<tr>
-										<td><strong><?= htmlspecialchars($e['title']) ?></strong></td>
-										<td><?= date('M d, Y', strtotime($e['event_date'])) ?></td>
-										<td><?= $e['event_time'] ? date('g:i A', strtotime($e['event_time'])) : 'All Day' ?></td>
-										<td>
-											<span class="badge badge-muted">Completed</span>
-										</td>
-									</tr>
+									<?php foreach ($recentPastEvents as $e): ?>
+										<tr>
+											<td><strong><?= htmlspecialchars($e['title']) ?></strong></td>
+											<td><?= date('M d, Y', strtotime($e['event_date'])) ?></td>
+											<td><?= $e['event_time'] ? date('g:i A', strtotime($e['event_time'])) : 'All Day' ?></td>
+											<td>
+												<span class="badge badge-muted">Completed</span>
+											</td>
+										</tr>
 									<?php endforeach; ?>
 								</tbody>
 							</table>
 						</div>
-						<?php else: ?>
+					<?php else: ?>
 						<div class="empty-state">
 							<div class="empty-icon">
 								<i class="fas fa-history"></i>
@@ -199,10 +467,8 @@ if ($latestEvent) {
 							<h3>No Past Events</h3>
 							<p>No past events found.</p>
 						</div>
-						<?php endif; ?>
-					</div>
+					<?php endif; ?>
 				</div>
-
 			</div>
 		</div>
 	</main>
