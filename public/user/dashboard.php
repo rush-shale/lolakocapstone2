@@ -39,6 +39,32 @@ if ($latestEvent) {
 	$latestEventAttendees = $attStmt->fetchAll();
 }
 
+// Get top active seniors based on attendance count (last 90 days)
+$topActiveSeniorsStmt = $pdo->prepare("
+	SELECT 
+		s.id,
+		s.first_name,
+		s.middle_name,
+		s.last_name,
+		s.ext_name,
+		s.age,
+		COUNT(DISTINCT a.id) AS attendance_count,
+		MAX(a.marked_at) AS last_attendance
+	FROM seniors s
+	LEFT JOIN attendance a ON s.id = a.senior_id
+	LEFT JOIN events e ON a.event_id = e.id 
+		AND e.scope = 'barangay' 
+		AND e.barangay = ?
+		AND e.event_date >= DATE_SUB(CURDATE(), INTERVAL 90 DAY)
+	WHERE s.barangay = ? 
+		AND s.life_status = 'living'
+	GROUP BY s.id, s.first_name, s.middle_name, s.last_name, s.ext_name, s.age
+	ORDER BY attendance_count DESC, last_attendance DESC, s.last_name ASC, s.first_name ASC
+	LIMIT 10
+");
+$topActiveSeniorsStmt->execute([$user['barangay'], $user['barangay']]);
+$topActiveSeniors = $topActiveSeniorsStmt->fetchAll();
+
 
 
 ?>
@@ -57,7 +83,7 @@ if ($latestEvent) {
 		.dashboard-grid {
 			display: grid;
 			grid-template-columns: 1.5fr 2.5fr;
-			grid-template-rows: 1fr 1fr;
+			grid-template-rows: 1fr 1fr 1fr;
 			gap: 0.5rem;
 			padding: 0.5rem;
 			height: calc(100vh - 40px);
@@ -69,7 +95,7 @@ if ($latestEvent) {
 
 		.dash-barangay {
 			grid-column: 1;
-			grid-row: 1 / 3;
+			grid-row: 1 / 4;
 			min-height: 0;
 			overflow: hidden;
 		}
@@ -84,6 +110,13 @@ if ($latestEvent) {
 		.dash-past {
 			grid-column: 2;
 			grid-row: 2;
+			min-height: 0;
+			overflow: hidden;
+		}
+
+		.dash-active-seniors {
+			grid-column: 2;
+			grid-row: 3;
 			min-height: 0;
 			overflow: hidden;
 		}
@@ -212,7 +245,7 @@ if ($latestEvent) {
 		@media (max-width: 1200px) {
 			.dashboard-grid {
 				grid-template-columns: 1.5fr 2.5fr;
-				grid-template-rows: 1fr 1fr;
+				grid-template-rows: 1fr 1fr 1fr;
 				gap: 0.5rem;
 				padding: 0.5rem;
 				height: calc(100vh - 40px);
@@ -222,7 +255,7 @@ if ($latestEvent) {
 
 			.dash-barangay {
 				grid-column: 1;
-				grid-row: 1 / 3;
+				grid-row: 1 / 4;
 			}
 
 			.dash-osca {
@@ -238,12 +271,19 @@ if ($latestEvent) {
 				min-height: 0;
 				overflow: hidden;
 			}
+
+			.dash-active-seniors {
+				grid-column: 2;
+				grid-row: 3;
+				min-height: 0;
+				overflow: hidden;
+			}
 		}
 
 		@media (max-width: 768px) {
 			.dashboard-grid {
 				grid-template-columns: 1fr;
-				grid-template-rows: auto auto auto;
+				grid-template-rows: auto auto auto auto;
 				gap: 0.75rem;
 				padding: 0.75rem;
 				height: auto;
@@ -265,6 +305,12 @@ if ($latestEvent) {
 				grid-column: 1;
 				grid-row: 3;
 			}
+
+			.dash-active-seniors {
+				grid-column: 1;
+				grid-row: 4;
+			}
+		}
 
 			.modern-card-header {
 				padding: 1rem;
@@ -302,7 +348,7 @@ if ($latestEvent) {
 		@media (min-width: 769px) and (max-width: 1024px) {
 			.dashboard-grid {
 				grid-template-columns: 1.5fr 2.5fr;
-				grid-template-rows: 1fr 1fr;
+				grid-template-rows: 1fr 1fr 1fr;
 				gap: 0.5rem;
 				padding: 0.5rem;
 				height: calc(100vh - 40px);
@@ -312,7 +358,7 @@ if ($latestEvent) {
 
 			.dash-barangay {
 				grid-column: 1;
-				grid-row: 1 / 3;
+				grid-row: 1 / 4;
 			}
 
 			.dash-osca {
@@ -323,6 +369,11 @@ if ($latestEvent) {
 			.dash-past {
 				grid-column: 2;
 				grid-row: 2;
+			}
+
+			.dash-active-seniors {
+				grid-column: 2;
+				grid-row: 3;
 			}
 		}
 
@@ -480,6 +531,71 @@ if ($latestEvent) {
 							</div>
 							<h3>No Past Events</h3>
 							<p>No past events found.</p>
+						</div>
+					<?php endif; ?>
+				</div>
+			</div>
+
+			<!-- Top Active Seniors Card -->
+			<div class="card dash-active-seniors modern-card">
+				<div class="card-header modern-card-header">
+					<div class="card-title-section">
+						<h2 class="card-title">⭐ Top Active Seniors</h2>
+						<p class="card-subtitle">Most active seniors in <?= htmlspecialchars($user['barangay']) ?></p>
+					</div>
+				</div>
+				<div class="card-body modern-card-body">
+					<?php if (!empty($topActiveSeniors)): ?>
+						<div class="table-container table-scroll">
+							<table class="modern-table">
+								<thead>
+									<tr>
+										<th>Rank</th>
+										<th>Name</th>
+										<th>Age</th>
+										<th>Attendances</th>
+										<th>Last Attendance</th>
+									</tr>
+								</thead>
+								<tbody>
+									<?php 
+									$rank = 1;
+									foreach ($topActiveSeniors as $senior): 
+										$fullName = trim(htmlspecialchars($senior['first_name'] . ' ' . ($senior['middle_name'] ? $senior['middle_name'] . ' ' : '') . $senior['last_name'] . ($senior['ext_name'] ? ' ' . $senior['ext_name'] : '')));
+										$attendanceCount = (int)$senior['attendance_count'];
+										$lastAttendance = $senior['last_attendance'] ? date('M d, Y', strtotime($senior['last_attendance'])) : 'Never';
+									?>
+										<tr>
+											<td>
+												<?php if ($rank <= 3): ?>
+													<span class="badge" style="background: <?= $rank == 1 ? '#FFD700' : ($rank == 2 ? '#C0C0C0' : '#CD7F32') ?>; color: white; padding: 0.25rem 0.5rem; border-radius: 4px; font-weight: 600;">
+														<?= $rank == 1 ? '🥇' : ($rank == 2 ? '🥈' : '🥉') ?>
+													</span>
+												<?php else: ?>
+													<span style="color: var(--text-muted); font-weight: 600;">#<?= $rank ?></span>
+												<?php endif; ?>
+											</td>
+											<td><strong><?= $fullName ?></strong></td>
+											<td><?= htmlspecialchars($senior['age'] ?? 'N/A') ?></td>
+											<td>
+												<span class="badge badge-info"><?= $attendanceCount ?> event<?= $attendanceCount != 1 ? 's' : '' ?></span>
+											</td>
+											<td><?= $lastAttendance ?></td>
+										</tr>
+									<?php 
+									$rank++;
+									endforeach; 
+									?>
+								</tbody>
+							</table>
+						</div>
+					<?php else: ?>
+						<div class="empty-state">
+							<div class="empty-icon">
+								<i class="fas fa-users"></i>
+							</div>
+							<h3>No Active Seniors</h3>
+							<p>No attendance records found for seniors in your barangay.</p>
 						</div>
 					<?php endif; ?>
 				</div>
