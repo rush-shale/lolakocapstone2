@@ -379,12 +379,16 @@ $seniorsList = $seniors->fetchAll();
 		</header>
 		<div class="content-body">
 			<div class="card">
-				<div class="card-header" style="display:flex; justify-content:space-between; align-items:center;">
+				<div class="card-header" style="display:flex; justify-content:space-between; align-items:center; flex-wrap: wrap; gap: 1rem;">
 					<h2 class="card-title"><i class="fas fa-certificate"></i> Senior Selection</h2>
+					<div class="table-search" style="flex: 1; min-width: 250px; max-width: 400px;">
+						<span class="table-search-icon"><i class="fas fa-search"></i></span>
+						<input type="text" id="searchInput" placeholder="Search seniors...">
+					</div>
 				</div>
 				<div class="card-body">
 					<div class="table-container">
-						<table class="table">
+						<table class="table" id="seniorsTable">
 						<thead>
 							<tr>
 									<th>Senior Information</th>
@@ -395,7 +399,7 @@ $seniorsList = $seniors->fetchAll();
 									<th>Actions</th>
 							</tr>
 						</thead>
-						<tbody>
+						<tbody id="seniorsTableBody">
 								<?php if (!empty($seniorsList)): ?>
 									<?php foreach ($seniorsList as $s): ?>
 										<tr>
@@ -436,7 +440,7 @@ $seniorsList = $seniors->fetchAll();
 										<div class="empty-state">
 											<div class="empty-icon">
 													<i class="fas fa-users"></i>
-												</div>
+											</div>
 												<h3>No Seniors Found</h3>
 												<p>No seniors registered in your barangay.</p>
 										</div>
@@ -451,5 +455,69 @@ $seniorsList = $seniors->fetchAll();
 		</div>
 	</main>
 	<script src="<?= BASE_URL ?>/assets/app.js"></script>
+	<script>
+		// Search filter for seniors table
+		document.addEventListener('DOMContentLoaded', function() {
+			const searchInput = document.getElementById('searchInput');
+			if (searchInput) {
+				searchInput.addEventListener('input', function() {
+					const filter = this.value.toLowerCase();
+					const rows = document.querySelectorAll('#seniorsTableBody tr');
+					
+					rows.forEach(row => {
+						if (row.classList.contains('no-data')) {
+							row.style.display = filter === '' ? '' : 'none';
+							return;
+						}
+						
+						// Get text content from all cells
+						const cells = row.querySelectorAll('td');
+						let textContent = '';
+						cells.forEach(cell => {
+							textContent += cell.textContent.toLowerCase() + ' ';
+						});
+						
+						// Check if any cell content matches the filter
+						if (textContent.includes(filter)) {
+							row.style.display = '';
+						} else {
+							row.style.display = 'none';
+						}
+					});
+					
+					// Show/hide empty state
+					const visibleRows = Array.from(rows).filter(row => 
+						row.style.display !== 'none' && !row.classList.contains('no-data')
+					);
+					
+					// Find empty state row (more compatible approach)
+					let emptyStateRow = null;
+					rows.forEach(row => {
+						if (row.querySelector('.empty-state')) {
+							emptyStateRow = row;
+						}
+					});
+					
+					if (emptyStateRow) {
+						if (visibleRows.length === 0 && filter !== '') {
+							emptyStateRow.style.display = '';
+							const h3 = emptyStateRow.querySelector('.empty-state h3');
+							const p = emptyStateRow.querySelector('.empty-state p');
+							if (h3) h3.textContent = 'No Results Found';
+							if (p) p.textContent = 'No seniors match your search criteria.';
+						} else if (visibleRows.length === 0 && filter === '') {
+							emptyStateRow.style.display = '';
+							const h3 = emptyStateRow.querySelector('.empty-state h3');
+							const p = emptyStateRow.querySelector('.empty-state p');
+							if (h3) h3.textContent = 'No Seniors Found';
+							if (p) p.textContent = 'No seniors registered in your barangay.';
+						} else {
+							emptyStateRow.style.display = 'none';
+						}
+					}
+				});
+			}
+		});
+	</script>
 </body>
 </html>
