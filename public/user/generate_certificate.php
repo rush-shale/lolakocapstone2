@@ -196,7 +196,7 @@ if ($id) {
 				font-size: 15px;
 				line-height: 1.8;
 				max-width: 600px;
-				margin: 0 auto 30px;
+				margin: 0 auto 20px;
 				text-align: center;
 				color: #000000;
 			}
@@ -224,7 +224,7 @@ if ($id) {
 			
 			.signature-name {
 				font-weight: bold;
-				font-size: 16px;
+				font-size: 20px;
 				margin-bottom: 5px;
 				border-bottom: 2px solid black;
 				padding-bottom: 5px;
@@ -234,7 +234,7 @@ if ($id) {
 			}
 			
 			.signature-title {
-				font-size: 14px;
+				font-size: 16px;
 				color: #000000;
 			}
 			
