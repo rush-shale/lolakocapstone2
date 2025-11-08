@@ -177,7 +177,7 @@ if ($id) {
 			}
 			
 			.recipient-name {
-				font-size: 18px;
+				font-size: 24px;
 				font-weight: bold;
 				color: #000000;
 				margin-bottom: 10px;
