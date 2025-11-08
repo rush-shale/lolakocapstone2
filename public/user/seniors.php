@@ -10,20 +10,6 @@ $user = current_user();
 $seniorsStmt = $pdo->prepare("SELECT id, first_name, middle_name, last_name, ext_name, age, life_status, benefits_received, barangay, cellphone FROM seniors WHERE barangay=? ORDER BY last_name, first_name");
 $seniorsStmt->execute([$user['barangay']]);
 $seniors = $seniorsStmt->fetchAll();
-
-// Active seniors based on attendance count (last 90 days by default)
-$activeStmt = $pdo->prepare(
-	"SELECT s.id, s.first_name, s.last_name, COUNT(a.id) AS attendances
-	 FROM seniors s
-	 JOIN attendance a ON a.senior_id = s.id
-	 JOIN events e ON e.id = a.event_id
-	 WHERE s.barangay = ? AND s.life_status = 'living' AND e.scope='barangay' AND e.barangay = ? AND e.event_date >= DATE_SUB(CURDATE(), INTERVAL 90 DAY)
-	 GROUP BY s.id, s.first_name, s.last_name
-	 HAVING COUNT(a.id) >= 3
-	 ORDER BY attendances DESC, s.last_name, s.first_name"
-);
-$activeStmt->execute([$user['barangay'], $user['barangay']]);
-$active = $activeStmt->fetchAll();
 ?>
 <!doctype html>
 <html lang="en">
@@ -130,52 +116,6 @@ $active = $activeStmt->fetchAll();
 							</div>
 							<h3>No Seniors Found</h3>
 							<p>No senior citizens are currently registered in your barangay.</p>
-						</div>
-						<?php endif; ?>
-					</div>
-				</div>
-				
-				<div class="card">
-					<div class="card-header">
-						<h2 class="card-title">
-							<i class="fas fa-star"></i>
-							Active Seniors
-						</h2>
-						<p class="card-subtitle">Seniors with 3+ attendances in the last 90 days</p>
-					</div>
-					<div class="card-body">
-						<?php if (!empty($active)): ?>
-						<div class="table-container table-scroll seniors-table-scroll">
-							<table class="modern-table">
-								<thead>
-									<tr>
-										<th>Last Name</th>
-										<th>First Name</th>
-										<th>Attendances</th>
-									</tr>
-								</thead>
-								<tbody>
-									<?php foreach ($active as $a): ?>
-									<tr>
-										<td><?= htmlspecialchars($a['last_name']) ?></td>
-										<td><?= htmlspecialchars($a['first_name']) ?></td>
-										<td>
-											<span class="badge badge-primary">
-												<?= (int)$a['attendances'] ?> events
-											</span>
-										</td>
-									</tr>
-									<?php endforeach; ?>
-								</tbody>
-							</table>
-						</div>
-						<?php else: ?>
-						<div class="empty-state">
-							<div class="empty-icon">
-								<i class="fas fa-star"></i>
-							</div>
-							<h3>No Active Seniors</h3>
-							<p>No seniors have attended 3 or more events in the last 90 days.</p>
 						</div>
 						<?php endif; ?>
 					</div>
