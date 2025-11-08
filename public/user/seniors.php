@@ -62,15 +62,20 @@ $seniors = $seniorsStmt->fetchAll();
 		<div class="content-body">
 			<div class="grid">
 				<div class="card">
-					<div class="card-header">
-						<h2 class="card-title">
-							<i class="fas fa-users"></i>
-							All Seniors
-						</h2>
-						<p class="card-subtitle">Complete list of senior citizens in your barangay</p>
+					<div class="card-header" style="display:flex; justify-content:space-between; align-items:center; flex-wrap: wrap; gap: 1rem;">
+						<div>
+							<h2 class="card-title">
+								<i class="fas fa-users"></i>
+								All Seniors
+							</h2>
+							<p class="card-subtitle">Complete list of senior citizens in your barangay</p>
+						</div>
+						<div class="table-search" style="flex: 1; min-width: 250px; max-width: 400px;">
+							<span class="table-search-icon"><i class="fas fa-search"></i></span>
+							<input type="text" id="searchInput" placeholder="Search seniors...">
+						</div>
 					</div>
 					<div class="card-body">
-						<?php if (!empty($seniors)): ?>
 						<div class="table-container table-scroll seniors-table-scroll">
 							<table class="modern-table">
 								<thead>
@@ -85,44 +90,108 @@ $seniors = $seniorsStmt->fetchAll();
 										<th>Cellphone</th>
 									</tr>
 								</thead>
-								<tbody>
-									<?php foreach ($seniors as $s): ?>
-									<tr>
-										<td><?= htmlspecialchars($s['last_name']) ?></td>
-										<td><?= htmlspecialchars($s['first_name']) ?></td>
-										<td><?= htmlspecialchars($s['middle_name'] ?: '') ?></td>
-										<td><?= htmlspecialchars($s['ext_name'] ?: '') ?></td>
-										<td><?= (int)$s['age'] ?> years</td>
-										<td>
-											<span class="badge <?= $s['life_status'] === 'living' ? 'badge-success' : 'badge-danger' ?>">
-												<?= ucfirst($s['life_status']) ?>
-											</span>
-										</td>
-										<td>
-											<span class="badge <?= $s['benefits_received'] ? 'badge-success' : 'badge-warning' ?>">
-												<?= $s['benefits_received'] ? 'Received' : 'Not Yet' ?>
-											</span>
-										</td>
-										<td><?= htmlspecialchars($s['cellphone'] ?: '-') ?></td>
-									</tr>
-									<?php endforeach; ?>
+								<tbody id="seniorsTableBody">
+									<?php if (!empty($seniors)): ?>
+										<?php foreach ($seniors as $s): ?>
+										<tr>
+											<td><?= htmlspecialchars($s['last_name']) ?></td>
+											<td><?= htmlspecialchars($s['first_name']) ?></td>
+											<td><?= htmlspecialchars($s['middle_name'] ?: '') ?></td>
+											<td><?= htmlspecialchars($s['ext_name'] ?: '') ?></td>
+											<td><?= (int)$s['age'] ?> years</td>
+											<td>
+												<span class="badge <?= $s['life_status'] === 'living' ? 'badge-success' : 'badge-danger' ?>">
+													<?= ucfirst($s['life_status']) ?>
+												</span>
+											</td>
+											<td>
+												<span class="badge <?= $s['benefits_received'] ? 'badge-success' : 'badge-warning' ?>">
+													<?= $s['benefits_received'] ? 'Received' : 'Not Yet' ?>
+												</span>
+											</td>
+											<td><?= htmlspecialchars($s['cellphone'] ?: '-') ?></td>
+										</tr>
+										<?php endforeach; ?>
+									<?php else: ?>
+										<tr id="emptyStateRow">
+											<td colspan="8">
+												<div class="empty-state">
+													<div class="empty-icon">
+														<i class="fas fa-users"></i>
+													</div>
+													<h3>No Seniors Found</h3>
+													<p>No senior citizens are currently registered in your barangay.</p>
+												</div>
+											</td>
+										</tr>
+									<?php endif; ?>
 								</tbody>
 							</table>
 						</div>
-						<?php else: ?>
-						<div class="empty-state">
-							<div class="empty-icon">
-								<i class="fas fa-users"></i>
-							</div>
-							<h3>No Seniors Found</h3>
-							<p>No senior citizens are currently registered in your barangay.</p>
-						</div>
-						<?php endif; ?>
 					</div>
 				</div>
 			</div>
 		</div>
 	</main>
 	<script src="<?= BASE_URL ?>/assets/app.js"></script>
+	<script>
+		// Search filter for seniors table
+		document.addEventListener('DOMContentLoaded', function() {
+			const searchInput = document.getElementById('searchInput');
+			if (searchInput) {
+				searchInput.addEventListener('input', function() {
+					const filter = this.value.toLowerCase();
+					const rows = document.querySelectorAll('#seniorsTableBody tr');
+					
+					rows.forEach(row => {
+						if (row.id === 'emptyStateRow') {
+							row.style.display = filter === '' ? '' : 'none';
+							return;
+						}
+						
+						// Get text content from all cells
+						const cells = row.querySelectorAll('td');
+						let textContent = '';
+						cells.forEach(cell => {
+							textContent += cell.textContent.toLowerCase() + ' ';
+						});
+						
+						// Check if any cell content matches the filter
+						if (textContent.includes(filter)) {
+							row.style.display = '';
+						} else {
+							row.style.display = 'none';
+						}
+					});
+					
+					// Show/hide empty state
+					const visibleRows = Array.from(rows).filter(row => 
+						row.style.display !== 'none' && row.id !== 'emptyStateRow'
+					);
+					
+					// Find empty state row
+					const emptyStateRow = document.getElementById('emptyStateRow');
+					
+					if (emptyStateRow) {
+						if (visibleRows.length === 0 && filter !== '') {
+							emptyStateRow.style.display = '';
+							const h3 = emptyStateRow.querySelector('.empty-state h3');
+							const p = emptyStateRow.querySelector('.empty-state p');
+							if (h3) h3.textContent = 'No Results Found';
+							if (p) p.textContent = 'No seniors match your search criteria.';
+						} else if (visibleRows.length === 0 && filter === '') {
+							emptyStateRow.style.display = '';
+							const h3 = emptyStateRow.querySelector('.empty-state h3');
+							const p = emptyStateRow.querySelector('.empty-state p');
+							if (h3) h3.textContent = 'No Seniors Found';
+							if (p) p.textContent = 'No senior citizens are currently registered in your barangay.';
+						} else {
+							emptyStateRow.style.display = 'none';
+						}
+					}
+				});
+			}
+		});
+	</script>
 </body>
 </html>
