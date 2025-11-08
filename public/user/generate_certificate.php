@@ -124,10 +124,10 @@ if ($id) {
 			/* Logo/Seal */
 			.logo-seal {
 				position: absolute;
-				top: 70px;
-				right: 70px;
-				width: 120px;
-				height: 120px;
+				top: 60px;
+				right: 60px;
+				width: 160px;
+				height: 160px;
 				z-index: 10;
 				display: flex;
 				align-items: center;
