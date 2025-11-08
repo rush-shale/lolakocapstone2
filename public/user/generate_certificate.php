@@ -316,9 +316,22 @@ if ($id) {
 	exit;
 }
 
-// Get seniors from user's barangay
-$seniors = $pdo->prepare("SELECT * FROM seniors WHERE barangay=? AND life_status='living' ORDER BY last_name, first_name");
-$seniors->execute([$user['barangay']]);
+// Get seniors from user's barangay with attendance count
+$seniors = $pdo->prepare("
+	SELECT 
+		s.*,
+		COUNT(DISTINCT a.id) AS attendance_count
+	FROM seniors s
+	LEFT JOIN attendance a ON s.id = a.senior_id
+	LEFT JOIN events e ON a.event_id = e.id 
+		AND e.scope = 'barangay' 
+		AND e.barangay = ?
+	WHERE s.barangay = ? 
+		AND s.life_status = 'living'
+	GROUP BY s.id
+	ORDER BY s.last_name, s.first_name
+");
+$seniors->execute([$user['barangay'], $user['barangay']]);
 $seniorsList = $seniors->fetchAll();
 
 ?>
@@ -382,8 +395,7 @@ $seniorsList = $seniors->fetchAll();
 									<th>Senior Information</th>
 									<th>Age</th>
 									<th>Barangay</th>
-									<th>Category</th>
-									<th>Benefits Status</th>
+									<th>Events Attended</th>
 									<th>Actions</th>
 							</tr>
 						</thead>
@@ -413,8 +425,12 @@ $seniorsList = $seniors->fetchAll();
 									</td>
 											<td><span class="age-badge"><?= (int)$s['age'] ?> years</span></td>
 											<td><div class="barangay-info"><i class="fas fa-map-marker-alt"></i><?= htmlspecialchars($s['barangay']) ?></div></td>
-											<td><span class="badge <?= $s['category'] === 'local' ? 'badge-primary' : 'badge-warning' ?>"><?= $s['category'] === 'local' ? 'Local' : 'National' ?></span></td>
-											<td><span class="badge <?= $s['benefits_received'] ? 'badge-success' : 'badge-warning' ?>"><i class="fas fa-<?= $s['benefits_received'] ? 'check' : 'clock' ?>"></i><?= $s['benefits_received'] ? 'Received' : 'Pending' ?></span></td>
+											<td>
+												<span class="badge badge-info">
+													<i class="fas fa-calendar-check"></i>
+													<?= (int)($s['attendance_count'] ?? 0) ?> event<?= (int)($s['attendance_count'] ?? 0) != 1 ? 's' : '' ?>
+												</span>
+											</td>
 											<td>
 												<a href="<?= BASE_URL ?>/user/generate_certificate.php?id=<?= (int)$s['id'] ?>" target="_blank" class="generate-btn">
 													<i class="fas fa-certificate"></i> Generate Certificate
@@ -424,7 +440,7 @@ $seniorsList = $seniors->fetchAll();
 							<?php endforeach; ?>
 								<?php else: ?>
 								<tr>
-										<td colspan="6">
+										<td colspan="5">
 										<div class="empty-state">
 											<div class="empty-icon">
 													<i class="fas fa-users"></i>
