@@ -129,6 +129,39 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 						$benefits_received, $life_status, $category, $validation_status, $validation_date
 					]);
 						$senior_id = $pdo->lastInsertId();
+						
+						// If benefits_received is checked, create benefit_records entries for all benefit types
+						if ($benefits_received == 1) {
+							try {
+								// Ensure benefit_records table exists
+								$tableExists = $pdo->query("SHOW TABLES LIKE 'benefit_records'")->rowCount() > 0;
+								if (!$tableExists) {
+									$pdo->exec("CREATE TABLE IF NOT EXISTS benefit_records (
+										id INT AUTO_INCREMENT PRIMARY KEY,
+										senior_id INT NOT NULL,
+										benefit_type VARCHAR(64) NOT NULL,
+										received TINYINT(1) NOT NULL DEFAULT 0,
+										remarks VARCHAR(255) NULL,
+										updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+										UNIQUE KEY uniq_senior_type (senior_id, benefit_type),
+										INDEX idx_senior_id (senior_id)
+									) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci");
+								}
+								
+								// All benefit types from the Benefits section
+								$benefitTypes = ['sp_q1', 'sp_q2', 'sp_q3', 'sp_q4', 'octogenarian', 'nonagenarian', 'centenarian', 'financial_asst', 'burial_asst'];
+								
+								// Insert benefit records for all types with received = 1
+								$benefitStmt = $pdo->prepare('INSERT INTO benefit_records (senior_id, benefit_type, received) VALUES (?, ?, 1) ON DUPLICATE KEY UPDATE received=1');
+								foreach ($benefitTypes as $type) {
+									$benefitStmt->execute([$senior_id, $type]);
+								}
+							} catch (Exception $benefitError) {
+								// Log error but don't fail the senior creation
+								error_log('Failed to create benefit records for senior ' . $senior_id . ': ' . $benefitError->getMessage());
+							}
+						}
+						
 						$message = 'Senior added successfully';
 					}
 				} else {
