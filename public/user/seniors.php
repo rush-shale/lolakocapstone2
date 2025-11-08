@@ -6,8 +6,8 @@ require_role('user');
 $pdo = get_db_connection();
 $user = current_user();
 
-// Seniors in my barangay (all life statuses)
-$seniorsStmt = $pdo->prepare("SELECT id, first_name, middle_name, last_name, ext_name, age, life_status, benefits_received, barangay, cellphone FROM seniors WHERE barangay=? ORDER BY last_name, first_name");
+// Seniors in my barangay (all life statuses) - matching admin columns
+$seniorsStmt = $pdo->prepare("SELECT id, first_name, middle_name, last_name, ext_name, age, life_status, benefits_received, barangay, cellphone, sex, civil_status, date_of_birth, osca_id_no, remarks, health_condition, purok, place_of_birth, category, validation_status, validation_date FROM seniors WHERE barangay=? ORDER BY last_name, first_name");
 $seniorsStmt->execute([$user['barangay']]);
 $seniors = $seniorsStmt->fetchAll();
 ?>
@@ -80,14 +80,25 @@ $seniors = $seniorsStmt->fetchAll();
 							<table class="modern-table">
 								<thead>
 									<tr>
-										<th>Last Name</th>
-										<th>First Name</th>
-										<th>Middle Name</th>
-										<th>Extension</th>
-										<th>Age</th>
-										<th>Life Status</th>
-										<th>Benefits Status</th>
-										<th>Cellphone</th>
+										<th>LAST NAME</th>
+										<th>FIRST NAME</th>
+										<th>MIDDLE NAME</th>
+										<th>EXT</th>
+										<th>BARANGAY</th>
+										<th>AGE</th>
+										<th>SEX</th>
+										<th>CIVIL STATUS</th>
+										<th>BIRTHDATE</th>
+										<th>OSCA ID NO.</th>
+										<th>REMARKS</th>
+										<th>HEALTH CONDITION</th>
+										<th>PUROK</th>
+										<th>PLACE OF BIRTH</th>
+										<th>CELLPHONE #</th>
+										<th>LIFE STATUS</th>
+										<th>CATEGORY</th>
+										<th>VALIDATION STATUS</th>
+										<th>VALIDATED</th>
 									</tr>
 								</thead>
 								<tbody id="seniorsTableBody">
@@ -98,23 +109,34 @@ $seniors = $seniorsStmt->fetchAll();
 											<td><?= htmlspecialchars($s['first_name']) ?></td>
 											<td><?= htmlspecialchars($s['middle_name'] ?: '') ?></td>
 											<td><?= htmlspecialchars($s['ext_name'] ?: '') ?></td>
-											<td><?= (int)$s['age'] ?> years</td>
+											<td><?= htmlspecialchars($s['barangay']) ?></td>
+											<td><?= (int)$s['age'] ?></td>
+											<td><?= htmlspecialchars($s['sex'] ?: '-') ?></td>
+											<td><?= htmlspecialchars($s['civil_status'] ?: '-') ?></td>
+											<td><?= $s['date_of_birth'] ? date('M d, Y', strtotime($s['date_of_birth'])) : '-' ?></td>
+											<td><?= htmlspecialchars($s['osca_id_no'] ?: '-') ?></td>
+											<td><?= htmlspecialchars($s['remarks'] ?: '-') ?></td>
+											<td><?= htmlspecialchars($s['health_condition'] ?: '-') ?></td>
+											<td><?= htmlspecialchars($s['purok'] ?: '-') ?></td>
+											<td><?= htmlspecialchars($s['place_of_birth'] ?: '-') ?></td>
+											<td><?= htmlspecialchars($s['cellphone'] ?: '-') ?></td>
 											<td>
 												<span class="badge <?= $s['life_status'] === 'living' ? 'badge-success' : 'badge-danger' ?>">
 													<?= ucfirst($s['life_status']) ?>
 												</span>
 											</td>
 											<td>
-												<span class="badge <?= $s['benefits_received'] ? 'badge-success' : 'badge-warning' ?>">
-													<?= $s['benefits_received'] ? 'Received' : 'Not Yet' ?>
+												<span class="badge <?= $s['category'] === 'local' ? 'badge-primary' : ($s['category'] === 'national' ? 'badge-warning' : 'badge-secondary') ?>">
+													<?= ucfirst($s['category'] ?: '-') ?>
 												</span>
 											</td>
-											<td><?= htmlspecialchars($s['cellphone'] ?: '-') ?></td>
+											<td><?= htmlspecialchars($s['validation_status'] ?: '-') ?></td>
+											<td><?= $s['validation_date'] ? date('M d, Y', strtotime($s['validation_date'])) : '-' ?></td>
 										</tr>
 										<?php endforeach; ?>
 									<?php else: ?>
 										<tr id="emptyStateRow">
-											<td colspan="8">
+											<td colspan="19">
 												<div class="empty-state">
 													<div class="empty-icon">
 														<i class="fas fa-users"></i>
