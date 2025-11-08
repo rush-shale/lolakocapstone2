@@ -2605,6 +2605,27 @@ try {
 						</div>
 					</div>
 
+					<!-- Benefits Section -->
+					<div class="form-section">
+						<h3 class="section-title">Benefits</h3>
+						<div class="form-row">
+							<div class="form-group checkbox-group">
+								<label class="checkbox-label">
+									<input
+										type="checkbox"
+										name="benefits_received"
+										id="benefits_received"
+										class="checkbox-input"
+										value="1"
+										checked
+									>
+									<span class="checkbox-custom"></span>
+									Benefits Received
+								</label>
+							</div>
+						</div>
+					</div>
+
 					<div class="form-actions">
 						<button type="submit" class="btn btn-primary modern-btn">
 							<span class="btn-text">Add Senior</span>
@@ -2638,6 +2659,11 @@ try {
             const mainContent = document.querySelector('main.content');
 			if (mainContent) {
 				mainContent.style.filter = 'blur(0)'; // Remove blur on open modal to show modal clearly
+			}
+			// Set default values for checkboxes
+			const benefitsCheckbox = document.getElementById('benefits_received');
+			if (benefitsCheckbox) {
+				benefitsCheckbox.checked = true;
 			}
 		}
 
