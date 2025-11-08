@@ -37,7 +37,341 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 		$message = 'Invalid session token';
 	} else {
 		$op = $_POST['op'] ?? '';
-	if ($op === 'create' || $op === 'update') {
+		
+		// Handle Excel import
+		if ($op === 'import_excel' && isset($_FILES['excel_file']) && $_FILES['excel_file']['error'] === UPLOAD_ERR_OK) {
+			$file = $_FILES['excel_file'];
+			$allowedTypes = ['application/vnd.ms-excel', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'text/csv'];
+			$allowedExtensions = ['xls', 'xlsx', 'csv'];
+			$extension = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
+			
+			if (!in_array($file['type'], $allowedTypes) && !in_array($extension, $allowedExtensions)) {
+				$message = 'Invalid file type. Please upload Excel (.xls, .xlsx) or CSV files only.';
+			} else {
+				try {
+					$imported = 0;
+					$skipped = 0;
+					$errors = [];
+					
+					// Read Excel/CSV file
+					$filePath = $file['tmp_name'];
+					$handle = fopen($filePath, 'r');
+					
+					if ($handle !== false) {
+						// Read header row
+						$headers = fgetcsv($handle);
+						if ($headers === false) {
+							$message = 'Failed to read file. Please check the file format.';
+						} else {
+							// Normalize headers (remove spaces, convert to lowercase)
+							$normalizedHeaders = array_map(function($h) {
+								return strtolower(trim(str_replace([' ', '_', '-'], '', $h)));
+							}, $headers);
+							
+							// Map Excel columns to database fields
+							$columnMap = [
+								'firstname' => 'first_name',
+								'first_name' => 'first_name',
+								'middlename' => 'middle_name',
+								'middle_name' => 'middle_name',
+								'lastname' => 'last_name',
+								'last_name' => 'last_name',
+								'extension' => 'ext_name',
+								'ext' => 'ext_name',
+								'ext_name' => 'ext_name',
+								'age' => 'age',
+								'dateofbirth' => 'date_of_birth',
+								'birthdate' => 'date_of_birth',
+								'date_of_birth' => 'date_of_birth',
+								'sex' => 'sex',
+								'gender' => 'sex',
+								'placeofbirth' => 'place_of_birth',
+								'place_of_birth' => 'place_of_birth',
+								'civilstatus' => 'civil_status',
+								'civil_status' => 'civil_status',
+								'educationalattainment' => 'educational_attainment',
+								'education' => 'educational_attainment',
+								'educational_attainment' => 'educational_attainment',
+								'occupation' => 'occupation',
+								'annualincome' => 'annual_income',
+								'income' => 'annual_income',
+								'annual_income' => 'annual_income',
+								'otherskills' => 'other_skills',
+								'skills' => 'other_skills',
+								'other_skills' => 'other_skills',
+								'barangay' => 'barangay',
+								'contact' => 'contact',
+								'oscaidno' => 'osca_id_no',
+								'oscaid' => 'osca_id_no',
+								'osca_id_no' => 'osca_id_no',
+								'remarks' => 'remarks',
+								'healthcondition' => 'health_condition',
+								'health' => 'health_condition',
+								'health_condition' => 'health_condition',
+								'purok' => 'purok',
+								'cellphone' => 'cellphone',
+								'phone' => 'cellphone',
+								'mobile' => 'cellphone',
+								'benefitsreceived' => 'benefits_received',
+								'benefits' => 'benefits_received',
+								'benefits_received' => 'benefits_received',
+								'lifestatus' => 'life_status',
+								'life_status' => 'life_status',
+								'category' => 'category',
+							];
+							
+							// Find column indices
+							$fieldIndices = [];
+							foreach ($columnMap as $excelCol => $dbField) {
+								$idx = array_search($excelCol, $normalizedHeaders);
+								if ($idx !== false) {
+									$fieldIndices[$dbField] = $idx;
+								}
+							}
+							
+							// Required fields
+							$requiredFields = ['first_name', 'last_name', 'age', 'barangay', 'osca_id_no'];
+							$missingRequired = array_diff($requiredFields, array_keys($fieldIndices));
+							if (!empty($missingRequired)) {
+								$message = 'Missing required columns: ' . implode(', ', $missingRequired);
+							} else {
+								$pdo->beginTransaction();
+								$rowNum = 1; // Start at 1 (header is row 0)
+								
+								// Process data rows
+								while (($row = fgetcsv($handle)) !== false) {
+									$rowNum++;
+									
+									// Skip empty rows
+									if (empty(array_filter($row))) {
+										continue;
+									}
+									
+									// Extract data based on column mapping
+									$data = [];
+									foreach ($fieldIndices as $dbField => $colIdx) {
+										$data[$dbField] = isset($row[$colIdx]) ? trim($row[$colIdx]) : '';
+									}
+									
+									// Validate required fields
+									$hasAllRequired = true;
+									foreach ($requiredFields as $field) {
+										if (empty($data[$field])) {
+											$hasAllRequired = false;
+											$errors[] = "Row $rowNum: Missing required field '$field'";
+											break;
+										}
+									}
+									
+									if (!$hasAllRequired) {
+										$skipped++;
+										continue;
+									}
+									
+									// Normalize and validate data
+									$first_name = trim($data['first_name']);
+									$middle_name = !empty($data['middle_name']) ? trim($data['middle_name']) : null;
+									$last_name = trim($data['last_name']);
+									$ext_name = !empty($data['ext_name']) ? trim($data['ext_name']) : null;
+									$age = (int)$data['age'];
+									$date_of_birth = !empty($data['date_of_birth']) ? date('Y-m-d', strtotime(str_replace('/', '-', $data['date_of_birth']))) : null;
+									if ($date_of_birth === false) $date_of_birth = null;
+									
+									// Normalize sex/gender
+									$sex = null;
+									if (!empty($data['sex'])) {
+										$sexVal = strtolower(trim($data['sex']));
+										if (in_array($sexVal, ['male', 'm', 'man'])) {
+											$sex = 'male';
+										} elseif (in_array($sexVal, ['female', 'f', 'woman'])) {
+											$sex = 'female';
+										} elseif (in_array($sexVal, ['lgbtq', 'lgbt', 'other'])) {
+											$sex = 'lgbtq';
+										}
+									}
+									
+									$place_of_birth = !empty($data['place_of_birth']) ? trim($data['place_of_birth']) : null;
+									
+									// Normalize civil status
+									$civil_status = 'single';
+									if (!empty($data['civil_status'])) {
+										$csVal = strtolower(trim($data['civil_status']));
+										if (in_array($csVal, ['married', 'm'])) {
+											$civil_status = 'married';
+										} elseif (in_array($csVal, ['widowed', 'w'])) {
+											$civil_status = 'widowed';
+										} elseif (in_array($csVal, ['divorced', 'd'])) {
+											$civil_status = 'divorced';
+										} elseif (in_array($csVal, ['separated', 's'])) {
+											$civil_status = 'separated';
+										}
+									}
+									
+									// Normalize educational attainment
+									$educational_attainment = 'no_formal_education';
+									if (!empty($data['educational_attainment'])) {
+										$eduVal = strtolower(trim($data['educational_attainment']));
+										$eduMap = [
+											'elementary' => 'elementary',
+											'highschool' => 'high_school',
+											'high school' => 'high_school',
+											'vocational' => 'vocational',
+											'college' => 'college',
+											'graduate' => 'graduate',
+											'postgraduate' => 'post_graduate',
+											'post graduate' => 'post_graduate',
+										];
+										if (isset($eduMap[$eduVal])) {
+											$educational_attainment = $eduMap[$eduVal];
+										}
+									}
+									
+									$occupation = !empty($data['occupation']) ? trim($data['occupation']) : null;
+									$annual_income = !empty($data['annual_income']) ? (float)str_replace(',', '', $data['annual_income']) : null;
+									$other_skills = !empty($data['other_skills']) ? trim($data['other_skills']) : '';
+									$barangay = trim($data['barangay']);
+									$contact = !empty($data['contact']) ? trim($data['contact']) : '';
+									$osca_id_no = trim($data['osca_id_no']);
+									$remarks = !empty($data['remarks']) ? trim($data['remarks']) : '';
+									$health_condition = !empty($data['health_condition']) ? trim($data['health_condition']) : '';
+									if (in_array(strtolower($health_condition), ['iwan', 'none', 'n/a', 'na', 'not specified', 'unknown', ''])) {
+										$health_condition = '';
+									}
+									$purok = !empty($data['purok']) ? trim($data['purok']) : '';
+									$cellphone = !empty($data['cellphone']) ? trim($data['cellphone']) : '';
+									
+									// Benefits received - check if value indicates received
+									$benefits_received = 0;
+									if (!empty($data['benefits_received'])) {
+										$benVal = strtolower(trim($data['benefits_received']));
+										if (in_array($benVal, ['yes', 'y', '1', 'true', 'received', 'check', 'checked'])) {
+											$benefits_received = 1;
+										}
+									}
+									
+									$life_status = 'living';
+									if (!empty($data['life_status'])) {
+										$lsVal = strtolower(trim($data['life_status']));
+										if ($lsVal === 'deceased') {
+											$life_status = 'deceased';
+										}
+									}
+									
+									$category = 'local';
+									if (!empty($data['category'])) {
+										$catVal = strtolower(trim($data['category']));
+										if ($catVal === 'national') {
+											$category = 'national';
+										} elseif ($catVal === 'waiting') {
+											$category = 'waiting';
+										}
+									}
+									
+									$validation_status = $category === 'waiting' ? 'Not Validated' : 'Validated';
+									$validation_date = $category === 'waiting' ? null : date('Y-m-d H:i:s');
+									
+									// Check for duplicates
+									$duplicateCheck = $pdo->prepare('
+										SELECT id FROM seniors 
+										WHERE first_name = ? AND last_name = ? 
+										AND (middle_name = ? OR (middle_name IS NULL AND ? IS NULL))
+										AND (ext_name = ? OR (ext_name IS NULL AND ? IS NULL))
+										AND barangay = ? AND osca_id_no = ?
+									');
+									$duplicateCheck->execute([
+										$first_name, $last_name,
+										$middle_name ?: null, $middle_name ?: null,
+										$ext_name ?: null, $ext_name ?: null,
+										$barangay, $osca_id_no
+									]);
+									
+									if ($duplicateCheck->rowCount() > 0) {
+										$skipped++;
+										$errors[] = "Row $rowNum: Duplicate senior (OSCA ID: $osca_id_no)";
+										continue;
+									}
+									
+									// Insert senior
+									try {
+										$stmt = $pdo->prepare('INSERT INTO seniors (first_name, middle_name, last_name, ext_name, age, date_of_birth, sex, place_of_birth, civil_status, educational_attainment, occupation, annual_income, other_skills, barangay, contact, osca_id_no, remarks, health_condition, purok, cellphone, benefits_received, life_status, category, validation_status, validation_date, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())');
+										$stmt->execute([
+											$first_name, $middle_name ?: null, $last_name, $ext_name ?: null, $age,
+											$date_of_birth ?: null, $sex ?: null, $place_of_birth ?: null,
+											$civil_status, $educational_attainment,
+											$occupation ?: null, $annual_income, $other_skills,
+											$barangay, $contact, $osca_id_no, $remarks,
+											$health_condition, $purok, $cellphone,
+											$benefits_received, $life_status, $category, $validation_status, $validation_date
+										]);
+										
+										$senior_id = $pdo->lastInsertId();
+										$imported++;
+										
+										// If benefits_received is checked, create benefit_records entries
+										if ($benefits_received == 1) {
+											try {
+												$tableExists = $pdo->query("SHOW TABLES LIKE 'benefit_records'")->rowCount() > 0;
+												if (!$tableExists) {
+													$pdo->exec("CREATE TABLE IF NOT EXISTS benefit_records (
+														id INT AUTO_INCREMENT PRIMARY KEY,
+														senior_id INT NOT NULL,
+														benefit_type VARCHAR(64) NOT NULL,
+														received TINYINT(1) NOT NULL DEFAULT 0,
+														remarks VARCHAR(255) NULL,
+														updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+														UNIQUE KEY uniq_senior_type (senior_id, benefit_type),
+														INDEX idx_senior_id (senior_id)
+													) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci");
+												}
+												
+												$benefitTypes = ['sp_q1', 'sp_q2', 'sp_q3', 'sp_q4', 'octogenarian', 'nonagenarian', 'centenarian', 'financial_asst', 'burial_asst'];
+												$benefitStmt = $pdo->prepare('INSERT INTO benefit_records (senior_id, benefit_type, received) VALUES (?, ?, 1) ON DUPLICATE KEY UPDATE received=1');
+												foreach ($benefitTypes as $type) {
+													$benefitStmt->execute([$senior_id, $type]);
+												}
+											} catch (Exception $benefitError) {
+												error_log('Failed to create benefit records for imported senior ' . $senior_id . ': ' . $benefitError->getMessage());
+											}
+										}
+									} catch (Exception $e) {
+										$skipped++;
+										$errors[] = "Row $rowNum: " . $e->getMessage();
+									}
+								}
+								
+								fclose($handle);
+								
+								if ($imported > 0) {
+									$pdo->commit();
+									$message = "Successfully imported $imported senior(s).";
+									if ($skipped > 0) {
+										$message .= " $skipped row(s) skipped.";
+									}
+									if (!empty($errors)) {
+										$message .= " Errors: " . implode('; ', array_slice($errors, 0, 5));
+										if (count($errors) > 5) {
+											$message .= " and " . (count($errors) - 5) . " more.";
+										}
+									}
+								} else {
+									$pdo->rollback();
+									$message = "No seniors were imported. " . implode('; ', array_slice($errors, 0, 10));
+								}
+							}
+						}
+					} else {
+						$message = 'Failed to open uploaded file.';
+					}
+				} catch (Exception $e) {
+					if (isset($pdo) && $pdo->inTransaction()) {
+						$pdo->rollback();
+					}
+					$message = 'Import failed: ' . $e->getMessage();
+				}
+			}
+		}
+		
+		if ($op === 'create' || $op === 'update') {
 		$id = (int)($_POST['id'] ?? 0);
 		$first_name = trim($_POST['first_name'] ?? '');
 		$middle_name = trim($_POST['middle_name'] ?? '');
@@ -1486,6 +1820,9 @@ try {
 							</div>
 							<div class="table-actions">
 								<?php if ($status !== 'waiting'): ?>
+								<button class="table-btn" onclick="openImportModal()" style="margin-right: 10px;">
+									<span>📥</span> Import Excel
+								</button>
 								<button class="table-btn" onclick="openAddSeniorModal()">
 									<span>➕</span>
 									<span>Add Senior</span>
@@ -2674,7 +3011,119 @@ try {
 		</div>
 	</div>
 
+	<!-- Import Excel Modal -->
+	<div id="importModal" class="modal-overlay" style="display: none;">
+		<div class="modal" style="max-width: 600px;">
+			<div class="modal-header">
+				<h2>Import Seniors from Excel</h2>
+				<button class="modal-close" onclick="closeImportModal()">&times;</button>
+			</div>
+			<div class="modal-body">
+				<form id="importForm" method="POST" enctype="multipart/form-data">
+					<input type="hidden" name="csrf" value="<?= generate_csrf_token() ?>">
+					<input type="hidden" name="op" value="import_excel">
+					
+					<div class="form-group">
+						<label for="excel_file" class="form-label">Select Excel/CSV File</label>
+						<input type="file" id="excel_file" name="excel_file" accept=".xls,.xlsx,.csv" class="form-input" required>
+						<small class="form-hint">Supported formats: .xls, .xlsx, .csv</small>
+					</div>
+					
+					<div class="form-group">
+						<h3 style="margin-top: 20px; margin-bottom: 10px; font-size: 14px; color: #374151;">Required Columns:</h3>
+						<div style="background: #f3f4f6; padding: 15px; border-radius: 6px; font-size: 13px; line-height: 1.8;">
+							<strong>Required:</strong> First Name, Last Name, Age, Barangay, OSCA ID No.<br>
+							<strong>Optional:</strong> Middle Name, Extension, Date of Birth, Sex, Place of Birth, Civil Status, Educational Attainment, Occupation, Annual Income, Other Skills, Contact, Remarks, Health Condition, Purok, Cellphone, Benefits Received, Life Status, Category
+						</div>
+					</div>
+					
+					<div class="form-group">
+						<h3 style="margin-top: 20px; margin-bottom: 10px; font-size: 14px; color: #374151;">Column Name Variations Accepted:</h3>
+						<div style="background: #f3f4f6; padding: 15px; border-radius: 6px; font-size: 12px; line-height: 1.8;">
+							• First Name: firstname, first_name<br>
+							• Last Name: lastname, last_name<br>
+							• Date of Birth: dateofbirth, birthdate, date_of_birth<br>
+							• Sex: sex, gender<br>
+							• OSCA ID: oscaidno, oscaid, osca_id_no<br>
+							• And more variations...
+						</div>
+					</div>
+					
+					<div class="form-actions">
+						<button type="button" class="btn-secondary" onclick="closeImportModal()">Cancel</button>
+						<button type="submit" class="btn-primary">
+							<span class="btn-text">Import Seniors</span>
+							<span class="btn-icon">📥</span>
+							<div class="btn-loading">
+								<div class="loading-spinner"></div>
+								<span>Importing...</span>
+							</div>
+						</button>
+					</div>
+				</form>
+			</div>
+		</div>
+	</div>
+
 	<script>
+		function openImportModal() {
+			const modal = document.getElementById('importModal');
+			modal.style.display = 'flex';
+			modal.classList.add('active');
+			document.body.classList.add('modal-active');
+			document.body.style.overflow = 'hidden';
+			const modalContent = modal.querySelector('.modal');
+			if (modalContent) {
+				modalContent.style.transform = '';
+				modalContent.style.left = '';
+				modalContent.style.top = '';
+			}
+			const mainContent = document.querySelector('main.content');
+			if (mainContent) {
+				mainContent.style.filter = 'blur(0)';
+			}
+		}
+
+		function closeImportModal() {
+			const modal = document.getElementById('importModal');
+			modal.style.animation = 'zoomOut 0.3s forwards';
+			setTimeout(() => {
+				modal.style.display = 'none';
+				modal.classList.remove('active');
+				document.body.classList.remove('modal-active');
+				document.body.style.overflow = '';
+				const mainContent = document.querySelector('main.content');
+				if (mainContent) {
+					mainContent.style.filter = '';
+				}
+				document.getElementById('importForm').reset();
+			}, 300);
+		}
+
+		// Handle import form submission
+		document.getElementById('importForm').addEventListener('submit', function(e) {
+			const fileInput = document.getElementById('excel_file');
+			if (!fileInput.files || !fileInput.files[0]) {
+				e.preventDefault();
+				alert('Please select a file to import.');
+				return false;
+			}
+			
+			const file = fileInput.files[0];
+			const allowedExtensions = ['xls', 'xlsx', 'csv'];
+			const extension = file.name.split('.').pop().toLowerCase();
+			
+			if (!allowedExtensions.includes(extension)) {
+				e.preventDefault();
+				alert('Invalid file type. Please upload Excel (.xls, .xlsx) or CSV files only.');
+				return false;
+			}
+			
+			// Show loading state
+			const submitBtn = this.querySelector('button[type="submit"]');
+			submitBtn.classList.add('loading');
+		});
+
 		function openAddSeniorModal() {
 			const modal = document.getElementById('addSeniorModal');
 			modal.style.display = 'flex';
