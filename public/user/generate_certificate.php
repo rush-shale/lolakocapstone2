@@ -29,25 +29,38 @@ if ($id) {
 		<meta name="viewport" content="width=device-width, initial-scale=1" />
 		<title>Certificate - <?= htmlspecialchars($fullName) ?></title>
 		<style>
+			* {
+				margin: 0;
+				padding: 0;
+				box-sizing: border-box;
+			}
+			
 			@page { 
 				size: A4 landscape;
 				margin: 0;
 			}
+			
 			html, body { 
 				margin: 0; 
 				padding: 0; 
-				font-family: Arial, sans-serif;
-				background: #f5f5f5;
+				font-family: 'Times New Roman', serif;
+				background: #f0f0f0;
 			}
+			
+			body {
+				display: flex;
+				justify-content: center;
+				align-items: center;
+				min-height: 100vh;
+				padding: 20px;
+			}
+			
 			.certificate {
 				width: 297mm;
 				height: 210mm;
-				background: #ffffff;
-				border: 6mm solid #1e3a8a;
-				box-sizing: border-box;
+				background: white;
 				position: relative;
 				overflow: hidden;
-				padding: 20mm;
 				margin: 0 auto;
 			}
 			
@@ -58,20 +71,19 @@ if ($id) {
 				left: 0;
 				width: 0;
 				height: 0;
-				border-style: solid;
-				border-width: 50mm 50mm 0 0;
-				border-color: #1e3a8a transparent transparent transparent;
+				border-left: 180px solid #2d1b4e;
+				border-bottom: 180px solid transparent;
 				z-index: 1;
 			}
+			
 			.triangle-top-left-inner {
 				position: absolute;
-				top: 8mm;
-				left: 8mm;
+				top: 0;
+				left: 0;
 				width: 0;
 				height: 0;
-				border-style: solid;
-				border-width: 35mm 35mm 0 0;
-				border-color: #3b82f6 transparent transparent transparent;
+				border-left: 140px solid #a8d5e2;
+				border-bottom: 140px solid transparent;
 				z-index: 2;
 			}
 			
@@ -82,171 +94,147 @@ if ($id) {
 				right: 0;
 				width: 0;
 				height: 0;
-				border-style: solid;
-				border-width: 0 0 50mm 50mm;
-				border-color: transparent transparent #1e3a8a transparent;
+				border-right: 180px solid #2d1b4e;
+				border-top: 180px solid transparent;
 				z-index: 1;
 			}
+			
 			.triangle-bottom-right-inner {
 				position: absolute;
-				bottom: 8mm;
-				right: 8mm;
+				bottom: 0;
+				right: 0;
 				width: 0;
 				height: 0;
-				border-style: solid;
-				border-width: 0 0 35mm 35mm;
-				border-color: transparent transparent #3b82f6 transparent;
+				border-right: 140px solid #a8d5e2;
+				border-top: 140px solid transparent;
 				z-index: 2;
+			}
+			
+			/* Main border */
+			.certificate-border {
+				position: absolute;
+				top: 50px;
+				left: 50px;
+				right: 50px;
+				bottom: 50px;
+				border: 3px solid black;
+				z-index: 3;
 			}
 			
 			/* Logo/Seal */
 			.logo-seal {
 				position: absolute;
-				top: 15mm;
-				right: 15mm;
-				width: 70mm;
-				height: 70mm;
-				z-index: 3;
-			}
-			.logo-outer-ring {
-				width: 70mm;
-				height: 70mm;
-				border-radius: 50%;
-				border: 2.5mm solid #065f46;
-				background: #ffffff;
+				top: 70px;
+				right: 70px;
+				width: 120px;
+				height: 120px;
+				z-index: 10;
 				display: flex;
 				align-items: center;
 				justify-content: center;
-				position: relative;
-				overflow: hidden;
 			}
-			.logo-text-top {
-				position: absolute;
-				top: 3mm;
-				left: 50%;
-				transform: translateX(-50%);
-				font-size: 3.8pt;
-				font-weight: 700;
-				color: #ffffff;
-				white-space: nowrap;
-				text-align: center;
-				z-index: 4;
+			.logo-seal img {
 				width: 100%;
-			}
-			.logo-text-bottom {
-				position: absolute;
-				bottom: 3mm;
-				left: 50%;
-				transform: translateX(-50%);
-				font-size: 3.2pt;
-				font-weight: 700;
-				color: #ffffff;
-				white-space: nowrap;
-				z-index: 4;
-				width: 100%;
-			}
-			.logo-inner-circle {
-				width: 55mm;
-				height: 55mm;
-				border-radius: 50%;
-				background: #d1fae5;
-				display: flex;
-				flex-direction: column;
-				align-items: center;
-				justify-content: center;
-				position: relative;
-				margin-top: 2mm;
-			}
-			.logo-figures {
-				display: flex;
-				align-items: center;
-				justify-content: center;
-				gap: 2mm;
-				margin-top: 5mm;
-			}
-			.logo-figure {
-				font-size: 18pt;
-			}
-			.logo-hands {
-				position: absolute;
-				bottom: 5mm;
-				left: 50%;
-				transform: translateX(-50%);
-				font-size: 14pt;
+				height: 100%;
+				object-fit: contain;
 			}
 			
 			/* Certificate Content */
 			.certificate-content {
 				position: relative;
-				z-index: 2;
+				z-index: 10;
+				padding: 70px;
 				text-align: center;
-				padding-top: 5mm;
-				padding-right: 80mm;
 			}
+			
 			.certificate-title {
-				font-size: 36pt;
-				font-weight: 900;
+				font-size: 64px;
+				font-weight: bold;
+				letter-spacing: 8px;
+				margin-bottom: 10px;
+				margin-top: 40px;
 				color: #000000;
-				margin-bottom: 8mm;
-				letter-spacing: 3pt;
-				font-family: Arial, sans-serif;
 			}
+			
 			.certificate-subtitle {
-				font-size: 16pt;
-				font-weight: 700;
+				font-size: 20px;
+				letter-spacing: 6px;
+				margin-bottom: 60px;
+				font-weight: normal;
 				color: #000000;
-				margin-bottom: 20mm;
-				letter-spacing: 1.5pt;
 				text-transform: uppercase;
 			}
+			
 			.award-statement {
-				font-size: 11pt;
+				font-size: 16px;
+				margin-bottom: 40px;
 				color: #000000;
-				margin-bottom: 5mm;
-				font-weight: 400;
 			}
+			
+			.recipient-name-container {
+				margin: 0 auto 40px;
+				text-align: center;
+			}
+			
+			.recipient-name {
+				font-size: 18px;
+				font-weight: bold;
+				color: #000000;
+				margin-bottom: 10px;
+				display: block;
+				text-transform: uppercase;
+			}
+			
 			.name-line {
-				width: 180mm;
-				height: 0.5mm;
-				background: #000000;
-				margin: 3mm auto 20mm;
+				width: 500px;
+				height: 2px;
+				background: black;
+				margin: 0 auto;
 			}
+			
 			.certificate-body {
-				text-align: left;
-				font-size: 10pt;
-				line-height: 1.7;
+				font-size: 15px;
+				line-height: 1.8;
+				max-width: 600px;
+				margin: 0 auto 30px;
+				text-align: center;
 				color: #000000;
-				max-width: 200mm;
-				margin: 0 auto 25mm;
 			}
+			
 			.certificate-body p {
-				margin: 0 0 10mm 0;
+				margin: 0 0 5px 0;
 			}
+			
 			.certificate-body strong {
-				font-weight: 700;
+				font-weight: bold;
 			}
 			
 			/* Signatures */
 			.signatures {
 				display: flex;
 				justify-content: space-between;
-				margin-top: 25mm;
-				padding: 0 15mm;
+				max-width: 600px;
+				margin: 0 auto;
+				padding-top: 0;
 			}
+			
 			.signature-block {
-				display: flex;
-				flex-direction: column;
-				align-items: flex-start;
+				text-align: center;
 			}
+			
 			.signature-name {
-				font-size: 11pt;
-				font-weight: 700;
+				font-weight: bold;
+				font-size: 16px;
+				margin-bottom: 5px;
+				border-bottom: 2px solid black;
+				padding-bottom: 5px;
+				display: inline-block;
+				min-width: 200px;
 				color: #000000;
-				text-decoration: underline;
-				margin-bottom: 2mm;
 			}
+			
 			.signature-title {
-				font-size: 9pt;
+				font-size: 14px;
 				color: #000000;
 			}
 			
@@ -254,7 +242,6 @@ if ($id) {
 				.noprint { display: none; }
 				body { 
 					background: white; 
-					margin: 0;
 					padding: 0;
 				}
 				.certificate {
@@ -280,34 +267,35 @@ if ($id) {
 			<div class="triangle-bottom-right"></div>
 			<div class="triangle-bottom-right-inner"></div>
 			
+			<!-- Main Border -->
+			<div class="certificate-border"></div>
+			
 			<!-- Logo/Seal -->
 			<div class="logo-seal">
-				<div class="logo-outer-ring">
-					<div class="logo-text-top">SENIOR CITIZEN FEDERATION, INCORPORATED</div>
-					<div class="logo-text-bottom">• 1990 • MANOLO FORTICH • 1990 •</div>
-					<div class="logo-inner-circle">
-						<div class="logo-figures">
-							<div class="logo-figure">👵</div>
-							<div class="logo-figure">👴</div>
-						</div>
-						<div class="logo-hands">🤲</div>
-					</div>
-				</div>
+				<img src="<?= BASE_URL ?>/images/OSCA MAIN LOGO.png" alt="OSCA Main Logo">
 			</div>
 			
 			<!-- Certificate Content -->
 			<div class="certificate-content">
-				<div class="certificate-title">CERTIFICATE</div>
+				<h1 class="certificate-title">CERTIFICATE</h1>
 				<div class="certificate-subtitle">OF BEST ACTIVE SENIOR CITIZEN</div>
 				
 				<div class="award-statement">THIS CERTIFICATE IS AWARDED TO</div>
-				<div style="width: 180mm; margin: 3mm auto 20mm; text-align: center; position: relative;">
-					<div style="font-size: 13pt; font-weight: 700; color: #000000; padding-bottom: 2mm; border-bottom: 0.5mm solid #000000; display: inline-block; min-width: 150mm;"><?= htmlspecialchars(strtoupper($fullName)) ?></div>
+				
+				<div class="recipient-name-container">
+					<span class="recipient-name"><?= htmlspecialchars(strtoupper($fullName)) ?></span>
+					<div class="name-line"></div>
 				</div>
 				
 				<div class="certificate-body">
 					<p>This certificate is proudly presented to <strong><?= htmlspecialchars($fullName) ?></strong></p>
-					<p>In recognition of being the "Best in Active Senior Citizen," for your outstanding participation, dedication, and positive contributions to community programs and activities. Your enthusiasm, commitment, and active involvement serve as an inspiration to your peers. This award honors your remarkable efforts and lasting impact on the senior community.</p>
+					<p>In recognition of being the "Best in Active Senior Citizen,"</p>
+					<p>for your outstanding participation, dedication, and positive contributions</p>
+					<p>to community programs and activities.</p>
+					<p>Your enthusiasm, commitment, and active involvement serve as an</p>
+					<p>inspiration to your peers.</p>
+					<p>This award honors your remarkable efforts and lasting impact on the</p>
+					<p>senior community.</p>
 				</div>
 				
 				<div class="signatures">
