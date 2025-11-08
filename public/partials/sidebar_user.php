@@ -28,9 +28,9 @@ $current_page = basename($_SERVER['PHP_SELF']);
 		</div>
 		
 		<div class="nav-item">
-			<a href="<?= BASE_URL ?>/user/osca_events.php" class="nav-link <?= $current_page === 'osca_events.php' ? 'active' : '' ?>">
+			<a href="<?= BASE_URL ?>/user/generate_certificate.php" class="nav-link <?= $current_page === 'generate_certificate.php' ? 'active' : '' ?>">
 				<span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 10l9-7 9 7"></path><path d="M5 10v10h14V10"></path></svg></span>
-				<span>OSCA Events</span>
+				<span>Generate Certificate</span>
 			</a>
 		</div>
 		
