@@ -172,7 +172,7 @@ if ($id) {
 			}
 			
 			.recipient-name-container {
-				margin: 0 auto 40px;
+				margin: 0 auto 30px;
 				text-align: center;
 			}
 			
