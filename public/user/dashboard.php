@@ -65,6 +65,24 @@ $topActiveSeniorsStmt = $pdo->prepare("
 $topActiveSeniorsStmt->execute([$user['barangay'], $user['barangay']]);
 $topActiveSeniors = $topActiveSeniorsStmt->fetchAll();
 
+// Get statistics for dashboard
+$stmtTotalSeniors = $pdo->prepare("SELECT COUNT(*) FROM seniors WHERE barangay = ? AND life_status = 'living'");
+$stmtTotalSeniors->execute([$user['barangay']]);
+$totalSeniors = (int)$stmtTotalSeniors->fetchColumn();
+
+$stmtTotalEvents = $pdo->prepare("SELECT COUNT(*) FROM events WHERE scope = 'barangay' AND barangay = ?");
+$stmtTotalEvents->execute([$user['barangay']]);
+$totalEvents = (int)$stmtTotalEvents->fetchColumn();
+
+$stmtTotalAttendances = $pdo->prepare("
+	SELECT COUNT(*) 
+	FROM attendance a
+	JOIN events e ON a.event_id = e.id
+	WHERE e.scope = 'barangay' AND e.barangay = ?
+");
+$stmtTotalAttendances->execute([$user['barangay']]);
+$totalAttendances = (int)$stmtTotalAttendances->fetchColumn();
+
 
 
 ?>
@@ -82,32 +100,32 @@ $topActiveSeniors = $topActiveSeniorsStmt->fetchAll();
 		/* Responsive Dashboard Styles - Matching Admin Dashboard */
 		.dashboard-grid {
 			display: grid;
-			grid-template-columns: 1.5fr 2.5fr;
-			grid-template-rows: 1fr 1fr 1fr;
-			gap: 0.5rem;
-			padding: 0.5rem;
-			height: calc(100vh - 40px);
-			max-height: calc(100vh - 40px);
+			grid-template-columns: 1fr 1fr 1fr;
+			grid-template-rows: auto auto auto;
+			gap: 1.5rem;
+			padding: 1.5rem;
+			height: calc(100vh - 100px);
+			max-height: calc(100vh - 100px);
 			overflow: hidden;
 			width: 100%;
 			box-sizing: border-box;
 		}
 
-		.dash-barangay {
-			grid-column: 1;
-			grid-row: 1 / 4;
-			min-height: 0;
-			overflow: hidden;
-		}
-
-		.dash-osca {
-			grid-column: 2;
+		.dash-stats {
+			grid-column: 1 / 4;
 			grid-row: 1;
 			min-height: 0;
 			overflow: hidden;
 		}
 
-		.dash-past {
+		.dash-barangay {
+			grid-column: 1;
+			grid-row: 2;
+			min-height: 0;
+			overflow: hidden;
+		}
+
+		.dash-osca {
 			grid-column: 2;
 			grid-row: 2;
 			min-height: 0;
@@ -115,7 +133,14 @@ $topActiveSeniors = $topActiveSeniorsStmt->fetchAll();
 		}
 
 		.dash-active-seniors {
-			grid-column: 2;
+			grid-column: 3;
+			grid-row: 2;
+			min-height: 0;
+			overflow: hidden;
+		}
+
+		.dash-past {
+			grid-column: 1 / 4;
 			grid-row: 3;
 			min-height: 0;
 			overflow: hidden;
@@ -244,64 +269,60 @@ $topActiveSeniors = $topActiveSeniorsStmt->fetchAll();
 		/* Responsive Design */
 		@media (max-width: 1200px) {
 			.dashboard-grid {
-				grid-template-columns: 1.5fr 2.5fr;
-				grid-template-rows: 1fr 1fr 1fr;
-				gap: 0.5rem;
-				padding: 0.5rem;
-				height: calc(100vh - 40px);
-				max-height: calc(100vh - 40px);
-				width: 100%;
+				grid-template-columns: 1fr 1fr;
+				grid-template-rows: auto auto auto auto;
+				gap: 1.5rem;
+				padding: 1.5rem;
+			}
+
+			.dash-stats {
+				grid-column: 1 / 3;
+				grid-row: 1;
 			}
 
 			.dash-barangay {
 				grid-column: 1;
-				grid-row: 1 / 4;
+				grid-row: 2;
 			}
 
 			.dash-osca {
 				grid-column: 2;
-				grid-row: 1;
-				min-height: 0;
-				overflow: hidden;
-			}
-
-			.dash-past {
-				grid-column: 2;
 				grid-row: 2;
-				min-height: 0;
-				overflow: hidden;
 			}
 
 			.dash-active-seniors {
-				grid-column: 2;
+				grid-column: 1 / 3;
 				grid-row: 3;
-				min-height: 0;
-				overflow: hidden;
+			}
+
+			.dash-past {
+				grid-column: 1 / 3;
+				grid-row: 4;
 			}
 		}
 
 		@media (max-width: 768px) {
 			.dashboard-grid {
 				grid-template-columns: 1fr;
-				grid-template-rows: auto auto auto auto;
-				gap: 0.75rem;
-				padding: 0.75rem;
+				grid-template-rows: auto auto auto auto auto;
+				gap: 1rem;
+				padding: 1rem;
 				height: auto;
 				max-height: none;
 				overflow: visible;
 			}
 
-			.dash-barangay {
+			.dash-stats {
 				grid-column: 1;
 				grid-row: 1;
 			}
 
-			.dash-osca {
+			.dash-barangay {
 				grid-column: 1;
 				grid-row: 2;
 			}
 
-			.dash-past {
+			.dash-osca {
 				grid-column: 1;
 				grid-row: 3;
 			}
@@ -310,7 +331,11 @@ $topActiveSeniors = $topActiveSeniorsStmt->fetchAll();
 				grid-column: 1;
 				grid-row: 4;
 			}
-		}
+
+			.dash-past {
+				grid-column: 1;
+				grid-row: 5;
+			}
 
 			.modern-card-header {
 				padding: 1rem;
@@ -347,33 +372,35 @@ $topActiveSeniors = $topActiveSeniorsStmt->fetchAll();
 		/* Tablet landscape */
 		@media (min-width: 769px) and (max-width: 1024px) {
 			.dashboard-grid {
-				grid-template-columns: 1.5fr 2.5fr;
-				grid-template-rows: 1fr 1fr 1fr;
-				gap: 0.5rem;
-				padding: 0.5rem;
-				height: calc(100vh - 40px);
-				max-height: calc(100vh - 40px);
-				width: 100%;
+				grid-template-columns: 1fr 1fr;
+				grid-template-rows: auto auto auto auto;
+				gap: 1.5rem;
+				padding: 1.5rem;
+			}
+
+			.dash-stats {
+				grid-column: 1 / 3;
+				grid-row: 1;
 			}
 
 			.dash-barangay {
 				grid-column: 1;
-				grid-row: 1 / 4;
+				grid-row: 2;
 			}
 
 			.dash-osca {
-				grid-column: 2;
-				grid-row: 1;
-			}
-
-			.dash-past {
 				grid-column: 2;
 				grid-row: 2;
 			}
 
 			.dash-active-seniors {
-				grid-column: 2;
+				grid-column: 1 / 3;
 				grid-row: 3;
+			}
+
+			.dash-past {
+				grid-column: 1 / 3;
+				grid-row: 4;
 			}
 		}
 
@@ -398,6 +425,32 @@ $topActiveSeniors = $topActiveSeniorsStmt->fetchAll();
 	<?php include __DIR__ . '/../partials/sidebar_user.php'; ?>
 	<main class="content">
 		<div class="dashboard-grid">
+			<!-- Statistics Summary Card -->
+			<div class="card dash-stats modern-card">
+				<div class="card-header modern-card-header">
+					<div class="card-title-section">
+						<h2 class="card-title">📊 Barangay Overview</h2>
+						<p class="card-subtitle">Summary statistics for <?= htmlspecialchars($user['barangay']) ?></p>
+					</div>
+				</div>
+				<div class="card-body modern-card-body">
+					<div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 2rem; padding: 2rem;">
+						<div style="text-align: center;">
+							<div style="font-size: 3rem; font-weight: 700; color: var(--gov-primary); margin-bottom: 0.5rem;"><?= $totalSeniors ?></div>
+							<div style="font-size: 1rem; color: var(--text-muted);">Total Seniors</div>
+						</div>
+						<div style="text-align: center;">
+							<div style="font-size: 3rem; font-weight: 700; color: var(--gov-secondary); margin-bottom: 0.5rem;"><?= $totalEvents ?></div>
+							<div style="font-size: 1rem; color: var(--text-muted);">Total Events</div>
+						</div>
+						<div style="text-align: center;">
+							<div style="font-size: 3rem; font-weight: 700; color: var(--gov-info); margin-bottom: 0.5rem;"><?= $totalAttendances ?></div>
+							<div style="font-size: 1rem; color: var(--text-muted);">Total Attendances</div>
+						</div>
+					</div>
+				</div>
+			</div>
+
 			<!-- My Barangay Events Card -->
 			<div class="card dash-barangay modern-card">
 				<div class="card-header modern-card-header">
@@ -490,52 +543,6 @@ $topActiveSeniors = $topActiveSeniorsStmt->fetchAll();
 				</div>
 			</div>
 
-			<!-- Past Events Card -->
-			<div class="card dash-past modern-card">
-				<div class="card-header modern-card-header">
-					<div class="card-title-section">
-						<h2 class="card-title">📜 Past Events</h2>
-						<p class="card-subtitle">Past events for your barangay</p>
-					</div>
-				</div>
-				<div class="card-body modern-card-body">
-					<?php if (!empty($recentPastEvents)): ?>
-						<div class="table-container table-scroll">
-							<table class="modern-table">
-								<thead>
-									<tr>
-										<th>Event</th>
-										<th>Date</th>
-										<th>Time</th>
-										<th>Status</th>
-									</tr>
-								</thead>
-								<tbody>
-									<?php foreach ($recentPastEvents as $e): ?>
-										<tr>
-											<td><strong><?= htmlspecialchars($e['title']) ?></strong></td>
-											<td><?= date('M d, Y', strtotime($e['event_date'])) ?></td>
-											<td><?= $e['event_time'] ? date('g:i A', strtotime($e['event_time'])) : 'All Day' ?></td>
-											<td>
-												<span class="badge badge-muted">Completed</span>
-											</td>
-										</tr>
-									<?php endforeach; ?>
-								</tbody>
-							</table>
-						</div>
-					<?php else: ?>
-						<div class="empty-state">
-							<div class="empty-icon">
-								<i class="fas fa-history"></i>
-							</div>
-							<h3>No Past Events</h3>
-							<p>No past events found.</p>
-						</div>
-					<?php endif; ?>
-				</div>
-			</div>
-
 			<!-- Top Active Seniors Card -->
 			<div class="card dash-active-seniors modern-card">
 				<div class="card-header modern-card-header">
@@ -596,6 +603,52 @@ $topActiveSeniors = $topActiveSeniorsStmt->fetchAll();
 							</div>
 							<h3>No Active Seniors</h3>
 							<p>No attendance records found for seniors in your barangay.</p>
+						</div>
+					<?php endif; ?>
+				</div>
+			</div>
+
+			<!-- Past Events Card -->
+			<div class="card dash-past modern-card">
+				<div class="card-header modern-card-header">
+					<div class="card-title-section">
+						<h2 class="card-title">📜 Past Events</h2>
+						<p class="card-subtitle">Past events for your barangay</p>
+					</div>
+				</div>
+				<div class="card-body modern-card-body">
+					<?php if (!empty($recentPastEvents)): ?>
+						<div class="table-container table-scroll">
+							<table class="modern-table">
+								<thead>
+									<tr>
+										<th>Event</th>
+										<th>Date</th>
+										<th>Time</th>
+										<th>Status</th>
+									</tr>
+								</thead>
+								<tbody>
+									<?php foreach ($recentPastEvents as $e): ?>
+										<tr>
+											<td><strong><?= htmlspecialchars($e['title']) ?></strong></td>
+											<td><?= date('M d, Y', strtotime($e['event_date'])) ?></td>
+											<td><?= $e['event_time'] ? date('g:i A', strtotime($e['event_time'])) : 'All Day' ?></td>
+											<td>
+												<span class="badge badge-muted">Completed</span>
+											</td>
+										</tr>
+									<?php endforeach; ?>
+								</tbody>
+							</table>
+						</div>
+					<?php else: ?>
+						<div class="empty-state">
+							<div class="empty-icon">
+								<i class="fas fa-history"></i>
+							</div>
+							<h3>No Past Events</h3>
+							<p>No past events found.</p>
 						</div>
 					<?php endif; ?>
 				</div>
