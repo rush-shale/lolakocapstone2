@@ -31,7 +31,79 @@ $seniors = $stmt->fetchAll();
 	<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
 	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 	<style>
-		/* Add any specific styles for this page here */
+		.table-container {
+			overflow-x: auto;
+			overflow-y: visible;
+			-webkit-overflow-scrolling: touch;
+			max-width: 100%;
+		}
+		
+		.table-scroll {
+			overflow-x: auto;
+			overflow-y: visible;
+			-webkit-overflow-scrolling: touch;
+		}
+		
+		.table-scroll table {
+			width: max-content;
+			min-width: 100%;
+			white-space: nowrap;
+		}
+		
+		.table-scroll table th,
+		.table-scroll table td {
+			min-width: 120px;
+			white-space: nowrap;
+		}
+		
+		/* Responsive design for tables */
+		@media (min-width: 769px) and (max-width: 1024px) {
+			.table-scroll table th,
+			.table-scroll table td {
+				min-width: 100px;
+				font-size: 0.875rem;
+				padding: 0.5rem 0.75rem;
+			}
+		}
+		
+		@media (min-width: 481px) and (max-width: 768px) {
+			.table-scroll {
+				-webkit-overflow-scrolling: touch;
+				position: relative;
+			}
+			
+			.table-scroll table {
+				min-width: max-content;
+			}
+			
+			.table-scroll table th,
+			.table-scroll table td {
+				min-width: 90px;
+				font-size: 0.8125rem;
+				padding: 0.5rem;
+			}
+		}
+		
+		@media (max-width: 480px) {
+			.table-scroll {
+				-webkit-overflow-scrolling: touch;
+				position: relative;
+				margin: 0 -0.75rem;
+				padding: 0 0.75rem;
+			}
+			
+			.table-scroll table {
+				min-width: max-content;
+				width: max-content;
+			}
+			
+			.table-scroll table th,
+			.table-scroll table td {
+				min-width: 80px;
+				font-size: 0.75rem;
+				padding: 0.375rem 0.5rem;
+			}
+		}
 	</style>
 </head>
 <body>
@@ -53,6 +125,7 @@ $seniors = $stmt->fetchAll();
 						<h2 class="card-title">Deceased Seniors List</h2>
 					</div>
 					<div class="card-body">
+					<div class="table-container table-scroll">
 					<table class="table">
 						<thead>
 							<tr>
@@ -132,6 +205,7 @@ $seniors = $stmt->fetchAll();
 							<?php endif; ?>
 						</tbody>
 					</table>
+					</div>
 					</div>
 				</div>
 			</div>
