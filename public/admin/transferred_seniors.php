@@ -160,7 +160,7 @@ $transferredThisMonthCount = count($transferredThisMonth);
 									<th>New Address</th>
 									<th>Transfer Date</th>
 									<th>Transfer Reason</th>
-									<th>Actions</th>
+									<th>Cellphone Number</th>
 								</tr>
 							</thead>
 							<tbody id="transferredSeniorsTable">
@@ -195,13 +195,7 @@ $transferredThisMonthCount = count($transferredThisMonth);
 													<span style="color: #6b7280;">Not specified</span>
 												<?php endif; ?>
 											</td>
-											<td>
-												<div class="action-buttons">
-													<a class="button small" href="senior_details.php?id=<?= (int)$senior['id'] ?>&noedit=1" title="View Details" onclick="event.stopPropagation();">
-														<i class="fas fa-eye"></i>
-													</a>
-												</div>
-											</td>
+											<td><?= htmlspecialchars($senior['cellphone'] ?? 'N/A') ?></td>
 										</tr>
 									<?php endforeach; ?>
 								<?php else: ?>
