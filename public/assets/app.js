@@ -1632,14 +1632,17 @@ function clearFieldError(e) {
         }
 
         // Add CSS for slideOut animation
-        const style = document.createElement('style');
-        style.textContent = `
-            @keyframes slideOut {
-                from { transform: translateX(0); opacity: 1; }
-                to { transform: translateX(100%); opacity: 0; }
-            }
-        `;
-        document.head.appendChild(style);
+        if (!document.getElementById('slideout-animation-style')) {
+            const style = document.createElement('style');
+            style.id = 'slideout-animation-style';
+            style.textContent = `
+                @keyframes slideOut {
+                    from { transform: translateX(0); opacity: 1; }
+                    to { transform: translateX(100%); opacity: 0; }
+                }
+            `;
+            document.head.appendChild(style);
+        }
 
         function saveFormData(form, formId) {
             const formData = new FormData(form);
@@ -1708,8 +1711,10 @@ function clearFieldError(e) {
         }
 
 // Add Modern CSS Animations
-const style = document.createElement('style');
-style.textContent = `
+if (!document.getElementById('modern-animations-style')) {
+    const animationStyle = document.createElement('style');
+    animationStyle.id = 'modern-animations-style';
+    animationStyle.textContent = `
     @keyframes ripple {
         to {
             transform: scale(4);
@@ -1795,6 +1800,7 @@ style.textContent = `
         transition: all var(--transition);
     }
 `;
-document.head.appendChild(style);
+    document.head.appendChild(animationStyle);
+}
 
 

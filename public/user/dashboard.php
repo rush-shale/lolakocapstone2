@@ -2,6 +2,11 @@
 require_once __DIR__ . '/../../includes/auth.php';
 require_once __DIR__ . '/../../config/db.php';
 
+// Ensure BASE_URL is defined
+if (!defined('BASE_URL')) {
+	define('BASE_URL', '/lolakocapstone2/public');
+}
+
 require_role('user');
 $pdo = get_db_connection();
 $user = current_user();
@@ -40,7 +45,7 @@ if ($latestEvent) {
 }
 
 // Get top active seniors based on attendance count (last 90 days)
-$topActiveSeniorsStmt = $pdo->prepare("
+	$topActiveSeniorsStmt = $pdo->prepare("
 	SELECT 
 		s.id,
 		s.first_name,
@@ -59,6 +64,7 @@ $topActiveSeniorsStmt = $pdo->prepare("
 	WHERE s.barangay = ? 
 		AND s.life_status = 'living'
 	GROUP BY s.id, s.first_name, s.middle_name, s.last_name, s.ext_name, s.age
+	HAVING attendance_count > 0
 	ORDER BY attendance_count DESC, last_attendance DESC, s.last_name ASC, s.first_name ASC
 	LIMIT 10
 ");
@@ -92,18 +98,21 @@ $totalAttendances = (int)$stmtTotalAttendances->fetchColumn();
 	<meta charset="utf-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1">
 	<title>Staff Dashboard | SeniorCare Information System</title>
-	<?php $cssVer = @filemtime(__DIR__ . '/../assets/government-portal.css') ?: time(); ?>
+	<?php 
+	$cssPath = __DIR__ . '/../assets/government-portal.css';
+	$cssVer = file_exists($cssPath) ? filemtime($cssPath) : time(); 
+	?>
 	<link rel="stylesheet" href="<?= BASE_URL ?>/assets/government-portal.css?v=<?= $cssVer ?>">
 	<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
 	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 	<style>
 		/* Responsive Dashboard Styles - Enhanced with Bigger Cards */
 		.dashboard-grid {
-			display: grid;
-			grid-template-columns: 1fr 1fr 1fr;
-			grid-template-rows: minmax(300px, 1fr) minmax(500px, 1.5fr) minmax(400px, 1fr);
+			display: grid !important;
+			grid-template-columns: 1fr 1fr 1fr !important;
+			grid-template-rows: minmax(300px, 1fr) minmax(500px, 1.5fr) minmax(400px, 1fr) !important;
 			gap: 1rem;
-			padding: 1rem;
+			padding: 1rem 1rem 1rem 0;
 			min-height: calc(100vh - 2rem);
 			height: calc(100vh - 2rem);
 			width: 100%;
@@ -113,8 +122,8 @@ $totalAttendances = (int)$stmtTotalAttendances->fetchColumn();
 		}
 
 		.dash-stats {
-			grid-column: 1 / 4;
-			grid-row: 1;
+			grid-column: 1 / 4 !important;
+			grid-row: 1 !important;
 			min-height: 300px;
 			height: 100%;
 			width: 100%;
@@ -122,8 +131,8 @@ $totalAttendances = (int)$stmtTotalAttendances->fetchColumn();
 		}
 
 		.dash-barangay {
-			grid-column: 1;
-			grid-row: 2;
+			grid-column: 1 !important;
+			grid-row: 2 !important;
 			min-height: 500px;
 			height: 100%;
 			width: 100%;
@@ -131,8 +140,8 @@ $totalAttendances = (int)$stmtTotalAttendances->fetchColumn();
 		}
 
 		.dash-osca {
-			grid-column: 2;
-			grid-row: 2;
+			grid-column: 2 !important;
+			grid-row: 2 !important;
 			min-height: 500px;
 			height: 100%;
 			width: 100%;
@@ -140,8 +149,8 @@ $totalAttendances = (int)$stmtTotalAttendances->fetchColumn();
 		}
 
 		.dash-active-seniors {
-			grid-column: 3;
-			grid-row: 2;
+			grid-column: 3 !important;
+			grid-row: 2 !important;
 			min-height: 500px;
 			height: 100%;
 			width: 100%;
@@ -149,8 +158,8 @@ $totalAttendances = (int)$stmtTotalAttendances->fetchColumn();
 		}
 
 		.dash-past {
-			grid-column: 1 / 4;
-			grid-row: 3;
+			grid-column: 1 / 4 !important;
+			grid-row: 3 !important;
 			min-height: 400px;
 			height: 100%;
 			width: 100%;
@@ -359,11 +368,17 @@ $totalAttendances = (int)$stmtTotalAttendances->fetchColumn();
 		/* Ensure dashboard grid extends to right edge */
 		.dashboard-grid {
 			margin: 0 !important;
-			padding: 1rem !important;
+			padding: 1rem 1rem 1rem 0 !important;
 			width: 100% !important;
 			max-width: 100% !important;
 			box-sizing: border-box !important;
-			margin-right: 0 !important;
+		}
+		
+		/* Override any conflicting global CSS */
+		.content .dashboard-grid {
+			display: grid !important;
+			grid-template-columns: 1fr 1fr 1fr !important;
+			grid-template-rows: minmax(300px, 1fr) minmax(500px, 1.5fr) minmax(400px, 1fr) !important;
 		}
 
 		/* Override any global container constraints */
@@ -585,8 +600,8 @@ $totalAttendances = (int)$stmtTotalAttendances->fetchColumn();
 									$rank = 1;
 									foreach ($topActiveSeniors as $senior): 
 										$fullName = trim(htmlspecialchars($senior['first_name'] . ' ' . ($senior['middle_name'] ? $senior['middle_name'] . ' ' : '') . $senior['last_name'] . ($senior['ext_name'] ? ' ' . $senior['ext_name'] : '')));
-										$attendanceCount = (int)$senior['attendance_count'];
-										$lastAttendance = $senior['last_attendance'] ? date('M d, Y', strtotime($senior['last_attendance'])) : 'Never';
+										$attendanceCount = (int)($senior['attendance_count'] ?? 0);
+										$lastAttendance = !empty($senior['last_attendance']) ? date('M d, Y', strtotime($senior['last_attendance'])) : 'Never';
 									?>
 										<tr>
 											<td>
