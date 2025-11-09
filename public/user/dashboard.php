@@ -107,24 +107,27 @@ $totalAttendances = (int)$stmtTotalAttendances->fetchColumn();
 	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 	<style>
 		/* Responsive Dashboard Styles - Enhanced with Bigger Cards */
-		.dashboard-grid {
+		.dashboard-grid,
+		.content .dashboard-grid,
+		main.content .dashboard-grid,
+		body .content .dashboard-grid {
 			display: grid !important;
 			grid-template-columns: 1fr 1fr 1fr !important;
-			grid-template-rows: minmax(300px, 1fr) minmax(500px, 1.5fr) minmax(400px, 1fr) !important;
-			gap: 1rem;
-			padding: 1rem 1rem 1rem 0;
-			min-height: calc(100vh - 2rem);
-			height: calc(100vh - 2rem);
-			width: 100%;
-			max-width: 100%;
-			box-sizing: border-box;
-			margin: 0;
+			grid-template-rows: minmax(280px, 1fr) minmax(480px, 1.5fr) minmax(380px, 1fr) !important;
+			gap: 0.6rem !important;
+			padding: 0.6rem 0.5rem 0.6rem 0 !important;
+			min-height: calc(100vh - 1.2rem) !important;
+			height: calc(100vh - 1.2rem) !important;
+			width: 100% !important;
+			max-width: 100% !important;
+			box-sizing: border-box !important;
+			margin: 0 !important;
 		}
 
 		.dash-stats {
 			grid-column: 1 / 4 !important;
 			grid-row: 1 !important;
-			min-height: 300px;
+			min-height: 280px;
 			height: 100%;
 			width: 100%;
 			min-width: 0;
@@ -133,7 +136,7 @@ $totalAttendances = (int)$stmtTotalAttendances->fetchColumn();
 		.dash-barangay {
 			grid-column: 1 !important;
 			grid-row: 2 !important;
-			min-height: 500px;
+			min-height: 480px;
 			height: 100%;
 			width: 100%;
 			min-width: 0;
@@ -142,7 +145,7 @@ $totalAttendances = (int)$stmtTotalAttendances->fetchColumn();
 		.dash-osca {
 			grid-column: 2 !important;
 			grid-row: 2 !important;
-			min-height: 500px;
+			min-height: 480px;
 			height: 100%;
 			width: 100%;
 			min-width: 0;
@@ -151,7 +154,7 @@ $totalAttendances = (int)$stmtTotalAttendances->fetchColumn();
 		.dash-active-seniors {
 			grid-column: 3 !important;
 			grid-row: 2 !important;
-			min-height: 500px;
+			min-height: 480px;
 			height: 100%;
 			width: 100%;
 			min-width: 0;
@@ -160,7 +163,7 @@ $totalAttendances = (int)$stmtTotalAttendances->fetchColumn();
 		.dash-past {
 			grid-column: 1 / 4 !important;
 			grid-row: 3 !important;
-			min-height: 400px;
+			min-height: 380px;
 			height: 100%;
 			width: 100%;
 			min-width: 0;
@@ -188,7 +191,7 @@ $totalAttendances = (int)$stmtTotalAttendances->fetchColumn();
 		.modern-card-header {
 			display: flex;
 			align-items: center;
-			padding: 1.75rem 2rem;
+			padding: 1.25rem 1.5rem;
 			border-bottom: 1px solid #e5e7eb;
 			background: linear-gradient(to right, #f9fafb, #ffffff);
 		}
@@ -238,7 +241,7 @@ $totalAttendances = (int)$stmtTotalAttendances->fetchColumn();
 			overflow-y: auto;
 			overflow-x: auto;
 			-webkit-overflow-scrolling: touch;
-			padding: 1.5rem;
+			padding: 1.25rem 1.5rem;
 			min-width: 0;
 			min-height: 0;
 		}
@@ -344,8 +347,8 @@ $totalAttendances = (int)$stmtTotalAttendances->fetchColumn();
 			margin-right: 0 !important;
 			margin-top: 0 !important;
 			margin-bottom: 0 !important;
-			width: calc(100% - 280px) !important;
-			max-width: none !important;
+			width: calc(100vw - 280px) !important;
+			max-width: calc(100vw - 280px) !important;
 		}
 
 		/* Override any global content-body constraints */
@@ -356,7 +359,7 @@ $totalAttendances = (int)$stmtTotalAttendances->fetchColumn();
 
 		.content-body {
 			flex: 1;
-			overflow: visible;
+			overflow: hidden;
 			padding: 0 !important;
 			margin: 0 !important;
 			width: 100% !important;
@@ -365,20 +368,21 @@ $totalAttendances = (int)$stmtTotalAttendances->fetchColumn();
 			height: 100%;
 		}
 
-		/* Ensure dashboard grid extends to right edge */
-		.dashboard-grid {
+		/* Ensure dashboard grid extends to right edge - override CSS file */
+		.dashboard-grid,
+		.content .dashboard-grid,
+		main.content .dashboard-grid,
+		body .content .dashboard-grid {
 			margin: 0 !important;
-			padding: 1rem 1rem 1rem 0 !important;
+			padding: 0.6rem 0.5rem 0.6rem 0 !important;
 			width: 100% !important;
 			max-width: 100% !important;
 			box-sizing: border-box !important;
-		}
-		
-		/* Override any conflicting global CSS */
-		.content .dashboard-grid {
-			display: grid !important;
 			grid-template-columns: 1fr 1fr 1fr !important;
-			grid-template-rows: minmax(300px, 1fr) minmax(500px, 1.5fr) minmax(400px, 1fr) !important;
+			grid-template-rows: minmax(280px, 1fr) minmax(480px, 1.5fr) minmax(380px, 1fr) !important;
+			grid-auto-rows: auto !important;
+			overflow-y: visible !important;
+			overflow-x: hidden !important;
 		}
 
 		/* Override any global container constraints */
@@ -406,8 +410,8 @@ $totalAttendances = (int)$stmtTotalAttendances->fetchColumn();
 		.stats-grid {
 			display: grid;
 			grid-template-columns: repeat(3, 1fr);
-			gap: 3rem;
-			padding: 4rem 2.5rem;
+			gap: 2rem;
+			padding: 2.5rem 1.5rem;
 			min-height: 0;
 			height: 100%;
 			align-content: center;
@@ -415,7 +419,7 @@ $totalAttendances = (int)$stmtTotalAttendances->fetchColumn();
 
 		.stat-item {
 			text-align: center;
-			padding: 2rem 1rem;
+			padding: 1.5rem 1rem;
 			border-radius: 8px;
 			background: #f9fafb;
 			transition: transform 0.2s ease;
