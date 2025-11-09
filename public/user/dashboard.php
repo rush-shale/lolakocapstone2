@@ -101,7 +101,7 @@ $totalAttendances = (int)$stmtTotalAttendances->fetchColumn();
 		.dashboard-grid {
 			display: grid;
 			grid-template-columns: 1fr 1fr 1fr;
-			grid-template-rows: minmax(300px, 1fr) minmax(500px, 1.5fr) minmax(500px, 1.5fr) minmax(400px, 1fr);
+			grid-template-rows: minmax(300px, 1fr) minmax(500px, 1.5fr) minmax(400px, 1fr);
 			gap: 1rem;
 			padding: 1rem;
 			min-height: calc(100vh - 2rem);
@@ -122,7 +122,7 @@ $totalAttendances = (int)$stmtTotalAttendances->fetchColumn();
 		}
 
 		.dash-barangay {
-			grid-column: 1 / 3;
+			grid-column: 1;
 			grid-row: 2;
 			min-height: 500px;
 			height: 100%;
@@ -131,7 +131,7 @@ $totalAttendances = (int)$stmtTotalAttendances->fetchColumn();
 		}
 
 		.dash-osca {
-			grid-column: 3;
+			grid-column: 2;
 			grid-row: 2;
 			min-height: 500px;
 			height: 100%;
@@ -140,19 +140,17 @@ $totalAttendances = (int)$stmtTotalAttendances->fetchColumn();
 		}
 
 		.dash-active-seniors {
-			grid-column: 1 / 4;
-			grid-row: 3;
+			grid-column: 3;
+			grid-row: 2;
 			min-height: 500px;
 			height: 100%;
-			width: calc(100% + 2rem);
-			margin-left: -1rem;
-			margin-right: -1rem;
+			width: 100%;
 			min-width: 0;
 		}
 
 		.dash-past {
 			grid-column: 1 / 4;
-			grid-row: 4;
+			grid-row: 3;
 			min-height: 400px;
 			height: 100%;
 			width: 100%;
@@ -236,9 +234,6 @@ $totalAttendances = (int)$stmtTotalAttendances->fetchColumn();
 			min-height: 0;
 		}
 		
-		.dash-active-seniors .table-container {
-			padding: 2rem 2.5rem;
-		}
 
 		.table-container table {
 			width: 100%;
@@ -438,6 +433,244 @@ $totalAttendances = (int)$stmtTotalAttendances->fetchColumn();
 	<?php include __DIR__ . '/../partials/sidebar_user.php'; ?>
 	<main class="content">
 		<div class="dashboard-grid">
+			<!-- Statistics Summary Card -->
+			<div class="card dash-stats modern-card">
+				<div class="card-header modern-card-header">
+					<div class="card-title-section">
+						<div>
+							<h2 class="card-title">Barangay Overview</h2>
+							<p class="card-subtitle">Summary Statistics of <?= htmlspecialchars($user['barangay']) ?></p>
+						</div>
+					</div>
+				</div>
+				<div class="card-body modern-card-body">
+					<div class="stats-grid">
+						<div class="stat-item">
+							<div class="stat-value" style="color: #7c3aed;"><?= $totalSeniors ?></div>
+							<div class="stat-label">Total Seniors</div>
+						</div>
+						<div class="stat-item">
+							<div class="stat-value" style="color: #10b981;"><?= $totalEvents ?></div>
+							<div class="stat-label">Total Events</div>
+						</div>
+						<div class="stat-item">
+							<div class="stat-value" style="color: #3b82f6;"><?= $totalAttendances ?></div>
+							<div class="stat-label">Total Attendance</div>
+						</div>
+					</div>
+				</div>
+			</div>
+
+			<!-- My Barangay Events Card -->
+			<div class="card dash-barangay modern-card">
+				<div class="card-header modern-card-header">
+					<div class="card-title-section">
+						<div>
+							<h2 class="card-title">My Barangay Events</h2>
+							<p class="card-subtitle">Upcoming events for <?= strtolower(htmlspecialchars($user['barangay'])) ?></p>
+						</div>
+					</div>
+				</div>
+				<div class="card-body modern-card-body">
+					<?php if (!empty($barangayEvents)): ?>
+						<div class="table-container table-scroll">
+							<table class="modern-table">
+								<thead>
+									<tr>
+										<th>Event</th>
+										<th>Date</th>
+										<th>Time</th>
+										<th>Status</th>
+									</tr>
+								</thead>
+								<tbody>
+									<?php foreach ($barangayEvents as $e): ?>
+										<tr>
+											<td><strong><?= htmlspecialchars($e['title']) ?></strong></td>
+											<td><?= date('M d, Y', strtotime($e['event_date'])) ?></td>
+											<td><?= $e['event_time'] ? date('g:i A', strtotime($e['event_time'])) : 'All Day' ?></td>
+											<td>
+												<span class="badge badge-success">Upcoming</span>
+											</td>
+										</tr>
+									<?php endforeach; ?>
+								</tbody>
+							</table>
+						</div>
+					<?php else: ?>
+						<div class="empty-state">
+							<div class="empty-icon">
+								<i class="fas fa-calendar-alt"></i>
+							</div>
+							<h3>No Upcoming Events</h3>
+							<p>No upcoming barangay events scheduled.</p>
+						</div>
+					<?php endif; ?>
+				</div>
+			</div>
+
+			<!-- OSCA Head Events Card -->
+			<div class="card dash-osca modern-card">
+				<div class="card-header modern-card-header">
+					<div class="card-title-section">
+						<div>
+							<h2 class="card-title">OSCA Head Events</h2>
+							<p class="card-subtitle">Events created by OSCA Head</p>
+						</div>
+					</div>
+				</div>
+				<div class="card-body modern-card-body">
+					<?php if (!empty($adminEvents)): ?>
+						<div class="table-container table-scroll">
+							<table class="modern-table">
+								<thead>
+									<tr>
+										<th>Event</th>
+										<th>Date</th>
+										<th>Time</th>
+										<th>Status</th>
+									</tr>
+								</thead>
+								<tbody>
+									<?php foreach ($adminEvents as $e): ?>
+										<tr>
+											<td><strong><?= htmlspecialchars($e['title']) ?></strong></td>
+											<td><?= date('M d, Y', strtotime($e['event_date'])) ?></td>
+											<td><?= $e['event_time'] ? date('g:i A', strtotime($e['event_time'])) : 'All Day' ?></td>
+											<td>
+												<span class="badge badge-success">Upcoming</span>
+											</td>
+										</tr>
+									<?php endforeach; ?>
+								</tbody>
+							</table>
+						</div>
+					<?php else: ?>
+						<div class="empty-state">
+							<div class="empty-icon">
+								<i class="fas fa-building"></i>
+							</div>
+							<h3>No Upcoming Events</h3>
+							<p>No upcoming OSCA events scheduled.</p>
+						</div>
+					<?php endif; ?>
+				</div>
+			</div>
+
+			<!-- Top Active Seniors Card -->
+			<div class="card dash-active-seniors modern-card">
+				<div class="card-header modern-card-header">
+					<div class="card-title-section">
+						<div>
+							<h2 class="card-title">Top Active Seniors</h2>
+							<p class="card-subtitle">Most Active Senior in <?= htmlspecialchars($user['barangay']) ?></p>
+						</div>
+					</div>
+				</div>
+				<div class="card-body modern-card-body">
+					<?php if (!empty($topActiveSeniors)): ?>
+						<div class="table-container table-scroll">
+							<table class="modern-table">
+								<thead>
+									<tr>
+										<th>Rank</th>
+										<th>Name</th>
+										<th>Age</th>
+										<th>Attendance</th>
+										<th>Last Atten.</th>
+									</tr>
+								</thead>
+								<tbody>
+									<?php 
+									$rank = 1;
+									foreach ($topActiveSeniors as $senior): 
+										$fullName = trim(htmlspecialchars($senior['first_name'] . ' ' . ($senior['middle_name'] ? $senior['middle_name'] . ' ' : '') . $senior['last_name'] . ($senior['ext_name'] ? ' ' . $senior['ext_name'] : '')));
+										$attendanceCount = (int)$senior['attendance_count'];
+										$lastAttendance = $senior['last_attendance'] ? date('M d, Y', strtotime($senior['last_attendance'])) : 'Never';
+									?>
+										<tr>
+											<td>
+												<?php if ($rank <= 3): ?>
+													<span class="badge" style="background: <?= $rank == 1 ? '#FFD700' : ($rank == 2 ? '#C0C0C0' : '#CD7F32') ?>; color: white; padding: 0.25rem 0.5rem; border-radius: 4px; font-weight: 600;">
+														<?= $rank == 1 ? '🥇' : ($rank == 2 ? '🥈' : '🥉') ?>
+													</span>
+												<?php else: ?>
+													<span style="color: var(--text-muted); font-weight: 600;">#<?= $rank ?></span>
+												<?php endif; ?>
+											</td>
+											<td><strong><?= $fullName ?></strong></td>
+											<td><?= htmlspecialchars($senior['age'] ?? 'N/A') ?></td>
+											<td>
+												<span class="badge badge-info"><?= $attendanceCount ?> event<?= $attendanceCount != 1 ? 's' : '' ?></span>
+											</td>
+											<td><?= $lastAttendance ?></td>
+										</tr>
+									<?php 
+									$rank++;
+									endforeach; 
+									?>
+								</tbody>
+							</table>
+						</div>
+					<?php else: ?>
+						<div class="empty-state">
+							<div class="empty-icon">
+								<i class="fas fa-users"></i>
+							</div>
+							<h3>No Active Seniors</h3>
+							<p>No attendance records found for seniors in your barangay.</p>
+						</div>
+					<?php endif; ?>
+				</div>
+			</div>
+
+			<!-- Past Events Card -->
+			<div class="card dash-past modern-card">
+				<div class="card-header modern-card-header">
+					<div class="card-title-section">
+						<div>
+							<h2 class="card-title">Past Events</h2>
+							<p class="card-subtitle">Past events for your baragay</p>
+						</div>
+					</div>
+				</div>
+				<div class="card-body modern-card-body">
+					<?php if (!empty($recentPastEvents)): ?>
+						<div class="table-container table-scroll">
+							<table class="modern-table">
+								<thead>
+									<tr>
+										<th>Event</th>
+										<th>Date</th>
+										<th>Time</th>
+										<th>Status</th>
+									</tr>
+								</thead>
+								<tbody>
+									<?php foreach ($recentPastEvents as $e): ?>
+										<tr>
+											<td><strong><?= htmlspecialchars($e['title']) ?></strong></td>
+											<td><?= date('M d, Y', strtotime($e['event_date'])) ?></td>
+											<td><?= $e['event_time'] ? date('g:i A', strtotime($e['event_time'])) : 'All Day' ?></td>
+											<td>
+												<span class="badge badge-muted">Completed</span>
+											</td>
+										</tr>
+									<?php endforeach; ?>
+								</tbody>
+							</table>
+						</div>
+					<?php else: ?>
+						<div class="empty-state">
+							<div class="empty-icon">
+								<i class="fas fa-history"></i>
+							</div>
+							<h3>No Past Events</h3>
+							<p>No past events found.</p>
+						</div>
+					<?php endif; ?>
+				</div>
+			</div>
 		</div>
 	</main>
 	<script src="<?= BASE_URL ?>/assets/app.js"></script>
