@@ -83,6 +83,29 @@ try {
 			white-space: nowrap;
 		}
 		
+		.table-search {
+			display: flex;
+			align-items: center;
+			background: white;
+			border: 1px solid #d1d5db;
+			border-radius: 6px;
+			padding: 0.5rem 0.75rem;
+			min-width: 250px;
+		}
+		
+		.table-search-icon {
+			margin-right: 0.5rem;
+			color: #6b7280;
+		}
+		
+		.table-search input {
+			border: none;
+			outline: none;
+			background: transparent;
+			flex: 1;
+			font-size: 0.875rem;
+		}
+		
 		/* Responsive design for tables */
 		@media (min-width: 769px) and (max-width: 1024px) {
 			.table-scroll table th,
@@ -159,6 +182,10 @@ try {
 						<div>
 							<h2 class="card-title">Waiting Seniors</h2>
 							<p class="card-subtitle">Pending validation</p>
+						</div>
+						<div class="table-search">
+							<span class="table-search-icon">🔍</span>
+							<input type="text" id="searchInput" placeholder="Search seniors...">
 						</div>
 					</div>
 					<div class="card-body">
@@ -248,6 +275,19 @@ try {
 	</main>
 
 	<script src="<?= BASE_URL ?>/assets/app.js"></script>
+	<script>
+		// Search filter for waiting seniors table
+		document.getElementById('searchInput').addEventListener('input', function() {
+			const filter = this.value.toLowerCase();
+			const rows = document.querySelectorAll('tbody tr');
+			
+			rows.forEach(row => {
+				const text = row.textContent.toLowerCase();
+				const isVisible = text.includes(filter);
+				row.style.display = isVisible ? '' : 'none';
+			});
+		});
+	</script>
 </body>
 </html>
 

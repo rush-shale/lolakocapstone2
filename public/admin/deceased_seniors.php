@@ -56,6 +56,29 @@ $seniors = $stmt->fetchAll();
 			white-space: nowrap;
 		}
 		
+		.table-search {
+			display: flex;
+			align-items: center;
+			background: white;
+			border: 1px solid #d1d5db;
+			border-radius: 6px;
+			padding: 0.5rem 0.75rem;
+			min-width: 250px;
+		}
+		
+		.table-search-icon {
+			margin-right: 0.5rem;
+			color: #6b7280;
+		}
+		
+		.table-search input {
+			border: none;
+			outline: none;
+			background: transparent;
+			flex: 1;
+			font-size: 0.875rem;
+		}
+		
 		/* Responsive design for tables */
 		@media (min-width: 769px) and (max-width: 1024px) {
 			.table-scroll table th,
@@ -121,8 +144,12 @@ $seniors = $stmt->fetchAll();
 			<!-- Example table listing deceased seniors -->
 			<div class="main-content-area">
 				<div class="card">
-					<div class="card-header">
+					<div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
 						<h2 class="card-title">Deceased Seniors List</h2>
+						<div class="table-search">
+							<span class="table-search-icon">🔍</span>
+							<input type="text" id="searchInput" placeholder="Search seniors...">
+						</div>
 					</div>
 					<div class="card-body">
 					<div class="table-container table-scroll">
@@ -213,6 +240,18 @@ $seniors = $stmt->fetchAll();
 	</main>
 
 	<script>
+		// Search filter for deceased seniors table
+		document.getElementById('searchInput').addEventListener('input', function() {
+			const filter = this.value.toLowerCase();
+			const rows = document.querySelectorAll('tbody tr');
+			
+			rows.forEach(row => {
+				const text = row.textContent.toLowerCase();
+				const isVisible = text.includes(filter);
+				row.style.display = isVisible ? '' : 'none';
+			});
+		});
+		
 		function editSenior(id) {
 			// Implement edit functionality or open modal
 			alert('Edit senior with ID: ' + id);

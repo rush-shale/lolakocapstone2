@@ -178,6 +178,29 @@ if (!$id) {
 		<style>
 			.capacity-badge { font-weight: 600; color:#111827; }
 			.table td, .table th { vertical-align: middle; }
+			
+			.table-search {
+				display: flex;
+				align-items: center;
+				background: white;
+				border: 1px solid #d1d5db;
+				border-radius: 6px;
+				padding: 0.5rem 0.75rem;
+				min-width: 250px;
+			}
+			
+			.table-search-icon {
+				margin-right: 0.5rem;
+				color: #6b7280;
+			}
+			
+			.table-search input {
+				border: none;
+				outline: none;
+				background: transparent;
+				flex: 1;
+				font-size: 0.875rem;
+			}
 		</style>
 	</head>
 	<body>
@@ -189,9 +212,13 @@ if (!$id) {
 			</header>
 			<div class="content-body">
 				<div class="card">
-					<div class="card-header" style="display:flex; justify-content:space-between; align-items:center;">
+					<div class="card-header" style="display:flex; justify-content:space-between; align-items:center; flex-wrap: wrap; gap: 1rem;">
 						<h2 class="card-title"><i class="fas fa-id-card"></i> Selection</h2>
-						<div style="display:flex; gap:.5rem; align-items:center;">
+						<div style="display:flex; gap:.5rem; align-items:center; flex-wrap: wrap;">
+							<div class="table-search">
+								<span class="table-search-icon">🔍</span>
+								<input type="text" id="searchInput" placeholder="Search seniors...">
+							</div>
 							<span class="capacity-badge"><span id="selectedCount">0</span>/8 selected</span>
 							<button form="printForm" type="submit" name="side" value="front" class="button primary" title="Print Front" formaction="<?= BASE_URL ?>/admin/senior_id.php">
 								<i class="fas fa-print"></i> Front
@@ -268,6 +295,18 @@ if (!$id) {
 				checkboxes.forEach(cb => cb.addEventListener('change', update));
 				update();
 			})();
+			
+			// Search filter for senior ID table
+			document.getElementById('searchInput').addEventListener('input', function() {
+				const filter = this.value.toLowerCase();
+				const rows = document.querySelectorAll('tbody tr');
+				
+				rows.forEach(row => {
+					const text = row.textContent.toLowerCase();
+					const isVisible = text.includes(filter);
+					row.style.display = isVisible ? '' : 'none';
+				});
+			});
 		</script>
 	</body>
 	</html>
