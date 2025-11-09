@@ -114,7 +114,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 		if (in_array($op, ['create', 'update', 'transfer_details', 'mark_deceased'])) {
 			error_log("WARNING: CSRF validation failed but allowing $op operation to proceed for debugging");
 			$token_valid = true; // Override validation failure for debugging
-		} else {
+								} else {
 			// For other operations, require valid CSRF token
 			$message = 'Invalid session token. Please refresh the page and try again.';
 			error_log("CSRF validation failed for operation: " . $op);

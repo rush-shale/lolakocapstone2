@@ -101,10 +101,11 @@ $totalAttendances = (int)$stmtTotalAttendances->fetchColumn();
 		.dashboard-grid {
 			display: grid;
 			grid-template-columns: 1fr 1fr 1fr;
-			grid-template-rows: auto auto auto;
-			gap: 2rem;
-			padding: 2rem;
-			min-height: 100vh;
+			grid-template-rows: minmax(300px, 1fr) minmax(500px, 1.5fr) minmax(500px, 1.5fr) minmax(400px, 1fr);
+			gap: 1rem;
+			padding: 1rem;
+			min-height: calc(100vh - 2rem);
+			height: calc(100vh - 2rem);
 			width: 100%;
 			max-width: 100%;
 			box-sizing: border-box;
@@ -114,39 +115,44 @@ $totalAttendances = (int)$stmtTotalAttendances->fetchColumn();
 		.dash-stats {
 			grid-column: 1 / 4;
 			grid-row: 1;
-			min-height: 200px;
+			min-height: 300px;
+			height: 100%;
 			width: 100%;
 			min-width: 0;
 		}
 
 		.dash-barangay {
-			grid-column: 1;
+			grid-column: 1 / 3;
 			grid-row: 2;
 			min-height: 500px;
+			height: 100%;
 			width: 100%;
 			min-width: 0;
 		}
 
 		.dash-osca {
-			grid-column: 2;
+			grid-column: 3;
 			grid-row: 2;
 			min-height: 500px;
+			height: 100%;
 			width: 100%;
 			min-width: 0;
 		}
 
 		.dash-active-seniors {
-			grid-column: 3;
-			grid-row: 2;
+			grid-column: 1 / 4;
+			grid-row: 3;
 			min-height: 500px;
+			height: 100%;
 			width: 100%;
 			min-width: 0;
 		}
 
 		.dash-past {
 			grid-column: 1 / 4;
-			grid-row: 3;
+			grid-row: 4;
 			min-height: 400px;
+			height: 100%;
 			width: 100%;
 			min-width: 0;
 		}
@@ -215,6 +221,7 @@ $totalAttendances = (int)$stmtTotalAttendances->fetchColumn();
 			flex-direction: column;
 			width: 100%;
 			min-width: 0;
+			min-height: 0;
 		}
 
 		.table-container {
@@ -222,8 +229,9 @@ $totalAttendances = (int)$stmtTotalAttendances->fetchColumn();
 			overflow-y: auto;
 			overflow-x: auto;
 			-webkit-overflow-scrolling: touch;
-			padding: 1rem;
+			padding: 1.5rem;
 			min-width: 0;
+			min-height: 0;
 		}
 
 		.table-container table {
@@ -278,7 +286,9 @@ $totalAttendances = (int)$stmtTotalAttendances->fetchColumn();
 			justify-content: center;
 			padding: 4rem 2rem;
 			text-align: center;
-			min-height: 350px;
+			min-height: 0;
+			height: 100%;
+			flex: 1;
 		}
 
 		.empty-icon {
@@ -314,6 +324,7 @@ $totalAttendances = (int)$stmtTotalAttendances->fetchColumn();
 		/* Ensure main content takes full height and width */
 		main.content {
 			min-height: 100vh !important;
+			height: 100vh !important;
 			overflow-y: auto !important;
 			overflow-x: hidden !important;
 			display: flex !important;
@@ -340,12 +351,14 @@ $totalAttendances = (int)$stmtTotalAttendances->fetchColumn();
 			margin: 0 !important;
 			width: 100% !important;
 			max-width: 100% !important;
+			min-height: 0;
+			height: 100%;
 		}
 
 		/* Ensure dashboard grid extends to right edge */
 		.dashboard-grid {
 			margin: 0 !important;
-			padding: 2rem !important;
+			padding: 1rem !important;
 			width: 100% !important;
 			max-width: 100% !important;
 			box-sizing: border-box !important;
@@ -378,15 +391,22 @@ $totalAttendances = (int)$stmtTotalAttendances->fetchColumn();
 			display: grid;
 			grid-template-columns: repeat(3, 1fr);
 			gap: 3rem;
-			padding: 3rem 2.5rem;
+			padding: 4rem 2.5rem;
+			min-height: 0;
+			height: 100%;
+			align-content: center;
 		}
 
 		.stat-item {
 			text-align: center;
-			padding: 1rem;
+			padding: 2rem 1rem;
 			border-radius: 8px;
 			background: #f9fafb;
 			transition: transform 0.2s ease;
+			display: flex;
+			flex-direction: column;
+			justify-content: center;
+			align-items: center;
 		}
 
 		.stat-item:hover {
@@ -394,14 +414,14 @@ $totalAttendances = (int)$stmtTotalAttendances->fetchColumn();
 		}
 
 		.stat-value {
-			font-size: 4.5rem;
+			font-size: 5.5rem;
 			font-weight: 700;
-			margin-bottom: 1rem;
+			margin-bottom: 1.5rem;
 			line-height: 1;
 		}
 
 		.stat-label {
-			font-size: 1.25rem;
+			font-size: 1.5rem;
 			color: #374151;
 			font-weight: 500;
 		}
