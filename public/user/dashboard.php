@@ -106,46 +106,58 @@ $totalAttendances = (int)$stmtTotalAttendances->fetchColumn();
 	<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
 	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 	<style>
-		/* Dashboard Grid Layout */
-		.dashboard-grid {
-			display: grid;
-			grid-template-columns: 1fr 1fr 1fr;
-			grid-template-rows: minmax(280px, 1fr) minmax(480px, 1.5fr) minmax(380px, 1fr);
-			gap: 0.5rem;
-			padding: 0.5rem 0.3rem 0.5rem 0;
-			width: 100%;
-			box-sizing: border-box;
-			margin: 0;
+		/* Dashboard Grid Layout - Override CSS file */
+		.dashboard-grid,
+		.content .dashboard-grid,
+		main.content .dashboard-grid {
+			display: grid !important;
+			grid-template-columns: 1fr 1fr 1fr !important;
+			grid-template-rows: minmax(280px, 1fr) minmax(480px, 1.5fr) minmax(380px, 1fr) !important;
+			grid-auto-rows: auto !important;
+			gap: 0.75rem !important;
+			padding: 0.75rem 0.5rem 0.75rem 0 !important;
+			width: 100% !important;
+			max-width: 100% !important;
+			box-sizing: border-box !important;
+			margin: 0 !important;
+			max-height: none !important;
+			overflow-y: visible !important;
+			overflow-x: hidden !important;
 		}
 
 		.dash-stats {
 			grid-column: 1 / 4;
 			grid-row: 1;
 			min-height: 280px;
+			width: 100%;
 		}
 
 		.dash-barangay {
 			grid-column: 1;
 			grid-row: 2;
 			min-height: 480px;
+			width: 100%;
 		}
 
 		.dash-osca {
 			grid-column: 2;
 			grid-row: 2;
 			min-height: 480px;
+			width: 100%;
 		}
 
 		.dash-active-seniors {
 			grid-column: 3;
 			grid-row: 2;
 			min-height: 480px;
+			width: 100%;
 		}
 
 		.dash-past {
 			grid-column: 1 / 4;
 			grid-row: 3;
 			min-height: 380px;
+			width: 100%;
 		}
 
 		/* Card Styling */
@@ -158,6 +170,8 @@ $totalAttendances = (int)$stmtTotalAttendances->fetchColumn();
 			display: flex;
 			flex-direction: column;
 			height: 100%;
+			width: 100%;
+			min-width: 0;
 			transition: box-shadow 0.3s ease;
 		}
 
@@ -305,7 +319,12 @@ $totalAttendances = (int)$stmtTotalAttendances->fetchColumn();
 			padding: 0;
 			margin-left: 280px;
 			width: calc(100% - 280px);
+			max-width: calc(100vw - 280px);
 			box-sizing: border-box;
+		}
+		
+		.dashboard-grid {
+			max-width: 100%;
 		}
 
 		/* Statistics Grid */
