@@ -110,14 +110,18 @@ $totalAttendances = (int)$stmtTotalAttendances->fetchColumn();
 		.dashboard-grid,
 		.content .dashboard-grid,
 		main.content .dashboard-grid,
-		body .content .dashboard-grid {
+		body .content .dashboard-grid,
+		main.content > .dashboard-grid {
 			display: grid !important;
 			grid-template-columns: 1fr 1fr 1fr !important;
 			grid-template-rows: minmax(280px, 1fr) minmax(480px, 1.5fr) minmax(380px, 1fr) !important;
-			gap: 0.6rem !important;
-			padding: 0.6rem 0.5rem 0.6rem 0 !important;
-			min-height: calc(100vh - 1.2rem) !important;
-			height: calc(100vh - 1.2rem) !important;
+			gap: 0.5rem !important;
+			padding-top: 0.5rem !important;
+			padding-right: 0.3rem !important;
+			padding-bottom: 0.5rem !important;
+			padding-left: 0 !important;
+			min-height: calc(100vh - 1rem) !important;
+			height: calc(100vh - 1rem) !important;
 			width: 100% !important;
 			max-width: 100% !important;
 			box-sizing: border-box !important;
@@ -181,6 +185,8 @@ $totalAttendances = (int)$stmtTotalAttendances->fetchColumn();
 			height: 100%;
 			width: 100%;
 			min-width: 0;
+			margin: 0;
+			padding: 0;
 			transition: box-shadow 0.3s ease;
 		}
 
@@ -327,10 +333,17 @@ $totalAttendances = (int)$stmtTotalAttendances->fetchColumn();
 			display: none;
 		}
 
-		/* Remove any default spacing */
+		/* Remove any default spacing and prevent horizontal scroll */
+		html, body {
+			margin: 0 !important;
+			padding: 0 !important;
+			overflow-x: hidden !important;
+			width: 100% !important;
+			max-width: 100vw !important;
+			box-sizing: border-box !important;
+		}
+		
 		body {
-			margin: 0;
-			padding: 0;
 			background: #f3f4f6;
 		}
 
@@ -347,8 +360,9 @@ $totalAttendances = (int)$stmtTotalAttendances->fetchColumn();
 			margin-right: 0 !important;
 			margin-top: 0 !important;
 			margin-bottom: 0 !important;
-			width: calc(100vw - 280px) !important;
-			max-width: calc(100vw - 280px) !important;
+			width: calc(100% - 280px) !important;
+			max-width: calc(100% - 280px) !important;
+			box-sizing: border-box !important;
 		}
 
 		/* Override any global content-body constraints */
@@ -372,9 +386,13 @@ $totalAttendances = (int)$stmtTotalAttendances->fetchColumn();
 		.dashboard-grid,
 		.content .dashboard-grid,
 		main.content .dashboard-grid,
-		body .content .dashboard-grid {
+		body .content .dashboard-grid,
+		main.content > .dashboard-grid {
 			margin: 0 !important;
-			padding: 0.6rem 0.5rem 0.6rem 0 !important;
+			padding-top: 0.5rem !important;
+			padding-right: 0.3rem !important;
+			padding-bottom: 0.5rem !important;
+			padding-left: 0 !important;
 			width: 100% !important;
 			max-width: 100% !important;
 			box-sizing: border-box !important;
@@ -383,6 +401,7 @@ $totalAttendances = (int)$stmtTotalAttendances->fetchColumn();
 			grid-auto-rows: auto !important;
 			overflow-y: visible !important;
 			overflow-x: hidden !important;
+			min-width: 0 !important;
 		}
 
 		/* Override any global container constraints */
@@ -390,6 +409,20 @@ $totalAttendances = (int)$stmtTotalAttendances->fetchColumn();
 		body > main.content > .dashboard-grid {
 			width: 100% !important;
 			max-width: 100% !important;
+			box-sizing: border-box !important;
+			overflow-x: hidden !important;
+		}
+		
+		/* Ensure all child elements respect container width */
+		main.content * {
+			box-sizing: border-box !important;
+			max-width: 100% !important;
+		}
+		
+		/* Force zero left padding - override CSS file completely */
+		main.content > .dashboard-grid,
+		main.content .dashboard-grid {
+			padding-left: 0 !important;
 		}
 
 		/* Force full width - override any global CSS max-width constraints */
