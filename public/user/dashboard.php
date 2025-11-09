@@ -106,74 +106,49 @@ $totalAttendances = (int)$stmtTotalAttendances->fetchColumn();
 	<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
 	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 	<style>
-		/* Responsive Dashboard Styles - Enhanced with Bigger Cards */
-		.dashboard-grid,
-		.content .dashboard-grid,
-		main.content .dashboard-grid,
-		body .content .dashboard-grid,
-		main.content > .dashboard-grid {
-			display: grid !important;
-			grid-template-columns: 1fr 1fr 1fr !important;
-			grid-template-rows: minmax(280px, 1fr) minmax(480px, 1.5fr) minmax(380px, 1fr) !important;
-			gap: 0.5rem !important;
-			padding-top: 0.5rem !important;
-			padding-right: 0.3rem !important;
-			padding-bottom: 0.5rem !important;
-			padding-left: 0 !important;
-			min-height: calc(100vh - 1rem) !important;
-			height: calc(100vh - 1rem) !important;
-			width: 100% !important;
-			max-width: 100% !important;
-			box-sizing: border-box !important;
-			margin: 0 !important;
+		/* Dashboard Grid Layout */
+		.dashboard-grid {
+			display: grid;
+			grid-template-columns: 1fr 1fr 1fr;
+			grid-template-rows: minmax(280px, 1fr) minmax(480px, 1.5fr) minmax(380px, 1fr);
+			gap: 0.5rem;
+			padding: 0.5rem 0.3rem 0.5rem 0;
+			width: 100%;
+			box-sizing: border-box;
+			margin: 0;
 		}
 
 		.dash-stats {
-			grid-column: 1 / 4 !important;
-			grid-row: 1 !important;
+			grid-column: 1 / 4;
+			grid-row: 1;
 			min-height: 280px;
-			height: 100%;
-			width: 100%;
-			min-width: 0;
 		}
 
 		.dash-barangay {
-			grid-column: 1 !important;
-			grid-row: 2 !important;
+			grid-column: 1;
+			grid-row: 2;
 			min-height: 480px;
-			height: 100%;
-			width: 100%;
-			min-width: 0;
 		}
 
 		.dash-osca {
-			grid-column: 2 !important;
-			grid-row: 2 !important;
+			grid-column: 2;
+			grid-row: 2;
 			min-height: 480px;
-			height: 100%;
-			width: 100%;
-			min-width: 0;
 		}
 
 		.dash-active-seniors {
-			grid-column: 3 !important;
-			grid-row: 2 !important;
+			grid-column: 3;
+			grid-row: 2;
 			min-height: 480px;
-			height: 100%;
-			width: 100%;
-			min-width: 0;
 		}
 
 		.dash-past {
-			grid-column: 1 / 4 !important;
-			grid-row: 3 !important;
+			grid-column: 1 / 4;
+			grid-row: 3;
 			min-height: 380px;
-			height: 100%;
-			width: 100%;
-			min-width: 0;
 		}
 
-		/* Modern Card Styling - Enhanced */
+		/* Card Styling */
 		.modern-card {
 			background: #ffffff;
 			border: 1px solid #e5e7eb;
@@ -183,10 +158,6 @@ $totalAttendances = (int)$stmtTotalAttendances->fetchColumn();
 			display: flex;
 			flex-direction: column;
 			height: 100%;
-			width: 100%;
-			min-width: 0;
-			margin: 0;
-			padding: 0;
 			transition: box-shadow 0.3s ease;
 		}
 
@@ -237,44 +208,32 @@ $totalAttendances = (int)$stmtTotalAttendances->fetchColumn();
 			overflow: hidden;
 			display: flex;
 			flex-direction: column;
-			width: 100%;
-			min-width: 0;
-			min-height: 0;
 		}
 
+		/* Table Styling */
 		.table-container {
 			flex: 1;
-			overflow-y: auto;
-			overflow-x: auto;
+			overflow: auto;
 			-webkit-overflow-scrolling: touch;
 			padding: 1.25rem 1.5rem;
-			min-width: 0;
-			min-height: 0;
 		}
-		
 
 		.table-container table {
 			width: 100%;
 			table-layout: auto;
-			min-width: 100%;
 		}
 
 		.table-container th,
 		.table-container td {
 			padding: 1.125rem 1.25rem;
 			font-size: 1rem;
+			white-space: nowrap;
 			word-wrap: break-word;
-			overflow-wrap: break-word;
 		}
 
 		.table-container th {
 			font-weight: 600;
 			font-size: 1.0625rem;
-		}
-
-		.table-container th,
-		.table-container td {
-			white-space: nowrap;
 		}
 
 		.table-container th:nth-child(1),
@@ -288,16 +247,13 @@ $totalAttendances = (int)$stmtTotalAttendances->fetchColumn();
 		}
 
 		.table-container th:nth-child(3),
-		.table-container td:nth-child(3) {
-			min-width: 120px;
-		}
-
+		.table-container td:nth-child(3),
 		.table-container th:nth-child(4),
 		.table-container td:nth-child(4) {
 			min-width: 120px;
 		}
 
-		/* Empty State Styling - Enhanced */
+		/* Empty State Styling */
 		.empty-state {
 			display: flex;
 			flex-direction: column;
@@ -305,8 +261,6 @@ $totalAttendances = (int)$stmtTotalAttendances->fetchColumn();
 			justify-content: center;
 			padding: 4rem 2rem;
 			text-align: center;
-			min-height: 0;
-			height: 100%;
 			flex: 1;
 		}
 
@@ -328,125 +282,38 @@ $totalAttendances = (int)$stmtTotalAttendances->fetchColumn();
 			color: #6b7280;
 		}
 
-		/* Hide content-header on dashboard view */
+		/* Layout Overrides */
 		.content-header {
 			display: none;
 		}
 
-		/* Remove any default spacing and prevent horizontal scroll */
 		html, body {
-			margin: 0 !important;
-			padding: 0 !important;
-			overflow-x: hidden !important;
-			width: 100% !important;
-			max-width: 100vw !important;
-			box-sizing: border-box !important;
-		}
-		
-		body {
-			background: #f3f4f6;
+			margin: 0;
+			padding: 0;
+			overflow-x: hidden;
+			width: 100%;
+			max-width: 100vw;
+			box-sizing: border-box;
 		}
 
-		/* Ensure main content takes full height and width */
 		main.content {
-			min-height: 100vh !important;
-			height: 100vh !important;
-			overflow-y: auto !important;
-			overflow-x: hidden !important;
-			display: flex !important;
-			flex-direction: column !important;
-			padding: 0 !important;
-			margin-left: 280px !important;
-			margin-right: 0 !important;
-			margin-top: 0 !important;
-			margin-bottom: 0 !important;
-			width: calc(100% - 280px) !important;
-			max-width: calc(100% - 280px) !important;
-			box-sizing: border-box !important;
+			min-height: 100vh;
+			overflow-y: auto;
+			overflow-x: hidden;
+			display: flex;
+			flex-direction: column;
+			padding: 0;
+			margin-left: 280px;
+			width: calc(100% - 280px);
+			box-sizing: border-box;
 		}
 
-		/* Override any global content-body constraints */
-		main.content > * {
-			width: 100% !important;
-			max-width: 100% !important;
-		}
-
-		.content-body {
-			flex: 1;
-			overflow: hidden;
-			padding: 0 !important;
-			margin: 0 !important;
-			width: 100% !important;
-			max-width: 100% !important;
-			min-height: 0;
-			height: 100%;
-		}
-
-		/* Ensure dashboard grid extends to right edge - override CSS file */
-		.dashboard-grid,
-		.content .dashboard-grid,
-		main.content .dashboard-grid,
-		body .content .dashboard-grid,
-		main.content > .dashboard-grid {
-			margin: 0 !important;
-			padding-top: 0.5rem !important;
-			padding-right: 0.3rem !important;
-			padding-bottom: 0.5rem !important;
-			padding-left: 0 !important;
-			width: 100% !important;
-			max-width: 100% !important;
-			box-sizing: border-box !important;
-			grid-template-columns: 1fr 1fr 1fr !important;
-			grid-template-rows: minmax(280px, 1fr) minmax(480px, 1.5fr) minmax(380px, 1fr) !important;
-			grid-auto-rows: auto !important;
-			overflow-y: visible !important;
-			overflow-x: hidden !important;
-			min-width: 0 !important;
-		}
-
-		/* Override any global container constraints */
-		body > main.content,
-		body > main.content > .dashboard-grid {
-			width: 100% !important;
-			max-width: 100% !important;
-			box-sizing: border-box !important;
-			overflow-x: hidden !important;
-		}
-		
-		/* Ensure all child elements respect container width */
-		main.content * {
-			box-sizing: border-box !important;
-			max-width: 100% !important;
-		}
-		
-		/* Force zero left padding - override CSS file completely */
-		main.content > .dashboard-grid,
-		main.content .dashboard-grid {
-			padding-left: 0 !important;
-		}
-
-		/* Force full width - override any global CSS max-width constraints */
-		main.content {
-			margin: 0 0 0 280px !important;
-		}
-
-		/* Ensure no centering or max-width constraints from global CSS */
-		.content,
-		main.content,
-		main.content .dashboard-grid {
-			max-width: 100% !important;
-			margin-left: 280px !important;
-			margin-right: 0 !important;
-		}
-
-		/* Enhanced Statistics Card */
+		/* Statistics Grid */
 		.stats-grid {
 			display: grid;
 			grid-template-columns: repeat(3, 1fr);
 			gap: 2rem;
 			padding: 2.5rem 1.5rem;
-			min-height: 0;
-			height: 100%;
 			align-content: center;
 		}
 
