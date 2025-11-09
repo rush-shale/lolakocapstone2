@@ -114,7 +114,7 @@ $target = $user['role'] === 'admin' ? '/admin/dashboard.php' : '/user/dashboard.
 	<div class="welcome-container">
 		<div class="welcome-content">
 			<div class="welcome-logo">
-				<img src="<?= BASE_URL ?>/images/OSCA LOGO.png" alt="OSCA Logo" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+				<img src="<?= BASE_URL ?>/images/OSCA MAIN LOGO.png" alt="OSCA Logo" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
 				<div style="display: none; font-size: 4rem;">🏛️</div>
 			</div>
 			

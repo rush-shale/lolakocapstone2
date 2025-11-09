@@ -64,7 +64,7 @@ $user = current_user();
 	<meta name="apple-mobile-web-app-title" content="OSCA MANOLO">
 	<title>Admin Dashboard | OSCA MANOLO</title>
 	<link rel="manifest" href="<?= BASE_URL ?>/manifest.json">
-	<link rel="apple-touch-icon" href="<?= BASE_URL ?>/images/OSCA LOGO.png">
+	<link rel="apple-touch-icon" href="<?= BASE_URL ?>/images/OSCA MAIN LOGO.png">
 	<link rel="stylesheet" href="<?= BASE_URL ?>/assets/government-portal.css">
 	<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
 	<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>

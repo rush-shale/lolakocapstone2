@@ -4,7 +4,7 @@ const urlsToCache = [
   '/assets/government-portal.css',
   '/assets/app.js',
   '/assets/sidebar-toggle.js',
-  '/images/OSCA LOGO.png',
+  '/images/OSCA MAIN LOGO.png',
   '/images/MANOLO FORTICH LOGO.png',
   '/images/BACK ID.png'
 ];

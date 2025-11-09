@@ -6,7 +6,7 @@ $current_page = basename($_SERVER['PHP_SELF']);
 	<div class="sidebar-header">
 		<a href="<?= BASE_URL ?>/user/dashboard.php" class="sidebar-brand">
 			<div class="sidebar-logo">
-				<img src="<?= BASE_URL ?>/images/OSCA LOGO.png" alt="OSCA Logo" style="height: 40px; width: auto; border-radius: 6px;" onerror="this.onerror=null;this.innerHTML='🏛️';">
+				<img src="<?= BASE_URL ?>/images/OSCA MAIN LOGO.png" alt="OSCA Logo" style="height: 40px; width: auto; border-radius: 6px;" onerror="this.onerror=null;this.innerHTML='🏛️';">
 			</div>
 		</a>
 		<button type="button" id="header-burger" class="sidebar-toggle" aria-label="Toggle menu"></button>
