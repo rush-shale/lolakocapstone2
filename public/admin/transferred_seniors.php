@@ -156,6 +156,7 @@ $transferredThisMonthCount = count($transferredThisMonth);
 								<tr>
 									<th>Name</th>
 									<th>Age</th>
+									<th>Old Address</th>
 									<th>New Address</th>
 									<th>Transfer Date</th>
 									<th>Transfer Reason</th>
@@ -178,6 +179,7 @@ $transferredThisMonthCount = count($transferredThisMonth);
 												</div>
 											</td>
 											<td><?= (int)$senior['age'] ?></td>
+											<td><?= htmlspecialchars($senior['barangay'] ?? 'N/A') ?></td>
 											<td><?= htmlspecialchars($senior['new_address']) ?></td>
 											<td>
 												<?php if ($senior['effective_date'] && $senior['effective_date'] !== '0000-00-00'): ?>
@@ -204,7 +206,7 @@ $transferredThisMonthCount = count($transferredThisMonth);
 									<?php endforeach; ?>
 								<?php else: ?>
 									<tr>
-										<td colspan="6" style="text-align: center;">No transferred seniors found.</td>
+										<td colspan="7" style="text-align: center;">No transferred seniors found.</td>
 									</tr>
 								<?php endif; ?>
 							</tbody>
