@@ -1671,7 +1671,7 @@ try {
 										<th>CIVIL STATUS</th>
 										<th>BIRTHDATE</th>
 										<th>OSCA ID NO.</th>
-										<th>REMARKS</th>
+										<th>REMARKS<br><small>(SSS, GSIS, PENSION FROM PRIVATE COMPARISON)</small></th>
 										<th>HEALTH CONDITION</th>
 										<th>PUROK</th>
 										<th>PLACE OF BIRTH</th>
