@@ -6,6 +6,15 @@ require_once __DIR__ . '/../../config/db.php';
 require_role('admin');
 start_app_session();
 
+if (!function_exists('is_ajax_request')) {
+	/**
+	 * Determine whether the current request is an AJAX request.
+	 */
+	function is_ajax_request(): bool {
+		return isset($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest';
+	}
+}
+
 // Ensure session is writable and active
 if (session_status() !== PHP_SESSION_ACTIVE) {
 	session_start();
@@ -13,17 +22,31 @@ if (session_status() !== PHP_SESSION_ACTIVE) {
 error_log("Session status: " . (session_status() === PHP_SESSION_ACTIVE ? 'ACTIVE' : 'INACTIVE'));
 error_log("Session ID: " . session_id());
 
+$action = $_GET['action'] ?? null;
+$csrf = null;
+
 // Generate CSRF token - FIXED APPROACH
 // The key issue: Token must be generated BEFORE POST processing starts
 // and must persist in session between GET and POST requests
 
-// For GET requests: Always generate a fresh token
-// For POST requests: Read existing token from session for validation (don't generate new one)
+// For GET requests: Generate a fresh token for full page loads.
+// For lightweight AJAX reads (e.g., get_senior, csrf), reuse the existing token to avoid invalidating open forms.
 if ($_SERVER['REQUEST_METHOD'] === 'GET') {
-	// GET request - generate fresh token and store in session
-	$csrf = generate_csrf_token();
-	error_log("GET request - Generated NEW CSRF token: " . substr($csrf, 0, 20) . '...');
-	error_log("Token stored in session: " . (isset($_SESSION[CSRF_TOKEN_NAME]) && $_SESSION[CSRF_TOKEN_NAME] === $csrf ? 'YES (verified)' : 'NO/DIFFERENT'));
+	$ajaxReadActions = ['get_senior', 'csrf'];
+	if ($action && in_array($action, $ajaxReadActions, true)) {
+		if (isset($_SESSION[CSRF_TOKEN_NAME]) && !empty($_SESSION[CSRF_TOKEN_NAME])) {
+			$csrf = $_SESSION[CSRF_TOKEN_NAME];
+			error_log("AJAX GET ({$action}) - Reusing existing CSRF token: " . substr($csrf, 0, 20) . '...');
+		} else {
+			$csrf = generate_csrf_token();
+			error_log("AJAX GET ({$action}) - Generated CSRF token because none existed: " . substr($csrf, 0, 20) . '...');
+		}
+	} else {
+		// Full GET request - generate fresh token and store in session
+		$csrf = generate_csrf_token();
+		error_log("GET request - Generated NEW CSRF token: " . substr($csrf, 0, 20) . '...');
+		error_log("Token stored in session: " . (isset($_SESSION[CSRF_TOKEN_NAME]) && $_SESSION[CSRF_TOKEN_NAME] === $csrf ? 'YES (verified)' : 'NO/DIFFERENT'));
+	}
 } else {
 	// POST request - DO NOT generate new token, use existing one from session
 	// This is critical: if we generate a new token here, validation will always fail
@@ -42,7 +65,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
 $pdo = get_db_connection();
 
 // Handle AJAX requests for getting senior data
-if (isset($_GET['action']) && $_GET['action'] === 'get_senior') {
+if ($action === 'get_senior') {
     $id = (int)($_GET['id'] ?? 0);
     if (!$id) {
         echo json_encode(['success' => false, 'message' => 'Invalid senior ID']);
@@ -62,7 +85,7 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_senior') {
     exit;
 }
 // Lightweight endpoint to fetch current CSRF token for modals/forms
-if (isset($_GET['action']) && $_GET['action'] === 'csrf') {
+if ($action === 'csrf') {
 	start_app_session();
 	$token = $_SESSION[CSRF_TOKEN_NAME] ?? null;
 	if (!$token) {
@@ -87,6 +110,8 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+	$update_success = false;
+	$updated_senior_id = null;
 	$submitted_token = $_POST['csrf'] ?? '';
 	$session_token = $_SESSION[CSRF_TOKEN_NAME] ?? '';
 	$op = $_POST['op'] ?? '';
@@ -154,12 +179,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         	$life_status = null; // defer resolution; preserve existing value on update
         }
 			// Read category - default to local if select has a value, otherwise check waiting list
-        $category_input = $_POST['category'] ?? '';
+        $category_input = strtolower(trim($_POST['category'] ?? ''));
+			$allowed_categories = ['local', 'national'];
 			
 			// Check if waiting list checkbox is set first (it overrides category)
 			if (isset($_POST['waiting_list']) && $_POST['waiting_list'] === '1') {
 				$category = 'waiting';
-			} elseif (in_array($category_input, ['local', 'national', 'waiting', 'transferred'], true)) {
+			} elseif (in_array($category_input, $allowed_categories, true)) {
 				$category = $category_input;
         } else {
 				// Default to local if category select has a default value but wasn't explicitly set
@@ -316,9 +342,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 						$existingCategory = $checkStmt->fetchColumn();
 					} catch (Exception $ignore) {}
 					if ($existingCategory === 'waiting') {
-						$category = 'waiting';
-						$validation_status = 'Not Validated';
-						$validation_date = null;
+						if ($category === 'waiting') {
+							// Remain in waiting category until explicitly validated
+							$validation_status = 'Not Validated';
+							$validation_date = null;
+						} else {
+							// Allow transition out of waiting when user updates category
+							// Ensure validation metadata reflects the change
+							if ($validation_status === 'Not Validated') {
+								$validation_status = 'Validated';
+							}
+							if (!$validation_date) {
+								$validation_date = date('Y-m-d H:i:s');
+							}
+						}
 					}
 					// Resolve life_status: preserve current if not provided in form
 					if ($life_status === null) {
@@ -433,8 +470,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 }
                 if ($op === 'update') {
 					error_log("Redirecting to success page after update");
-                    header('Location: ' . $_SERVER['PHP_SELF'] . '?success=1');
-                    exit;
+					$update_success = true;
+					$updated_senior_id = $senior_id;
+					if (!is_ajax_request()) {
+						header('Location: ' . $_SERVER['PHP_SELF'] . '?success=1');
+						exit;
+					}
                 }
 			} catch (Exception $e) {
 				// Use safe rollback to handle connection issues
@@ -699,6 +740,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 				}
 			}
 		}
+	}
+
+	if (is_ajax_request() && $op === 'update') {
+		header('Content-Type: application/json');
+		echo json_encode([
+			'success' => $update_success,
+			'id' => $update_success ? (int)$updated_senior_id : null,
+			'message' => $update_success ? ($message ?: 'Senior updated successfully') : ($message ?: 'Failed to update senior.')
+		]);
+		exit;
 	}
 }
 
@@ -3261,8 +3312,6 @@ try {
 						<select id="editCategory" name="category" style="padding: 0.35rem; border: 1px solid #d1d5db; border-radius: 6px;">
 							<option value="local">Local</option>
 							<option value="national">National</option>
-							<option value="waiting">Waiting</option>
-							<option value="transferred">Transferred</option>
 						</select>
 					</div>
 				</div>
@@ -3419,7 +3468,12 @@ try {
 					document.getElementById('editCellphone').value = senior.cellphone || '';
 					document.getElementById('editHealthCondition').value = senior.health_condition || '';
 					document.getElementById('editRemarks').value = senior.remarks || '';
-					document.getElementById('editCategory').value = senior.category || 'local';
+					const categorySelect = document.getElementById('editCategory');
+					if (categorySelect) {
+						const normalizedCategory = (senior.category || '').toLowerCase();
+						const categoryOption = Array.from(categorySelect.options).find(option => option.value === normalizedCategory);
+						categorySelect.value = categoryOption ? categoryOption.value : 'local';
+					}
 					document.getElementById('editLifeStatus').value = senior.life_status || 'living';
 
 					// Show modal
@@ -3442,11 +3496,242 @@ try {
 				}
 			} catch (_) {}
 		}
-		// Refresh CSRF on page load and periodically
+
+		async function handleEditSeniorSubmit(event) {
+			event.preventDefault();
+			const form = event.target;
+			const submitButton = form.querySelector('button[type="submit"]');
+			let originalButtonHtml = '';
+			
+			if (submitButton) {
+				originalButtonHtml = submitButton.innerHTML;
+				submitButton.disabled = true;
+				submitButton.innerHTML = '<span class="loading-spinner"></span> Updating...';
+			}
+
+			try {
+				const formData = new FormData(form);
+				const response = await fetch(form.action, {
+					method: 'POST',
+					body: formData,
+					headers: { 'X-Requested-With': 'XMLHttpRequest' },
+					credentials: 'same-origin'
+				});
+
+				const contentType = response.headers.get('content-type') || '';
+				if (!contentType.includes('application/json')) {
+					window.location.reload();
+					return;
+				}
+
+				const payload = await response.json();
+
+				if (!payload.success) {
+					showInlineAlert(payload.message || 'Failed to update senior.', 'error');
+					await refreshCsrfInputs();
+					return;
+				}
+
+				await refreshCsrfInputs();
+				if (payload.id) {
+					await updateSeniorRowDisplay(payload.id);
+				}
+				window.localStorage.setItem('senior-category-updated', Date.now().toString());
+				closeEditSeniorModal();
+				showInlineAlert(payload.message || 'Senior updated successfully.', 'success');
+			} catch (error) {
+				console.error('Update senior failed', error);
+				showInlineAlert('An unexpected error occurred while updating the senior.', 'error');
+			} finally {
+				if (submitButton) {
+					submitButton.disabled = false;
+					submitButton.innerHTML = originalButtonHtml;
+				}
+			}
+		}
+
+		async function updateSeniorRowDisplay(seniorId) {
+			const row = document.querySelector(`tr[data-senior-id="${seniorId}"]`);
+			if (!row) {
+				return;
+			}
+
+			try {
+				const response = await fetch(`seniors.php?action=get_senior&id=${encodeURIComponent(seniorId)}&t=${Date.now()}`, { credentials: 'same-origin' });
+				const data = await response.json();
+				if (!data.success || !data.senior) {
+					return;
+				}
+
+				const senior = data.senior;
+				const cells = row.cells;
+				if (!cells || cells.length < 19) {
+					return;
+				}
+
+				cells[0].textContent = senior.last_name || '';
+				cells[1].textContent = senior.first_name || '';
+				cells[2].textContent = senior.middle_name || '';
+				cells[3].textContent = senior.ext_name || '';
+				cells[4].textContent = senior.barangay || '';
+				cells[5].textContent = senior.age ? parseInt(senior.age, 10) : '';
+				cells[6].textContent = mapSexDisplay(senior.sex);
+				cells[7].textContent = senior.civil_status || '';
+				cells[8].textContent = formatDateOnly(senior.date_of_birth);
+				cells[9].textContent = senior.osca_id_no || '';
+				cells[10].textContent = senior.remarks || '';
+				cells[11].textContent = formatHealthCondition(senior.health_condition);
+				cells[12].textContent = senior.purok || '';
+				cells[13].textContent = senior.place_of_birth || '';
+				cells[14].textContent = senior.cellphone || '';
+				cells[15].innerHTML = renderLifeStatusBadge(senior.life_status);
+				cells[16].innerHTML = renderCategoryBadge(senior.category);
+				cells[17].innerHTML = renderValidationStatus(senior.validation_status, senior.validation_date);
+				cells[18].textContent = formatDateTime(senior.validation_date) || '-';
+
+				row.classList.add('new-senior-highlight');
+				setTimeout(() => row.classList.remove('new-senior-highlight'), 4000);
+				row.scrollIntoView({ behavior: 'smooth', block: 'center' });
+			} catch (error) {
+				console.error('Failed to refresh senior row', error);
+			}
+		}
+
+		function mapSexDisplay(sex) {
+			switch ((sex || '').toLowerCase()) {
+				case 'male':
+					return 'Male';
+				case 'female':
+					return 'Female';
+				case 'lgbtq':
+					return 'LGBTQ+';
+				default:
+					return 'Not specified';
+			}
+		}
+
+		function formatHealthCondition(value) {
+			const normalized = (value || '').trim();
+			if (!normalized) {
+				return 'Not specified';
+			}
+			const lower = normalized.toLowerCase();
+			const placeholders = ['iwan', 'none', 'n/a', 'na', 'not specified', 'unknown'];
+			return placeholders.includes(lower) ? 'Not specified' : normalized;
+		}
+
+		function formatDateOnly(value) {
+			if (!value) return '';
+			const safeValue = value.includes('T') ? value : `${value}T00:00:00`;
+			const date = new Date(safeValue);
+			if (Number.isNaN(date.getTime())) {
+				return '';
+			}
+			return date.toLocaleDateString(undefined, { month: 'short', day: '2-digit', year: 'numeric' });
+		}
+
+		function formatDateTime(value) {
+			if (!value) return '';
+			const safeValue = value.replace(' ', 'T');
+			const date = new Date(safeValue);
+			if (Number.isNaN(date.getTime())) {
+				return '';
+			}
+			const datePart = date.toLocaleDateString(undefined, { month: 'short', day: '2-digit', year: 'numeric' });
+			const timePart = date.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit', hour12: false });
+			return `${datePart} ${timePart}`;
+		}
+
+		function renderLifeStatusBadge(status) {
+			const normalized = (status || 'living').toLowerCase();
+			if (normalized === 'deceased') {
+				return `<span class="status-badge deceased">💀 Deceased</span>`;
+			}
+			return `<span class="status-badge validated">👤 Living</span>`;
+		}
+
+		function renderCategoryBadge(category) {
+			const normalized = (category || '').toLowerCase();
+			switch (normalized) {
+				case 'national':
+					return `<span class="status-badge national">🏛️ National</span>`;
+				case 'waiting':
+					return `<span class="status-badge pending">⏳ Waiting</span>`;
+				case 'transferred':
+					return `<span class="status-badge pending">🚚 Transferred</span>`;
+				default:
+					return `<span class="status-badge local">🏘️ Local</span>`;
+			}
+		}
+
+		function renderValidationStatus(status, validationDate) {
+			const isValidated = (status || '').toLowerCase() === 'validated';
+			const label = isValidated ? 'Validated' : (status || 'Not Validated');
+			const emoji = isValidated ? '✅' : '⏳';
+			let html = `<span class="status-badge ${isValidated ? 'validated' : 'pending'}">${emoji} ${label}</span>`;
+			if (isValidated && validationDate) {
+				const formatted = formatDateTime(validationDate);
+				if (formatted) {
+					html += `<br><small style="color: var(--text-secondary); font-size: 0.75rem;">${formatted}</small>`;
+				}
+			}
+			return html;
+		}
+
+		function showInlineAlert(message, type = 'success') {
+			const container = document.querySelector('.main-content-area');
+			if (!container) return;
+
+			const existing = container.querySelector('.alert.dynamic-alert');
+			if (existing) {
+				existing.remove();
+			}
+
+			const wrapper = document.createElement('div');
+			wrapper.className = `alert ${type === 'success' ? 'alert-success' : 'alert-error'} dynamic-alert`;
+			wrapper.innerHTML = `
+				<div class="alert-icon">
+					<i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-circle'}"></i>
+				</div>
+				<div class="alert-content">
+					<strong>${type === 'success' ? 'Success!' : 'Error!'}</strong>
+					<p>${escapeHtml(message || '')}</p>
+				</div>
+			`;
+
+			container.insertBefore(wrapper, container.firstChild);
+
+			setTimeout(() => {
+				if (wrapper && wrapper.parentNode) {
+					wrapper.parentNode.removeChild(wrapper);
+				}
+			}, 5000);
+		}
+
+		function escapeHtml(value) {
+			return (value || '').toString().replace(/[&<>"']/g, match => {
+				const replacements = {
+					'&': '&amp;',
+					'<': '&lt;',
+					'>': '&gt;',
+					'"': '&quot;',
+					'\'': '&#39;'
+				};
+				return replacements[match] || match;
+			});
+		}
+
+		// Refresh CSRF on page load and wire up AJAX form submission
 		document.addEventListener('DOMContentLoaded', function() {
 			refreshCsrfInputs();
 			// Refresh every 5 minutes to keep session fresh for long-lived pages
 			setInterval(refreshCsrfInputs, 5 * 60 * 1000);
+
+			const editForm = document.getElementById('editSeniorForm');
+			if (editForm && !editForm.dataset.ajaxBound) {
+				editForm.dataset.ajaxBound = 'true';
+				editForm.addEventListener('submit', handleEditSeniorSubmit);
+			}
 		});
 	</script>
 </body>

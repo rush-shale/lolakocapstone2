@@ -9,8 +9,8 @@ $pdo = get_db_connection();
 $localSeniorsList = $pdo->query("
     SELECT s.*, s.barangay as barangay_name 
     FROM seniors s 
-    WHERE s.category = 'local' AND s.life_status = 'living'
-    ORDER BY s.created_at DESC
+    WHERE LOWER(s.category) = 'local' AND s.life_status = 'living'
+    ORDER BY GREATEST(COALESCE(s.validation_date, '1970-01-01 00:00:00'), s.created_at) DESC
 ")->fetchAll();
 
 $user = current_user();
@@ -86,6 +86,12 @@ $user = current_user();
         function editSenior(id){
             alert('Edit senior with ID: ' + id);
         }
+
+        window.addEventListener('storage', function(event) {
+            if (event.key === 'senior-category-updated') {
+                window.location.reload();
+            }
+        });
     </script>
 </body>
 </html>

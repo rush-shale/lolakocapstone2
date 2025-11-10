@@ -8,8 +8,8 @@ $pdo = get_db_connection();
 // Get comprehensive statistics
 $totalUsers = (int)$pdo->query("SELECT COUNT(*) FROM users")->fetchColumn();
 $totalSeniors = (int)$pdo->query("SELECT COUNT(*) FROM seniors WHERE life_status = 'living'")->fetchColumn();
-$localSeniors = (int)$pdo->query("SELECT COUNT(*) FROM seniors WHERE life_status = 'living' AND category = 'local'")->fetchColumn();
-$nationalSeniors = (int)$pdo->query("SELECT COUNT(*) FROM seniors WHERE life_status = 'living' AND category = 'national'")->fetchColumn();
+$localSeniors = (int)$pdo->query("SELECT COUNT(*) FROM seniors WHERE life_status = 'living' AND LOWER(category) = 'local'")->fetchColumn();
+$nationalSeniors = (int)$pdo->query("SELECT COUNT(*) FROM seniors WHERE life_status = 'living' AND LOWER(category) = 'national'")->fetchColumn();
 $deceasedSeniors = (int)$pdo->query("SELECT COUNT(*) FROM seniors WHERE life_status = 'deceased'")->fetchColumn();
 $benefitsPending = (int)$pdo->query("SELECT COUNT(*) FROM seniors WHERE life_status = 'living' AND benefits_received = 0")->fetchColumn();
 $benefitsReceived = (int)$pdo->query("SELECT COUNT(*) FROM seniors WHERE life_status = 'living' AND benefits_received = 1")->fetchColumn();
@@ -18,11 +18,11 @@ $upcomingEvents = (int)$pdo->query("SELECT COUNT(*) FROM events WHERE scope = 'a
 	->fetchColumn();
 
 // Get seniors data for dashboard sections
-$allSeniors = $pdo->query("\n    SELECT s.*, s.barangay as barangay_name \n    FROM seniors s \n    WHERE s.life_status = 'living'\n    ORDER BY s.created_at DESC \n    LIMIT 10\n")->fetchAll();
+$allSeniors = $pdo->query("\n    SELECT s.*, s.barangay as barangay_name \n    FROM seniors s \n    WHERE s.life_status = 'living'\n    ORDER BY GREATEST(COALESCE(s.validation_date, '1970-01-01 00:00:00'), s.created_at) DESC \n    LIMIT 10\n")->fetchAll();
 
-$localSeniorsList = $pdo->query("\n    SELECT s.*, s.barangay as barangay_name \n    FROM seniors s \n    WHERE s.category = 'local' AND s.life_status = 'living'\n    ORDER BY s.created_at DESC \n    LIMIT 10\n")->fetchAll();
+$localSeniorsList = $pdo->query("\n    SELECT s.*, s.barangay as barangay_name \n    FROM seniors s \n    WHERE s.life_status = 'living' AND LOWER(s.category) = 'local'\n    ORDER BY GREATEST(COALESCE(s.validation_date, '1970-01-01 00:00:00'), s.created_at) DESC \n    LIMIT 10\n")->fetchAll();
 
-$nationalSeniorsList = $pdo->query("\n    SELECT s.*, s.barangay as barangay_name \n    FROM seniors s \n    WHERE s.category = 'national' AND s.life_status = 'living'\n    ORDER BY s.created_at DESC \n    LIMIT 10\n")->fetchAll();
+$nationalSeniorsList = $pdo->query("\n    SELECT s.*, s.barangay as barangay_name \n    FROM seniors s \n    WHERE s.life_status = 'living' AND LOWER(s.category) = 'national'\n    ORDER BY GREATEST(COALESCE(s.validation_date, '1970-01-01 00:00:00'), s.created_at) DESC \n    LIMIT 10\n")->fetchAll();
 
 // Get upcoming events with organizer name
 $upcomingEventsList = $pdo->query("\n    SELECT e.*, u.name AS organizer_name\n    FROM events e\n    LEFT JOIN users u ON e.created_by = u.id\n    WHERE e.event_date >= CURDATE()\n    ORDER BY e.event_date ASC \n    LIMIT 5\n")->fetchAll();
@@ -454,6 +454,13 @@ $user = current_user();
 			}
 		`;
 		document.head.appendChild(style);
+
+		// Automatically refresh dashboard metrics when category updates occur elsewhere
+		window.addEventListener('storage', (event) => {
+			if (event.key === 'senior-category-updated') {
+				window.location.reload();
+			}
+		});
 	</script>
 	<script>
 		// Register Service Worker for PWA

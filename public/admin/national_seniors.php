@@ -16,7 +16,12 @@ $barangays = $pdo->query('SELECT name FROM barangays ORDER BY name')->fetchAll()
 // You can add specific content or logic here for National Seniors
 
 // Example: Fetch all seniors with category 'national'
-$stmt = $pdo->prepare('SELECT * FROM seniors WHERE category = ? ORDER BY created_at DESC');
+$stmt = $pdo->prepare("
+    SELECT * 
+    FROM seniors 
+    WHERE LOWER(category) = ? 
+    ORDER BY GREATEST(COALESCE(validation_date, '1970-01-01 00:00:00'), created_at) DESC
+");
 $stmt->execute(['national']);
 $seniors = $stmt->fetchAll();
 
@@ -107,6 +112,12 @@ $seniors = $stmt->fetchAll();
 			// Implement edit functionality or open modal
 			alert('Edit senior with ID: ' + id);
 		}
+
+		window.addEventListener('storage', function(event) {
+			if (event.key === 'senior-category-updated') {
+				window.location.reload();
+			}
+		});
 	</script>
 </body>
 </html>
