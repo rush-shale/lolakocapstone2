@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . '/../../includes/auth.php';
+require_once __DIR__ . '/../../includes/session.php';
 require_once __DIR__ . '/../../config/db.php';
 
 // Ensure BASE_URL is defined
@@ -8,6 +9,7 @@ if (!defined('BASE_URL')) {
 }
 
 require_role('user');
+$started = function_exists('start_app_session') ? start_app_session() : null;
 $pdo = get_db_connection();
 $user = current_user();
 
@@ -89,7 +91,74 @@ $stmtTotalAttendances = $pdo->prepare("
 $stmtTotalAttendances->execute([$user['barangay']]);
 $totalAttendances = (int)$stmtTotalAttendances->fetchColumn();
 
+// CSRF for user actions (edit/delete/save events) - do not regenerate on every request
+start_app_session();
+$csrf = $_SESSION[CSRF_TOKEN_NAME] ?? generate_csrf_token();
 
+// Provide a way for the client to refresh CSRF without reloading
+if (isset($_GET['action']) && $_GET['action'] === 'csrf') {
+	header('Content-Type: application/json');
+	$token = $_SESSION[CSRF_TOKEN_NAME] ?? null;
+	if (!$token) {
+		$token = generate_csrf_token();
+	}
+	echo json_encode(['csrf' => $token]);
+	exit;
+}
+
+// AJAX: fetch event details for modal
+if (isset($_GET['action']) && $_GET['action'] === 'get_event') {
+	header('Content-Type: application/json');
+	$eventId = (int)($_GET['id'] ?? 0);
+	if (!$eventId) { echo json_encode(['success' => false, 'message' => 'Invalid id']); exit; }
+	$chk = $pdo->prepare("SELECT id, title, event_date, event_time, scope, barangay, created_by FROM events WHERE id = ? LIMIT 1");
+	$chk->execute([$eventId]);
+	$ev = $chk->fetch();
+	if (!$ev || $ev['scope'] !== 'barangay' || strtolower($ev['barangay']) !== strtolower($user['barangay']) || (int)$ev['created_by'] !== (int)$user['id']) {
+		echo json_encode(['success' => false, 'message' => 'Not allowed']); exit;
+	}
+	echo json_encode(['success' => true, 'event' => $ev]); exit;
+}
+
+// Lightweight AJAX actions for user's own barangay events
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+	header('Content-Type: application/json');
+	$op = $_POST['op'] ?? '';
+	$token = $_POST['csrf'] ?? '';
+	if (!validate_csrf_token($token)) {
+		echo json_encode(['success' => false, 'message' => 'Invalid session token. Please refresh and try again.']); exit;
+	}
+	if ($op === 'delete_event') {
+		$eventId = (int)($_POST['event_id'] ?? 0);
+		if (!$eventId) { echo json_encode(['success' => false, 'message' => 'Invalid event']); exit; }
+		$chk = $pdo->prepare("SELECT id, created_by, scope, barangay FROM events WHERE id = ? LIMIT 1");
+		$chk->execute([$eventId]);
+		$ev = $chk->fetch();
+		if (!$ev || $ev['scope'] !== 'barangay' || strtolower($ev['barangay']) !== strtolower($user['barangay']) || (int)$ev['created_by'] !== (int)$user['id']) {
+			echo json_encode(['success' => false, 'message' => 'Not allowed']); exit;
+		}
+		$pdo->prepare("DELETE FROM events WHERE id = ? LIMIT 1")->execute([$eventId]);
+		echo json_encode(['success' => true]); exit;
+	}
+	if ($op === 'save_event') {
+		$eventId = (int)($_POST['event_id'] ?? 0);
+		$title = trim($_POST['title'] ?? '');
+		$event_date = $_POST['event_date'] ?? '';
+		$event_time = $_POST['event_time'] ?? null;
+		if (!$eventId || $title === '' || $event_date === '') {
+			echo json_encode(['success' => false, 'message' => 'Missing required fields']); exit;
+		}
+		$chk = $pdo->prepare("SELECT id, created_by, scope, barangay FROM events WHERE id = ? LIMIT 1");
+		$chk->execute([$eventId]);
+		$ev = $chk->fetch();
+		if (!$ev || $ev['scope'] !== 'barangay' || strtolower($ev['barangay']) !== strtolower($user['barangay']) || (int)$ev['created_by'] !== (int)$user['id']) {
+			echo json_encode(['success' => false, 'message' => 'Not allowed']); exit;
+		}
+		$pdo->prepare("UPDATE events SET title = ?, event_date = ?, event_time = ? WHERE id = ?")->execute([$title, $event_date, $event_time ?: null, $eventId]);
+		echo json_encode(['success' => true]); exit;
+	}
+	echo json_encode(['success' => false, 'message' => 'Invalid operation']); exit;
+}
 
 ?>
 <!doctype html>
@@ -495,6 +564,7 @@ $totalAttendances = (int)$stmtTotalAttendances->fetchColumn();
 										<th>Date</th>
 										<th>Time</th>
 										<th>Status</th>
+										<th style="min-width:130px;">Actions</th>
 									</tr>
 								</thead>
 								<tbody>
@@ -505,6 +575,14 @@ $totalAttendances = (int)$stmtTotalAttendances->fetchColumn();
 											<td><?= $e['event_time'] ? date('g:i A', strtotime($e['event_time'])) : 'All Day' ?></td>
 											<td>
 												<span class="badge badge-success">Upcoming</span>
+											</td>
+											<td>
+												<?php if ((int)($e['created_by'] ?? 0) === (int)$user['id']): ?>
+													<button class="btn btn-sm" onclick="userOpenEditEventModal(<?= (int)$e['id'] ?>)">Edit</button>
+													<button class="btn btn-sm btn-danger" onclick="confirmUserDeleteEvent(<?= (int)$e['id'] ?>)">Delete</button>
+												<?php else: ?>
+													<small style=\"color:#6b7280;\">—</small>
+												<?php endif; ?>
 											</td>
 										</tr>
 									<?php endforeach; ?>
@@ -688,5 +766,105 @@ $totalAttendances = (int)$stmtTotalAttendances->fetchColumn();
 		</div>
 	</main>
 	<script src="<?= BASE_URL ?>/assets/app.js"></script>
+
+	<!-- Modal for editing user's barangay event -->
+	<div id="userEditEventModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.35); z-index:1000; align-items:center; justify-content:center;">
+		<div style="background:#fff; width:95%; max-width:520px; border-radius:12px; box-shadow:0 10px 30px rgba(0,0,0,0.2); overflow:hidden;">
+			<div style="display:flex; align-items:center; justify-content:space-between; padding:1rem 1.25rem; border-bottom:1px solid #e5e7eb;">
+				<h3 style="margin:0; font-size:1.125rem;">Edit Event</h3>
+				<button onclick="userCloseEditEventModal()" style="background:none; border:none; font-size:1.5rem; line-height:1; cursor:pointer;">&times;</button>
+			</div>
+			<form id="userEditEventForm" onsubmit="return userSaveEvent();" style="padding:1rem 1.25rem; display:flex; flex-direction:column; gap:0.75rem;">
+				<input type="hidden" name="csrf" value="<?= $csrf ?>">
+				<input type="hidden" name="event_id" id="ue_event_id">
+				<div>
+					<label for="ue_title" style="display:block; font-weight:600; margin-bottom:0.25rem;">Title *</label>
+					<input id="ue_title" name="title" type="text" required style="width:100%; padding:0.6rem; border:1px solid #d1d5db; border-radius:8px;">
+				</div>
+				<div style="display:grid; grid-template-columns:1fr 1fr; gap:0.75rem;">
+					<div>
+						<label for="ue_date" style="display:block; font-weight:600; margin-bottom:0.25rem;">Date *</label>
+						<input id="ue_date" name="event_date" type="date" required style="width:100%; padding:0.6rem; border:1px solid #d1d5db; border-radius:8px;">
+					</div>
+					<div>
+						<label for="ue_time" style="display:block; font-weight:600; margin-bottom:0.25rem;">Time</label>
+						<input id="ue_time" name="event_time" type="time" style="width:100%; padding:0.6rem; border:1px solid #d1d5db; border-radius:8px;">
+						<small style="color:#6b7280;">Leave blank for All Day</small>
+					</div>
+				</div>
+				<div style="display:flex; justify-content:flex-end; gap:0.5rem; padding-top:0.5rem;">
+					<button type="button" class="btn" onclick="userCloseEditEventModal()">Cancel</button>
+					<button type="submit" class="btn btn-primary">Update</button>
+				</div>
+			</form>
+		</div>
+	</div>
+
+	<script>
+		async function userFetchCsrf() {
+			try {
+				const res = await fetch('<?= BASE_URL ?>/user/dashboard.php?action=csrf', { credentials: 'same-origin' });
+				const data = await res.json();
+				if (data && data.csrf) {
+					const inp = document.querySelector('#userEditEventForm input[name="csrf"]');
+					if (inp) inp.value = data.csrf;
+					return data.csrf;
+				}
+			} catch (e) { /* ignore */ }
+			// fallback to existing value
+			const inp = document.querySelector('#userEditEventForm input[name="csrf"]');
+			return inp ? inp.value : '';
+		}
+
+		function userOpenEditEventModal(id){
+			fetch('<?= BASE_URL ?>/user/dashboard.php?action=get_event&id='+id, { credentials:'same-origin' })
+				.then(r=>r.json()).then(resp=>{
+					if(!resp || !resp.success){ alert(resp?.message || 'Failed to load event'); return; }
+					const ev = resp.event;
+					document.getElementById('ue_event_id').value = ev.id;
+					document.getElementById('ue_title').value = ev.title || '';
+					document.getElementById('ue_date').value = ev.event_date || '';
+					document.getElementById('ue_time').value = ev.event_time || '';
+					const modal = document.getElementById('userEditEventModal');
+					modal.style.display = 'flex';
+					document.body.style.overflow = 'hidden';
+				}).catch(()=>alert('Failed to load event'));
+		}
+		function userCloseEditEventModal(){
+			const modal = document.getElementById('userEditEventModal');
+			modal.style.display = 'none';
+			document.body.style.overflow = '';
+		}
+		async function userSaveEvent(){
+			const token = await userFetchCsrf();
+			const form = document.getElementById('userEditEventForm');
+			const fd = new FormData(form);
+			if (!fd.get('csrf') && token) fd.append('csrf', token);
+			fd.append('op','save_event');
+			fetch('', { method:'POST', credentials:'same-origin', body: fd })
+				.then(r=>r.json()).then(resp=>{
+					if(!resp || !resp.success){ alert(resp?.message || 'Failed to update'); return false; }
+					location.reload();
+				}).catch(()=>alert('Failed to update'));
+			return false;
+		}
+
+		async function confirmUserDeleteEvent(id) {
+			if (!confirm('Delete this event?')) return;
+			const form = new FormData();
+			form.append('op','delete_event');
+			const token = await userFetchCsrf();
+			form.append('csrf', token || '<?= $csrf ?>');
+			form.append('event_id', id);
+			fetch('', { method:'POST', credentials:'same-origin', body: form })
+			.then(r => r.json()).then(resp => {
+				if (!resp || !resp.success) {
+					alert(resp?.message || 'Failed to delete event');
+					return;
+				}
+				location.reload();
+			}).catch(() => alert('Failed to delete event.'));
+		}
+	</script>
 </body>
 </html>
