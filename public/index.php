@@ -4,6 +4,16 @@ require_once __DIR__ . '/../includes/auth.php';
 
 start_app_session();
 $user = current_user();
+// Lightweight CSRF token fetch for login form (avoids stale tokens)
+if (isset($_GET['action']) && $_GET['action'] === 'csrf') {
+	$token = $_SESSION[CSRF_TOKEN_NAME] ?? null;
+	if (!$token) {
+		$token = generate_csrf_token();
+	}
+	header('Content-Type: application/json');
+	echo json_encode(['csrf' => $token]);
+	exit;
+}
 if ($user) {
 	if ($user['role'] === 'admin') {
 		header('Location: ' . BASE_URL . '/admin/dashboard.php');
@@ -129,6 +139,17 @@ $csrf = generate_csrf_token();
 
 	<script src="<?= BASE_URL ?>/assets/app.js"></script>
 	<script>
+		// Refresh CSRF to avoid stale token errors
+		async function refreshCsrf() {
+			try {
+				const res = await fetch('<?= BASE_URL ?>/index.php?action=csrf', { credentials: 'same-origin' });
+				const data = await res.json();
+				if (data && data.csrf) {
+					const inp = document.querySelector('input[name=\"csrf\"]');
+					if (inp) inp.value = data.csrf;
+				}
+			} catch (e) {}
+		}
 		// Enhanced password toggle with better UX
 		function togglePassword() {
 			const input = document.getElementById('password');
@@ -151,6 +172,11 @@ $csrf = generate_csrf_token();
 			if (!form) return;
 			
 			form.addEventListener('submit', function(e) {
+				// last-moment CSRF refresh
+				e.preventDefault();
+				refreshCsrf().then(() => {
+					form.submit();
+				}).catch(() => form.submit());
 				const btn = form.querySelector('button[type="submit"]');
 				if (btn) {
 					btn.classList.add('loading');
