@@ -5613,10 +5613,102 @@ img, canvas, svg, video {
 /* Improve table scroll usability and spacing on small screens */
 @media (max-width: 768px) {
 	.table-container {
-		margin-left: calc(-1 * var(--space-3));
-		margin-right: calc(-1 * var(--space-3));
+		margin-left: 0;
+		margin-right: 0;
 		padding-left: var(--space-3);
 		padding-right: var(--space-3);
 		padding-bottom: var(--space-2);
+		scrollbar-gutter: stable both-edges;
+		overscroll-behavior-x: contain;
+		-webkit-overflow-scrolling: touch;
+	}
+	.table-scroll {
+		scrollbar-gutter: stable both-edges;
+		overscroll-behavior-x: contain;
+		-webkit-overflow-scrolling: touch;
+	}
+	/* Ensure card body doesn't clip inner scrollbars */
+	.card .card-body {
+		overflow: visible;
+	}
+}
+
+/* Admin: ensure content does not reserve sidebar width on small screens */
+@media (max-width: 1024px) {
+	body .content {
+		margin-left: 0 !important;
+		width: 100% !important;
+	}
+	/* Sidebar overlays content when opened via burger */
+	.sidebar {
+		position: fixed;
+		top: 0;
+		left: 0;
+		height: 100%;
+		z-index: 1100;
+		box-shadow: 4px 0 16px rgba(0,0,0,0.2);
+	}
+}
+
+/* All Seniors: refine table and controls responsiveness */
+@media (max-width: 1024px) {
+	.table-controls {
+		flex-wrap: wrap;
+		row-gap: var(--space-2);
+	}
+	.table-filters {
+		flex-wrap: wrap;
+		gap: var(--space-2);
+	}
+}
+
+@media (max-width: 768px) {
+	.table thead th {
+		font-size: 0.8rem;
+		padding: 0.5rem 0.5rem;
+	}
+	.table tbody td {
+		font-size: 0.9rem;
+		padding: 0.5rem 0.5rem;
+	}
+	/* Reduce minimum widths slightly to ease horizontal scrolling on phones */
+	.seniors-table th, .seniors-table td {
+		min-width: 100px;
+	}
+	/* Keep critical identifier columns readable */
+	.seniors-table th:nth-child(1), .seniors-table td:nth-child(1) { min-width: 130px; }
+	.seniors-table th:nth-child(2), .seniors-table td:nth-child(2) { min-width: 120px; }
+	/* Make action buttons not overflow */
+	.table .btn, .table .action-btn, .table .filter-btn {
+		white-space: nowrap;
+	}
+}
+
+/* --- iOS specific enhancements --- */
+/* Prevent text auto-zoom and layout jumps on iOS */
+html {
+	-webkit-text-size-adjust: 100%;
+}
+
+/* Detect iOS Safari/WebKit touch environment */
+@supports (-webkit-touch-callout: none) {
+	/* Avoid 100vh issues beneath dynamic URL bar */
+	html, body { height: -webkit-fill-available; }
+	.content { min-height: -webkit-fill-available; }
+
+	/* Momentum scrolling and reliable horizontal panning inside tables */
+	.table-container,
+	.table-scroll {
+		-webkit-overflow-scrolling: touch;
+		touch-action: pan-x;
+	}
+
+	/* Respect safe-area insets (notch/home indicator) */
+	body {
+		padding-bottom: max(var(--space-2), env(safe-area-inset-bottom));
+	}
+	.floating-burger {
+		left: max(16px, env(safe-area-inset-left) + 16px);
+		top: max(16px, env(safe-area-inset-top) + 16px);
 	}
 }
