@@ -2304,11 +2304,11 @@ tr:hover {
 }
 
 .content .dashboard-grid .dash-calendar {
-    grid-column: 1 / span 12;
+    grid-column: 1 / span 8;
     display: flex;
     flex-direction: column;
     overflow: hidden;
-    margin-top: var(--space-6);
+    margin-top: 0;
 }
 
 .dash-calendar .card-body {
@@ -5938,4 +5938,40 @@ html {
 	/* On mobile, sidebar collapses and content becomes full width */
 	.content { margin-left: 0 !important; }
 	.content::before { display: none; }
+}
+
+.dashboard-grid > a {
+    display: block;
+    width: 100%;
+}
+
+.dashboard-grid > a .card {
+    height: 100%;
+}
+
+.dash-calendar .card-header {
+	padding-bottom: var(--space-2);
+}
+
+.dash-calendar .card-body {
+	padding-top: var(--space-2);
+}
+
+/* Normalize header/body paddings so card bodies align */
+.dash-calendar .modern-card-header,
+.dash-upcoming .modern-card-header,
+.dash-calendar .card-header,
+.dash-upcoming .card-header {
+	padding: var(--space-4);
+}
+
+.dash-calendar .card-body,
+.dash-upcoming .card-body {
+	padding: var(--space-4);
+}
+
+@media (min-width: 1025px) {
+	.content .dashboard-grid .dash-calendar {
+		margin-top: -2rem; /* align with Upcoming Events card */
+	}
 }
