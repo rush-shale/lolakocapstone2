@@ -1647,8 +1647,12 @@ function clearFieldError(e) {
 
 // Drag-to-scroll for table containers (mouse and touch)
 function initializeDragScrollForTables() {
-    const containers = document.querySelectorAll('.table-scroll, .table-container');
-    containers.forEach(container => {
+    const SELECTOR = '.table-scroll, .table-container';
+
+    function wireContainer(container) {
+        if (!container || container.dataset.dragWired === 'true') return;
+        container.dataset.dragWired = 'true';
+
         let isDown = false;
         let startX = 0;
         let scrollLeft = 0;
@@ -1714,6 +1718,36 @@ function initializeDragScrollForTables() {
             }
             isDragging = false;
         }, true);
+    }
+
+    // Wire existing containers
+    document.querySelectorAll(SELECTOR).forEach(wireContainer);
+
+    // Observe for dynamically added tables/containers (e.g., navigating to Waiting Seniors)
+    const observer = new MutationObserver((mutations) => {
+        mutations.forEach(mutation => {
+            if (mutation.type === 'childList') {
+                mutation.addedNodes.forEach(node => {
+                    if (!(node instanceof HTMLElement)) return;
+                    if (node.matches && node.matches(SELECTOR)) {
+                        wireContainer(node);
+                    }
+                    // Also check descendants
+                    node.querySelectorAll?.(SELECTOR).forEach(wireContainer);
+                });
+            } else if (mutation.type === 'attributes' && mutation.target instanceof HTMLElement) {
+                const el = mutation.target;
+                if (el.matches && el.matches(SELECTOR)) {
+                    wireContainer(el);
+                }
+            }
+        });
+    });
+
+    observer.observe(document.body, {
+        childList: true,
+        subtree: true,
+        attributes: false
     });
 
     // Add minimal styles to indicate dragging (optional, non-intrusive)
