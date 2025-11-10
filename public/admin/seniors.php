@@ -90,38 +90,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 	error_log("Session ID: " . session_id());
 	error_log("Session data: " . print_r($_SESSION, true));
 	
-	// Validate CSRF token - but allow create/update operations to proceed even if token validation fails
-	// This is a temporary workaround to identify if CSRF is the actual blocker
+	// Validate CSRF token
 	$token_valid = validate_csrf_token($submitted_token);
 	
 	if (!$token_valid) {
-		error_log("=== CSRF VALIDATION FAILED ===");
-		error_log("Operation: " . $op);
-		error_log("Session ID: " . session_id());
-		error_log("Session has token: " . (isset($_SESSION[CSRF_TOKEN_NAME]) ? 'YES' : 'NO'));
-		error_log("Submitted token: " . ($submitted_token ? substr($submitted_token, 0, 40) . '... (Len: ' . strlen($submitted_token) . ')' : 'EMPTY'));
-		error_log("Session token: " . (isset($_SESSION[CSRF_TOKEN_NAME]) ? substr($_SESSION[CSRF_TOKEN_NAME], 0, 40) . '... (Len: ' . strlen($_SESSION[CSRF_TOKEN_NAME]) . ')' : 'NOT SET'));
-		
-		// Manual comparison for debugging
-		if (isset($_SESSION[CSRF_TOKEN_NAME]) && !empty($submitted_token)) {
-			$manual_match = hash_equals($_SESSION[CSRF_TOKEN_NAME], $submitted_token);
-			error_log("Manual hash_equals check: " . ($manual_match ? 'MATCH' : 'NO MATCH'));
-			error_log("First 10 chars match: " . (substr($_SESSION[CSRF_TOKEN_NAME], 0, 10) === substr($submitted_token, 0, 10) ? 'YES' : 'NO'));
-		}
-		
-		// For create/update/transfer/deceased operations, allow them to proceed even if CSRF fails
-		// This helps prevent issues with session token mismatches
-		if (in_array($op, ['create', 'update', 'transfer_details', 'mark_deceased'])) {
-			error_log("WARNING: CSRF validation failed but allowing $op operation to proceed for debugging");
-			$token_valid = true; // Override validation failure for debugging
-								} else {
-			// For other operations, require valid CSRF token
-			$message = 'Invalid session token. Please refresh the page and try again.';
-			error_log("CSRF validation failed for operation: " . $op);
-			$csrf = generate_csrf_token();
-			error_log("Regenerated CSRF token for next attempt");
-			$token_valid = false;
-		}
+		// Require valid CSRF token for all modifying operations
+		$message = 'Invalid session token. Please refresh the page and try again.';
+		$csrf = generate_csrf_token();
+		$token_valid = false;
 	}
 	
 	if ($token_valid) {
@@ -1657,7 +1633,7 @@ try {
 							</div>
 						</div>
 					</div>
-					<div class="table-container table-scroll">
+					<div class="table-container table-scroll seniors-scroll">
                             <table class="modern-table seniors-table">
                                 <thead>
 									<tr>
