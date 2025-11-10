@@ -365,6 +365,82 @@ $totalAttendances = (int)$stmtTotalAttendances->fetchColumn();
 			font-weight: 500;
 		}
 
+		/* Responsive: tablet/desktop adjustments */
+		@media (max-width: 1280px) {
+			.dashboard-grid,
+			.content .dashboard-grid,
+			main.content .dashboard-grid {
+				grid-template-columns: 1fr 1fr !important;
+				grid-template-rows: auto auto auto auto !important;
+				gap: 1rem !important;
+				padding: 0.75rem !important;
+			}
+			.dash-stats { grid-column: 1 / 3; grid-row: 1; min-height: 240px; }
+			.dash-barangay { grid-column: 1; grid-row: 2; min-height: 420px; }
+			.dash-osca { grid-column: 2; grid-row: 2; min-height: 420px; }
+			.dash-active-seniors { grid-column: 1 / 3; grid-row: 3; min-height: 420px; }
+			.dash-past { grid-column: 1 / 3; grid-row: 4; min-height: 320px; }
+			.stats-grid { grid-template-columns: repeat(3, 1fr); gap: 1.25rem; padding: 2rem 1rem; }
+			.stat-value { font-size: 4.5rem; }
+			.stat-label { font-size: 1.25rem; }
+		}
+
+		/* Responsive: collapse to single column on small laptops/tablets */
+		@media (max-width: 1024px) {
+			main.content {
+				margin-left: 0;
+				width: 100%;
+				max-width: 100%;
+			}
+			.dashboard-grid,
+			.content .dashboard-grid,
+			main.content .dashboard-grid {
+				grid-template-columns: 1fr !important;
+				grid-template-rows: auto auto auto auto auto !important;
+				gap: 1rem !important;
+				padding: 0.75rem !important;
+			}
+			.dash-stats { grid-column: 1; grid-row: 1; min-height: auto; }
+			.dash-barangay { grid-column: 1; grid-row: 2; min-height: auto; }
+			.dash-osca { grid-column: 1; grid-row: 3; min-height: auto; }
+			.dash-active-seniors { grid-column: 1; grid-row: 4; min-height: auto; }
+			.dash-past { grid-column: 1; grid-row: 5; min-height: auto; }
+			.stats-grid { grid-template-columns: repeat(3, 1fr); gap: 1rem; padding: 1.5rem 1rem; }
+			.card-title-section h2 { font-size: 1.25rem; }
+			.card-title-section p { font-size: 0.95rem; }
+		}
+
+		/* Responsive: phones */
+		@media (max-width: 768px) {
+			.dashboard-grid,
+			.content .dashboard-grid,
+			main.content .dashboard-grid {
+				gap: 0.75rem !important;
+				padding: 0.75rem 0.5rem !important;
+			}
+			.modern-card-header {
+				flex-wrap: wrap;
+				gap: 0.5rem;
+			}
+			.card-title-section h2 { font-size: 1.125rem; }
+			.card-title-section p { font-size: 0.9rem; }
+			.stats-grid { grid-template-columns: 1fr; gap: 0.75rem; padding: 1rem; }
+			.stat-item { padding: 1rem; }
+			.stat-value { font-size: 3rem; margin-bottom: 0.5rem; }
+			.stat-label { font-size: 1rem; }
+			.table-container { padding: 0.75rem; }
+			.table-container th, .table-container td { padding: 0.6rem 0.75rem; font-size: 0.95rem; }
+		}
+
+		/* Extra small phones */
+		@media (max-width: 480px) {
+			.card-title-section h2 { font-size: 1.05rem; }
+			.card-title-section p { font-size: 0.85rem; }
+			.stat-value { font-size: 2.4rem; }
+			.stat-label { font-size: 0.95rem; }
+			.table-container th, .table-container td { padding: 0.5rem 0.6rem; font-size: 0.9rem; }
+		}
+
 	</style>
 </head>
 <body>
