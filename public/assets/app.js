@@ -185,6 +185,10 @@ function removeSidebarOverlay() {
         function initializeFormEnhancements() {
             const forms = document.querySelectorAll('form');
             forms.forEach(form => {
+                // Allow specific forms to opt-out from global handlers
+                if (form.hasAttribute('data-no-global-submit')) {
+                    return;
+                }
                 form.addEventListener('submit', handleFormSubmit);
                 
                 // Enhanced input interactions

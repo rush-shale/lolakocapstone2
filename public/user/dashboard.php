@@ -111,10 +111,10 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_event') {
 	header('Content-Type: application/json');
 	$eventId = (int)($_GET['id'] ?? 0);
 	if (!$eventId) { echo json_encode(['success' => false, 'message' => 'Invalid id']); exit; }
-	$chk = $pdo->prepare("SELECT id, title, event_date, event_time, scope, barangay, created_by FROM events WHERE id = ? LIMIT 1");
+	$chk = $pdo->prepare("SELECT id, title, description, event_date, event_time, scope, barangay, created_by FROM events WHERE id = ? LIMIT 1");
 	$chk->execute([$eventId]);
 	$ev = $chk->fetch();
-	if (!$ev || $ev['scope'] !== 'barangay' || strtolower($ev['barangay']) !== strtolower($user['barangay']) || (int)$ev['created_by'] !== (int)$user['id']) {
+	if (!$ev || $ev['scope'] !== 'barangay' || strtolower($ev['barangay']) !== strtolower($user['barangay'])) {
 		echo json_encode(['success' => false, 'message' => 'Not allowed']); exit;
 	}
 	echo json_encode(['success' => true, 'event' => $ev]); exit;
@@ -134,7 +134,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 		$chk = $pdo->prepare("SELECT id, created_by, scope, barangay FROM events WHERE id = ? LIMIT 1");
 		$chk->execute([$eventId]);
 		$ev = $chk->fetch();
-		if (!$ev || $ev['scope'] !== 'barangay' || strtolower($ev['barangay']) !== strtolower($user['barangay']) || (int)$ev['created_by'] !== (int)$user['id']) {
+		if (!$ev || $ev['scope'] !== 'barangay' || strtolower($ev['barangay']) !== strtolower($user['barangay'])) {
 			echo json_encode(['success' => false, 'message' => 'Not allowed']); exit;
 		}
 		$pdo->prepare("DELETE FROM events WHERE id = ? LIMIT 1")->execute([$eventId]);
@@ -145,16 +145,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 		$title = trim($_POST['title'] ?? '');
 		$event_date = $_POST['event_date'] ?? '';
 		$event_time = $_POST['event_time'] ?? null;
+		$description = trim($_POST['description'] ?? '');
 		if (!$eventId || $title === '' || $event_date === '') {
 			echo json_encode(['success' => false, 'message' => 'Missing required fields']); exit;
 		}
 		$chk = $pdo->prepare("SELECT id, created_by, scope, barangay FROM events WHERE id = ? LIMIT 1");
 		$chk->execute([$eventId]);
 		$ev = $chk->fetch();
-		if (!$ev || $ev['scope'] !== 'barangay' || strtolower($ev['barangay']) !== strtolower($user['barangay']) || (int)$ev['created_by'] !== (int)$user['id']) {
+		if (!$ev || $ev['scope'] !== 'barangay' || strtolower($ev['barangay']) !== strtolower($user['barangay'])) {
 			echo json_encode(['success' => false, 'message' => 'Not allowed']); exit;
 		}
-		$pdo->prepare("UPDATE events SET title = ?, event_date = ?, event_time = ? WHERE id = ?")->execute([$title, $event_date, $event_time ?: null, $eventId]);
+		$pdo->prepare("UPDATE events SET title = ?, description = ?, event_date = ?, event_time = ? WHERE id = ?")->execute([$title, $description ?: null, $event_date, $event_time ?: null, $eventId]);
 		echo json_encode(['success' => true]); exit;
 	}
 	echo json_encode(['success' => false, 'message' => 'Invalid operation']); exit;
@@ -561,6 +562,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 								<thead>
 									<tr>
 										<th>Event</th>
+										<th>Description</th>
 										<th>Date</th>
 										<th>Time</th>
 										<th>Status</th>
@@ -571,6 +573,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 									<?php foreach ($barangayEvents as $e): ?>
 										<tr>
 											<td><strong><?= htmlspecialchars($e['title']) ?></strong></td>
+											<td><?= $e['description'] ? nl2br(htmlspecialchars($e['description'])) : '<span style="color:#9ca3af;">No description</span>' ?></td>
 											<td><?= date('M d, Y', strtotime($e['event_date'])) ?></td>
 											<td><?= $e['event_time'] ? date('g:i A', strtotime($e['event_time'])) : 'All Day' ?></td>
 											<td>
@@ -774,12 +777,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 				<h3 style="margin:0; font-size:1.125rem;">Edit Event</h3>
 				<button onclick="userCloseEditEventModal()" style="background:none; border:none; font-size:1.5rem; line-height:1; cursor:pointer;">&times;</button>
 			</div>
-			<form id="userEditEventForm" onsubmit="return userSaveEvent();" style="padding:1rem 1.25rem; display:flex; flex-direction:column; gap:0.75rem;">
+			<form id="userEditEventForm" data-no-global-submit="true" method="post" action="" onsubmit="return userSaveEvent(event);" style="padding:1rem 1.25rem; display:flex; flex-direction:column; gap:0.75rem;">
 				<input type="hidden" name="csrf" value="<?= $csrf ?>">
 				<input type="hidden" name="event_id" id="ue_event_id">
 				<div>
 					<label for="ue_title" style="display:block; font-weight:600; margin-bottom:0.25rem;">Title *</label>
 					<input id="ue_title" name="title" type="text" required style="width:100%; padding:0.6rem; border:1px solid #d1d5db; border-radius:8px;">
+				</div>
+				<div>
+					<label for="ue_description" style="display:block; font-weight:600; margin-bottom:0.25rem;">Description</label>
+					<textarea id="ue_description" name="description" rows="3" style="width:100%; padding:0.6rem; border:1px solid #d1d5db; border-radius:8px; resize:vertical;" placeholder="Enter event description (optional)"></textarea>
 				</div>
 				<div style="display:grid; grid-template-columns:1fr 1fr; gap:0.75rem;">
 					<div>
@@ -803,7 +810,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 	<script>
 		async function userFetchCsrf() {
 			try {
-				const res = await fetch('<?= BASE_URL ?>/user/dashboard.php?action=csrf', { credentials: 'same-origin' });
+				const res = await fetch('<?= BASE_URL ?>/user/dashboard.php?action=csrf&r=' + Date.now(), { credentials: 'same-origin', cache: 'no-store', headers: { 'Accept': 'application/json' } });
 				const data = await res.json();
 				if (data && data.csrf) {
 					const inp = document.querySelector('#userEditEventForm input[name="csrf"]');
@@ -823,6 +830,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 					const ev = resp.event;
 					document.getElementById('ue_event_id').value = ev.id;
 					document.getElementById('ue_title').value = ev.title || '';
+					document.getElementById('ue_description').value = ev.description || '';
 					document.getElementById('ue_date').value = ev.event_date || '';
 					document.getElementById('ue_time').value = ev.event_time || '';
 					const modal = document.getElementById('userEditEventModal');
@@ -835,17 +843,45 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 			modal.style.display = 'none';
 			document.body.style.overflow = '';
 		}
-		async function userSaveEvent(){
+		async function userSaveEvent(e){
+			// Prevent native form submission; async handlers return a Promise which browsers treat as truthy
+			if (e && typeof e.preventDefault === 'function') e.preventDefault();
 			const token = await userFetchCsrf();
 			const form = document.getElementById('userEditEventForm');
 			const fd = new FormData(form);
 			if (!fd.get('csrf') && token) fd.append('csrf', token);
 			fd.append('op','save_event');
-			fetch('', { method:'POST', credentials:'same-origin', body: fd })
-				.then(r=>r.json()).then(resp=>{
-					if(!resp || !resp.success){ alert(resp?.message || 'Failed to update'); return false; }
-					location.reload();
-				}).catch(()=>alert('Failed to update'));
+			// Put button in loading state, prevent double submit
+			const submitBtn = form.querySelector('button[type=\"submit\"]');
+			const originalText = submitBtn ? submitBtn.innerHTML : '';
+			if (submitBtn) { submitBtn.disabled = true; submitBtn.classList.add('loading'); submitBtn.innerHTML = '<span class=\"loading-spinner\"></span> Processing...'; }
+			fetch('', { method:'POST', credentials:'same-origin', body: fd, cache: 'no-store', headers: { 'Accept': 'application/json' } })
+				.then(async (r) => {
+					// Try to parse JSON; if it fails but HTTP is OK, still proceed
+					let data = null;
+					try {
+						data = await r.clone().json();
+					} catch (_) {
+						// Non-JSON (e.g., cached HTML) — fall back to OK status
+					}
+					if (!r.ok) {
+						throw new Error(data?.message || 'Request failed');
+					}
+					if (!data || data.success !== true) {
+						// If server didn't send JSON but request succeeded, treat as success
+						if (!data) {
+							// Bust cache on reload so UI reflects the update immediately
+							window.location.href = window.location.pathname + window.location.search.replace(/([?&])r=\d+/, '') + (window.location.search ? '&' : '?') + 'r=' + Date.now();
+							return;
+						}
+						alert(data?.message || 'Failed to update');
+						return false;
+					}
+					// Cache-busting reload to avoid stale SW cache
+					window.location.href = window.location.pathname + window.location.search.replace(/([?&])r=\d+/, '') + (window.location.search ? '&' : '?') + 'r=' + Date.now();
+				})
+				.catch(()=>alert('Failed to update'))
+				.finally(()=>{ if (submitBtn) { submitBtn.disabled = false; submitBtn.classList.remove('loading'); submitBtn.innerHTML = originalText; } });
 			return false;
 		}
 
