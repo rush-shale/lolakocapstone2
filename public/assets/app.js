@@ -530,20 +530,7 @@ function validateField(e) {
 function showFieldError(field, message) {
     field.style.borderColor = 'var(--danger)';
     field.style.boxShadow = '0 0 0 4px var(--danger-light)';
-    
-    const errorDiv = document.createElement('div');
-    errorDiv.className = 'field-error';
-    errorDiv.textContent = message;
-    errorDiv.style.cssText = `
-        color: var(--danger);
-        font-size: var(--font-size-xs);
-        font-weight: 600;
-        margin-top: var(--space-sm);
-        animation: slideIn 0.3s ease;
-    `;
-    
-    field.parentNode.appendChild(errorDiv);
-    field._errorDiv = errorDiv;
+    // Suppress inline error notifications
 }
 
 function clearFieldError(e) {
@@ -623,24 +610,7 @@ function clearFieldError(e) {
         }
 
         function showModernFieldError(group, message) {
-            const errorDiv = document.createElement('div');
-            errorDiv.className = 'field-error';
-            errorDiv.innerHTML = `
-                <i class="fas fa-exclamation-circle"></i>
-                <span>${message}</span>
-            `;
-            errorDiv.style.cssText = `
-                display: flex;
-                align-items: center;
-                gap: var(--space-xs);
-                color: var(--danger);
-                font-size: var(--font-size-xs);
-                font-weight: 600;
-                margin-top: var(--space-sm);
-                animation: slideIn 0.3s ease;
-            `;
-            
-            group.appendChild(errorDiv);
+            // Suppress inline error notifications
         }
 
         // Theme Toggle Functionality
@@ -827,10 +797,7 @@ function clearFieldError(e) {
         }
 
         function showFieldSuccess(group, message) {
-            const successDiv = document.createElement('div');
-            successDiv.className = 'field-success';
-            successDiv.textContent = message;
-            group.appendChild(successDiv);
+            // Suppress inline success notifications
         }
 
         // Enhanced Form Submission
@@ -895,10 +862,7 @@ function clearFieldError(e) {
         }
 
         function showFieldError(group, message) {
-            const errorDiv = document.createElement('div');
-            errorDiv.className = 'field-error';
-            errorDiv.textContent = message;
-            group.appendChild(errorDiv);
+            // Suppress inline error notifications
         }
 
         // Form Auto-save functionality

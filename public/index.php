@@ -66,7 +66,7 @@ $csrf = generate_csrf_token();
 					</div>
 				<?php endif; ?>
 				
-				<form method="post" action="<?= BASE_URL ?>/login.php" class="login-form modern-form">
+				<form method="post" action="<?= BASE_URL ?>/login.php" class="login-form modern-form" novalidate>
 					<input type="hidden" name="csrf" value="<?= $csrf ?>">
 					
 					<div class="form-group modern-form-group">
