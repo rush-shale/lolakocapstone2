@@ -172,7 +172,7 @@ try {
                                     <th>Barangay</th>
                                     <th>Category</th>
                                     <th colspan="4" style="text-align:center;">Social Pension</th>
-                                    <th colspan="5" style="text-align:center;">Other Benefits</th>
+                                    <th colspan="4" style="text-align:center;">Other Benefits</th>
                                 </tr>
                                 <tr>
                                     <th></th>
@@ -188,7 +188,6 @@ try {
                                     <th>Octogenarian</th>
                                     <th>Nonagenarian</th>
                                     <th>Centenarian</th>
-                                    <th>Financial Asst.</th>
                                     <th>Burial Asst.</th>
                                 </tr>
                             </thead>
@@ -206,7 +205,7 @@ try {
                                     <td><?= htmlspecialchars($row['barangay'] ?? '') ?></td>
                                     <td><?= htmlspecialchars($row['category'] === 'local' ? 'Local' : 'National') ?></td>
                                     <?php
-                                        $types = ['sp_q1','sp_q2','sp_q3','sp_q4','octogenarian','nonagenarian','centenarian','financial_asst','burial_asst'];
+                                        $types = ['sp_q1','sp_q2','sp_q3','sp_q4','octogenarian','nonagenarian','centenarian','burial_asst'];
                                         $sid = (int)$row['id'];
                                         $current = [];
                                         // Use preloaded map if available, else empty state
