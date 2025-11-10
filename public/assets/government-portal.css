@@ -1652,7 +1652,7 @@ body:not(.sidebar-hidden) .content {
 
 /* Universal table scroll styling for all sections */
 .table-scroll {
-	overflow-x: auto;
+	overflow-x: scroll; /* ensure horizontal scrollbar is present for wide tables */
 	overflow-y: visible;
 	-webkit-overflow-scrolling: touch;
 	max-width: 100%;
@@ -1666,6 +1666,22 @@ body:not(.sidebar-hidden) .content {
 .table-scroll table td {
 	min-width: 120px;
 	white-space: nowrap;
+}
+
+/* All Seniors: make the table's scroll area clearly visible */
+.table-scroll::-webkit-scrollbar {
+	height: 12px;
+}
+.table-scroll::-webkit-scrollbar-track {
+	background: #f3f4f6;
+	border-radius: 8px;
+}
+.table-scroll::-webkit-scrollbar-thumb {
+	background: #cbd5e1;
+	border-radius: 8px;
+}
+.table-scroll::-webkit-scrollbar-thumb:hover {
+	background: #94a3b8;
 }
 
 /* General table styling */
@@ -5684,6 +5700,24 @@ img, canvas, svg, video {
 	}
 }
 
+/* Always expose a horizontal scrollbar area on desktop for wide tables */
+@media (min-width: 1025px) {
+	.table-container,
+	.table-scroll {
+		overflow-x: auto; /* ensure horizontal scrolling is available */
+		scrollbar-gutter: stable both-edges; /* reserve space for scrollbar */
+		-webkit-overflow-scrolling: touch;
+	}
+	/* Make the scrollbar track visible in WebKit browsers */
+	.table-container::-webkit-scrollbar,
+	.table-scroll::-webkit-scrollbar {
+		height: 10px;
+	}
+	/* Provide a little breathing room so the scrollbar is not clipped */
+	.table-container {
+		padding-bottom: var(--space-2);
+	}
+}
 /* --- iOS specific enhancements --- */
 /* Prevent text auto-zoom and layout jumps on iOS */
 html {
