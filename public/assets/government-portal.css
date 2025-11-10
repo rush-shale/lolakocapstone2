@@ -5700,6 +5700,53 @@ img, canvas, svg, video {
 	}
 }
 
+/* Small iPhones (up to 414px logical width, e.g., XR/11/12/14 Pro Max in portrait) */
+@media (max-width: 414px) {
+	/* Tighter global paddings */
+	.content { padding-left: var(--space-3); padding-right: var(--space-3); }
+	.page-header { padding: var(--space-4) var(--space-4) var(--space-3); }
+	.card { margin-bottom: var(--space-3); }
+	.card-header { padding: var(--space-3) var(--space-4); }
+	.card-body { padding: var(--space-3) var(--space-4); }
+	.modern-card-header { flex-wrap: wrap; gap: var(--space-2); }
+	.card-actions { width: 100%; justify-content: flex-start; gap: var(--space-2); }
+
+	/* Dashboard widgets stack with tighter gaps */
+	.dashboard-grid { gap: var(--space-3) !important; padding: var(--space-3) !important; }
+
+	/* Table: reduce font and cell padding; keep horizontal scroll */
+	.table-container { padding: var(--space-2) var(--space-2) var(--space-2); max-width: 100vw; }
+	.table-scroll { overflow-x: scroll; max-width: 100vw; }
+	.table thead th { font-size: 0.78rem; padding: 0.45rem 0.5rem; }
+	.table tbody td { font-size: 0.9rem; padding: 0.45rem 0.5rem; }
+	.seniors-table th, .seniors-table td { min-width: 95px; }
+	.seniors-table th:nth-child(1), .seniors-table td:nth-child(1) { min-width: 120px; }
+	.seniors-table th:nth-child(2), .seniors-table td:nth-child(2) { min-width: 110px; }
+}
+
+/* Very small iPhones (SE/mini ~375px width) */
+@media (max-width: 375px) {
+	.content { padding-left: var(--space-2); padding-right: var(--space-2); }
+	.page-header { padding: var(--space-3) var(--space-3) var(--space-2); }
+	.card-header { padding: var(--space-3); }
+	.card-body { padding: var(--space-3); }
+	.card-title, .card h2 { font-size: 1rem; }
+	.card-subtitle { font-size: 0.85rem; }
+
+	/* Tables even tighter */
+	.table thead th { font-size: 0.75rem; padding: 0.4rem 0.45rem; }
+	.table tbody td { font-size: 0.88rem; padding: 0.4rem 0.45rem; }
+	.seniors-table th, .seniors-table td { min-width: 90px; }
+	.seniors-table th:nth-child(1), .seniors-table td:nth-child(1) { min-width: 115px; }
+}
+
+/* Ultra compact screens (≤320px) */
+@media (max-width: 320px) {
+	.card-title, .card h2 { font-size: 0.95rem; }
+	.card-subtitle { font-size: 0.8rem; }
+	.table thead th { font-size: 0.72rem; }
+	.table tbody td { font-size: 0.85rem; }
+}
 /* Always expose a horizontal scrollbar area on desktop for wide tables */
 @media (min-width: 1025px) {
 	.table-container,
