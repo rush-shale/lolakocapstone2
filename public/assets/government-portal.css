@@ -1066,6 +1066,12 @@ a:hover {
     font-size: var(--text-base);
 }
 
+/* Hide validation messages on login form */
+.login-form .field-error,
+.login-form .field-success {
+    display: none !important;
+}
+
 /* Form Actions */
 .form-actions {
     display: flex;

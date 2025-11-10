@@ -189,6 +189,11 @@ function removeSidebarOverlay() {
                 if (form.hasAttribute('data-no-global-submit')) {
                     return;
                 }
+                // Skip validation for login form
+                if (form.classList.contains('login-form')) {
+                    return;
+                }
+                
                 form.addEventListener('submit', handleFormSubmit);
                 
                 // Enhanced input interactions
@@ -207,8 +212,17 @@ function removeSidebarOverlay() {
             // Initialize form progress tracking
             initializeFormProgress();
             
-            // Initialize real-time validation
+            // Initialize real-time validation (excludes login form)
             initializeRealTimeValidation();
+            
+            // Remove any existing validation messages from login form
+            const loginForm = document.querySelector('.login-form');
+            if (loginForm) {
+                loginForm.querySelectorAll('.field-error, .field-success').forEach(el => el.remove());
+                loginForm.querySelectorAll('.form-group').forEach(group => {
+                    group.classList.remove('error', 'success', 'validating');
+                });
+            }
         }
 
         // Modern Form Interactions
@@ -710,7 +724,7 @@ function clearFieldError(e) {
 
         // Real-time Form Validation
         function initializeRealTimeValidation() {
-            const forms = document.querySelectorAll('form');
+            const forms = document.querySelectorAll('form:not(.login-form)');
             forms.forEach(form => {
                 const inputs = form.querySelectorAll('input, select, textarea');
                 
@@ -801,7 +815,11 @@ function clearFieldError(e) {
         }
 
         function showFieldSuccess(group, message) {
-            // Suppress inline success notifications
+            // Suppress inline success notifications - do not create any elements
+            const existingSuccess = group.querySelector('.field-success');
+            if (existingSuccess) {
+                existingSuccess.remove();
+            }
         }
 
         // Enhanced Form Submission
@@ -866,7 +884,11 @@ function clearFieldError(e) {
         }
 
         function showFieldError(group, message) {
-            // Suppress inline error notifications
+            // Suppress inline error notifications - do not create any elements
+            const existingError = group.querySelector('.field-error');
+            if (existingError) {
+                existingError.remove();
+            }
         }
 
         // Form Auto-save functionality
