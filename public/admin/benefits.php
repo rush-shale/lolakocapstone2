@@ -161,7 +161,7 @@ try {
                     <p class="card-subtitle">Mark seniors as having received their benefits</p>
                 </div>
                 <div class="card-body" style="padding: 0;">
-                    <div class="table-container table-scroll">
+                    <div class="table-container table-scroll benefits-scroll">
                         <table class="table benefits-wide">
                             <thead>
                                 <tr>
