@@ -337,6 +337,117 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 			min-width: 120px;
 		}
 
+		/* My Barangay Events table - ensure Actions column is always accessible */
+		.dash-barangay .table-container {
+			overflow-x: auto;
+			overflow-y: visible;
+			-webkit-overflow-scrolling: touch;
+			scrollbar-width: thin;
+			scrollbar-color: #cbd5e1 #f3f4f6;
+		}
+
+		.dash-barangay .table-container::-webkit-scrollbar {
+			height: 8px;
+		}
+
+		.dash-barangay .table-container::-webkit-scrollbar-track {
+			background: #f3f4f6;
+			border-radius: 4px;
+		}
+
+		.dash-barangay .table-container::-webkit-scrollbar-thumb {
+			background: #cbd5e1;
+			border-radius: 4px;
+		}
+
+		.dash-barangay .table-container::-webkit-scrollbar-thumb:hover {
+			background: #94a3b8;
+		}
+
+		.dash-barangay .table-container table {
+			min-width: 800px;
+			width: 100%;
+		}
+
+		.dash-barangay .table-container th:nth-child(6),
+		.dash-barangay .table-container td:nth-child(6) {
+			min-width: 150px;
+			white-space: nowrap;
+		}
+
+		.dash-barangay .table-container td:nth-child(6) {
+			display: flex;
+			gap: 0.5rem;
+			align-items: center;
+			justify-content: flex-start;
+		}
+
+		.dash-barangay .table-container .btn {
+			min-width: 60px;
+			padding: 0.5rem 0.75rem;
+			font-size: 0.875rem;
+			white-space: nowrap;
+			touch-action: manipulation;
+			cursor: pointer;
+			flex-shrink: 0;
+		}
+
+		/* Mobile optimizations for My Barangay Events */
+		@media (max-width: 768px) {
+			.dash-barangay .table-container {
+				overflow-x: scroll;
+				-webkit-overflow-scrolling: touch;
+				touch-action: pan-x;
+				padding-bottom: 0.5rem;
+			}
+
+			.dash-barangay .table-container::-webkit-scrollbar {
+				height: 10px;
+			}
+
+			.dash-barangay .table-container table {
+				min-width: 700px;
+			}
+
+			.dash-barangay .table-container th:nth-child(6),
+			.dash-barangay .table-container td:nth-child(6) {
+				min-width: 140px;
+				padding: 0.75rem 0.5rem;
+			}
+
+			.dash-barangay .table-container .btn {
+				min-width: 55px;
+				padding: 0.625rem 0.5rem;
+				font-size: 0.8125rem;
+			}
+		}
+
+		@media (max-width: 480px) {
+			.dash-barangay .table-container {
+				padding-bottom: 0.75rem;
+			}
+
+			.dash-barangay .table-container::-webkit-scrollbar {
+				height: 12px;
+			}
+
+			.dash-barangay .table-container table {
+				min-width: 650px;
+			}
+
+			.dash-barangay .table-container th:nth-child(6),
+			.dash-barangay .table-container td:nth-child(6) {
+				min-width: 130px;
+				padding: 0.625rem 0.375rem;
+			}
+
+			.dash-barangay .table-container .btn {
+				min-width: 50px;
+				padding: 0.5rem 0.375rem;
+				font-size: 0.75rem;
+			}
+		}
+
 		/* Empty State Styling */
 		.empty-state {
 			display: flex;
@@ -584,7 +695,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 													<button class="btn btn-sm" onclick="userOpenEditEventModal(<?= (int)$e['id'] ?>)">Edit</button>
 													<button class="btn btn-sm btn-danger" onclick="confirmUserDeleteEvent(<?= (int)$e['id'] ?>)">Delete</button>
 												<?php else: ?>
-													<small style=\"color:#6b7280;\">—</small>
+													<small style="color:#6b7280;">—</small>
 												<?php endif; ?>
 											</td>
 										</tr>
