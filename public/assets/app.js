@@ -5,6 +5,7 @@ document.addEventListener('DOMContentLoaded', () => {
         initializeSidebarInteractions();
         initializeFormEnhancements();
         initializeTableInteractions();
+        initializeDragScrollForTables();
         initializeSearchFunctionality();
         initializeTooltips();
         initializeLoadingStates();
@@ -1644,6 +1645,88 @@ function clearFieldError(e) {
             document.head.appendChild(style);
         }
 
+// Drag-to-scroll for table containers (mouse and touch)
+function initializeDragScrollForTables() {
+    const containers = document.querySelectorAll('.table-scroll, .table-container');
+    containers.forEach(container => {
+        let isDown = false;
+        let startX = 0;
+        let scrollLeft = 0;
+        let isDragging = false;
+
+        // Mouse events
+        container.addEventListener('mousedown', (e) => {
+            // Only left click
+            if (e.button !== 0) return;
+            isDown = true;
+            isDragging = false;
+            container.classList.add('is-dragging');
+            startX = e.pageX - container.offsetLeft;
+            scrollLeft = container.scrollLeft;
+        });
+
+        container.addEventListener('mouseleave', () => {
+            isDown = false;
+            container.classList.remove('is-dragging');
+        });
+
+        container.addEventListener('mouseup', () => {
+            isDown = false;
+            // prevent accidental text selection after drag
+            setTimeout(() => container.classList.remove('is-dragging'), 0);
+        });
+
+        container.addEventListener('mousemove', (e) => {
+            if (!isDown) return;
+            e.preventDefault();
+            const x = e.pageX - container.offsetLeft;
+            const walk = (x - startX); // pixels moved
+            if (Math.abs(walk) > 2) isDragging = true;
+            container.scrollLeft = scrollLeft - walk;
+        });
+
+        // Touch events
+        container.addEventListener('touchstart', (e) => {
+            if (!e.touches || e.touches.length !== 1) return;
+            isDown = true;
+            isDragging = false;
+            startX = e.touches[0].pageX - container.offsetLeft;
+            scrollLeft = container.scrollLeft;
+        }, { passive: true });
+
+        container.addEventListener('touchend', () => {
+            isDown = false;
+        }, { passive: true });
+
+        container.addEventListener('touchmove', (e) => {
+            if (!isDown || !e.touches || e.touches.length !== 1) return;
+            const x = e.touches[0].pageX - container.offsetLeft;
+            const walk = (x - startX);
+            if (Math.abs(walk) > 2) isDragging = true;
+            container.scrollLeft = scrollLeft - walk;
+        }, { passive: false });
+
+        // Prevent link clicks while dragging
+        container.addEventListener('click', (e) => {
+            if (isDragging) {
+                e.preventDefault();
+                e.stopPropagation();
+            }
+            isDragging = false;
+        }, true);
+    });
+
+    // Add minimal styles to indicate dragging (optional, non-intrusive)
+    if (!document.getElementById('drag-scroll-style')) {
+        const style = document.createElement('style');
+        style.id = 'drag-scroll-style';
+        style.textContent = `
+            .is-dragging { cursor: grabbing !important; user-select: none; }
+            .table-scroll, .table-container { cursor: grab; }
+        `;
+        document.head.appendChild(style);
+    }
+}
         function saveFormData(form, formId) {
             const formData = new FormData(form);
             const data = {};
