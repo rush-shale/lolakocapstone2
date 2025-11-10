@@ -5590,3 +5590,33 @@ body.modal-active .table-container {
 		display: none;
 	}
 }
+
+/* --- Global responsive enhancements (mobile/tablet/desktop) --- */
+/* Scale media to container to prevent overflow on small screens */
+img, canvas, svg, video {
+	max-width: 100%;
+	height: auto;
+}
+
+/* Make card headers wrap nicely on small screens */
+@media (max-width: 768px) {
+	.modern-card-header {
+		flex-wrap: wrap;
+		gap: var(--space-3);
+	}
+	.modern-card-header .card-actions {
+		width: 100%;
+		justify-content: flex-start;
+	}
+}
+
+/* Improve table scroll usability and spacing on small screens */
+@media (max-width: 768px) {
+	.table-container {
+		margin-left: calc(-1 * var(--space-3));
+		margin-right: calc(-1 * var(--space-3));
+		padding-left: var(--space-3);
+		padding-right: var(--space-3);
+		padding-bottom: var(--space-2);
+	}
+}
