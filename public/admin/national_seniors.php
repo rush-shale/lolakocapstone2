@@ -69,7 +69,6 @@ $seniors = $stmt->fetchAll();
 									<th>Age</th>
 									<th>Barangay</th>
 									<th>Validation Status</th>
-									<th>Actions</th>
 								</tr>
 							</thead>
 							<tbody>
@@ -81,15 +80,11 @@ $seniors = $stmt->fetchAll();
 											<td><?= htmlspecialchars($senior['age']) ?></td>
 											<td><?= htmlspecialchars($senior['barangay']) ?></td>
 											<td><?= htmlspecialchars($senior['validation_status']) ?></td>
-											<td>
-												<!-- Add action buttons as needed -->
-												<button class="button secondary small" onclick="editSenior(<?= $senior['id'] ?>)">Edit</button>
-											</td>
 										</tr>
 									<?php endforeach; ?>
 								<?php else: ?>
 									<tr>
-										<td colspan="6" style="text-align: center;">No national seniors found.</td>
+										<td colspan="5" style="text-align: center;">No national seniors found.</td>
 									</tr>
 								<?php endif; ?>
 							</tbody>
@@ -107,10 +102,6 @@ $seniors = $stmt->fetchAll();
 			} else {
 				window.location.href = '<?= BASE_URL ?>/admin/dashboard.php';
 			}
-		}
-		function editSenior(id) {
-			// Implement edit functionality or open modal
-			alert('Edit senior with ID: ' + id);
 		}
 
 		window.addEventListener('storage', function(event) {

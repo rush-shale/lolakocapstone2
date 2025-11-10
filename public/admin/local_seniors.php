@@ -51,7 +51,6 @@ $user = current_user();
                                     <th>Age</th>
                                     <th>Barangay</th>
                                     <th>Validation Status</th>
-                                    <th>Actions</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -62,9 +61,6 @@ $user = current_user();
                                     <td><?= (int)$senior['age'] ?></td>
                                     <td><?= htmlspecialchars($senior['barangay_name'] ?? 'N/A') ?></td>
                                     <td><?= htmlspecialchars($senior['validation_status'] ?? '') ?></td>
-                                    <td>
-                                        <button class="button secondary small" onclick="editSenior(<?= (int)$senior['id'] ?>)">Edit</button>
-                                    </td>
                                 </tr>
                                 <?php endforeach; ?>
                             </tbody>
@@ -82,9 +78,6 @@ $user = current_user();
             } else {
                 window.location.href = '<?= BASE_URL ?>/admin/dashboard.php';
             }
-        }
-        function editSenior(id){
-            alert('Edit senior with ID: ' + id);
         }
 
         window.addEventListener('storage', function(event) {
