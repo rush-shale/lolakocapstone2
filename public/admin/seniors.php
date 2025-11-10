@@ -61,6 +61,17 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_senior') {
     echo json_encode(['success' => true, 'senior' => $senior]);
     exit;
 }
+// Lightweight endpoint to fetch current CSRF token for modals/forms
+if (isset($_GET['action']) && $_GET['action'] === 'csrf') {
+	start_app_session();
+	$token = $_SESSION[CSRF_TOKEN_NAME] ?? null;
+	if (!$token) {
+		$token = generate_csrf_token();
+	}
+	header('Content-Type: application/json');
+	echo json_encode(['csrf' => $token]);
+	exit;
+}
 
 $message = '';
 
@@ -132,17 +143,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 		$purok = trim($_POST['purok'] ?? '') ?: '';
 		$cellphone = trim($_POST['cellphone'] ?? '') ?: '';
 		$benefits_received = isset($_POST['benefits_received']) ? 1 : 0;
-        $life_status = ($_POST['life_status'] ?? '') === 'deceased' ? 'deceased' : 'living';
+        // Preserve existing life_status on update if not provided by the form (edit modal may omit it)
+        $life_status_input = $_POST['life_status'] ?? null;
+        // Normalize explicit inputs; otherwise leave null for preservation on update
+        if ($life_status_input === 'deceased') {
+        	$life_status = 'deceased';
+        } elseif ($life_status_input === 'living') {
+        	$life_status = 'living';
+        } else {
+        	$life_status = null; // defer resolution; preserve existing value on update
+        }
 			// Read category - default to local if select has a value, otherwise check waiting list
         $category_input = $_POST['category'] ?? '';
 			
 			// Check if waiting list checkbox is set first (it overrides category)
 			if (isset($_POST['waiting_list']) && $_POST['waiting_list'] === '1') {
 				$category = 'waiting';
-			} elseif ($category_input === 'local') {
-            $category = 'local';
-        } elseif ($category_input === 'national') {
-            $category = 'national';
+			} elseif (in_array($category_input, ['local', 'national', 'waiting', 'transferred'], true)) {
+				$category = $category_input;
         } else {
 				// Default to local if category select has a default value but wasn't explicitly set
 				// This handles cases where the form might not properly submit the select value
@@ -207,6 +225,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 						$pdo->rollback();
 					} else {
 						error_log("Executing INSERT query for senior: $first_name $last_name");
+						// For creation, default to 'living' unless explicitly submitted as 'deceased'
+						$life_status_create = ($life_status_input === 'deceased') ? 'deceased' : 'living';
 						$stmt = $pdo->prepare('INSERT INTO seniors (first_name, middle_name, last_name, ext_name, age, date_of_birth, sex, place_of_birth, civil_status, educational_attainment, occupation, annual_income, other_skills, barangay, contact, osca_id_no, remarks, health_condition, purok, cellphone, benefits_received, life_status, category, validation_status, validation_date, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())');
 					$stmt->execute([
 						$first_name, $middle_name ?: null, $last_name, $ext_name ?: null, $age,
@@ -215,9 +235,34 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 						$occupation ?: null, $annual_income, $other_skills,
 						$barangay, $contact, $osca_id_no, $remarks,
 						$health_condition, $purok, $cellphone,
-						$benefits_received, $life_status, $category, $validation_status, $validation_date
+						$benefits_received, $life_status_create, $category, $validation_status, $validation_date
 					]);
 						$senior_id = $pdo->lastInsertId();
+					
+					// If created as deceased, ensure a corresponding basic record exists
+					if ($life_status_create === 'deceased') {
+						try {
+							$pdo->exec("CREATE TABLE IF NOT EXISTS senior_deaths (
+								id INT AUTO_INCREMENT PRIMARY KEY,
+								senior_id INT NOT NULL,
+								death_date DATE NULL,
+								place_of_death VARCHAR(255) NULL,
+								cause_of_death VARCHAR(255) NULL,
+								remarks TEXT NULL,
+								created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+								updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+								INDEX idx_senior_death_senior_id (senior_id)
+							) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
+							$exists = $pdo->prepare("SELECT id FROM senior_deaths WHERE senior_id = ? LIMIT 1");
+							$exists->execute([$senior_id]);
+							if (!$exists->fetch()) {
+								$ins = $pdo->prepare("INSERT INTO senior_deaths (senior_id) VALUES (?)");
+								$ins->execute([$senior_id]);
+							}
+						} catch (Exception $e) {
+							error_log("Failed to ensure senior_deaths record for newly created deceased senior {$senior_id}: " . $e->getMessage());
+						}
+					}
 					error_log("Senior inserted successfully with ID: $senior_id");
 						
 						// If benefits_received is checked, create benefit_records entries for all benefit types
@@ -268,6 +313,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 						$validation_status = 'Not Validated';
 						$validation_date = null;
 					}
+					// Resolve life_status: preserve current if not provided in form
+					if ($life_status === null) {
+						try {
+							$cur = $pdo->prepare('SELECT life_status FROM seniors WHERE id = ?');
+							$cur->execute([$id]);
+							$life_status = $cur->fetchColumn() ?: 'living';
+						} catch (Exception $ignore) {
+							$life_status = 'living';
+						}
+					}
 					$stmt = $pdo->prepare('UPDATE seniors SET first_name=?, middle_name=?, last_name=?, ext_name=?, age=?, date_of_birth=?, sex=?, place_of_birth=?, civil_status=?, educational_attainment=?, occupation=?, annual_income=?, other_skills=?, barangay=?, contact=?, osca_id_no=?, remarks=?, health_condition=?, purok=?, cellphone=?, benefits_received=?, life_status=?, category=?, validation_status=?, validation_date=? WHERE id=?');
 					$stmt->execute([
 						$first_name, $middle_name ?: null, $last_name, $ext_name ?: null, $age,
@@ -279,6 +334,32 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 						$benefits_received, $life_status, $category, $validation_status, $validation_date, $id
 					]);
 					$senior_id = $id;
+					
+					// Ensure a basic death record exists when marking as deceased
+					if ($life_status === 'deceased') {
+						try {
+							$pdo->exec("CREATE TABLE IF NOT EXISTS senior_deaths (
+								id INT AUTO_INCREMENT PRIMARY KEY,
+								senior_id INT NOT NULL,
+								death_date DATE NULL,
+								place_of_death VARCHAR(255) NULL,
+								cause_of_death VARCHAR(255) NULL,
+								remarks TEXT NULL,
+								created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+								updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+								INDEX idx_senior_death_senior_id (senior_id)
+							) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
+							
+							$exists = $pdo->prepare("SELECT id FROM senior_deaths WHERE senior_id = ? LIMIT 1");
+							$exists->execute([$senior_id]);
+							if (!$exists->fetch()) {
+								$ins = $pdo->prepare("INSERT INTO senior_deaths (senior_id) VALUES (?)");
+								$ins->execute([$senior_id]);
+							}
+						} catch (Exception $e) {
+							error_log("Failed to ensure senior_deaths record for senior {$senior_id}: " . $e->getMessage());
+						}
+					}
 					$message = 'Senior updated successfully';
 				}
 				
@@ -433,7 +514,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 					$stmt->execute(['deceased', $id]);
 					
 					// Insert death information into senior_deaths table
-					$stmt = $pdo->prepare('INSERT INTO senior_deaths (senior_id, date_of_death, time_of_death, place_of_death, cause_of_death) VALUES (?, ?, ?, ?, ?)');
+					$stmt = $pdo->prepare('INSERT INTO senior_deaths (senior_id, date_of_death, time_of_death, place_of_death, cause_of_death) VALUES (?, ?, ?, ?, ?)
+						ON DUPLICATE KEY UPDATE date_of_death = VALUES(date_of_death), time_of_death = VALUES(time_of_death), place_of_death = VALUES(place_of_death), cause_of_death = VALUES(cause_of_death)');
 					$stmt->execute([$id, $death_date, $death_time ?: null, $death_place, $death_cause]);
 					
 					// Remove any existing death information from remarks
@@ -613,26 +695,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 	}
 }
 
-// Regenerate CSRF token after successful operations or if validation failed
-// This ensures a fresh token for the next form submission
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-	if (isset($message)) {
-		// Check if operation was successful (no error message)
-		$isError = (strpos(strtolower($message), 'error') !== false || 
-		            strpos(strtolower($message), 'invalid') !== false ||
-		            strpos(strtolower($message), 'failed') !== false ||
-		            strpos(strtolower($message), 'duplicate') !== false);
-		
-		if (!$isError && strpos(strtolower($message), 'success') !== false) {
-			// Successful operation - regenerate token for next form
-$csrf = generate_csrf_token();
-			error_log("Operation successful - Regenerated CSRF token for next form");
-		} elseif ($isError) {
-			// Error occurred - keep same token so user can retry
-			error_log("Operation failed - Keeping CSRF token for retry");
-		}
-	}
-}
 try {
 	$pdo = get_db_connection();
 	$barangays = $pdo->query('SELECT name FROM barangays ORDER BY name')->fetchAll();
@@ -1577,12 +1639,12 @@ try {
         }
         ?>
         <?php if ($message): ?>
-		<div class="alert <?= strpos(strtolower($message), 'error') !== false || strpos(strtolower($message), 'duplicate') !== false || strpos(strtolower($message), 'failed') !== false ? 'alert-error' : 'alert-success' ?>">
+		<div class="alert <?= (strpos(strtolower($message), 'error') !== false || strpos(strtolower($message), 'duplicate') !== false || strpos(strtolower($message), 'failed') !== false || strpos(strtolower($message), 'invalid') !== false || strpos(strtolower($message), 'required') !== false) ? 'alert-error' : 'alert-success' ?>">
 			<div class="alert-icon">
-				<i class="fas fa-<?= strpos(strtolower($message), 'error') !== false || strpos(strtolower($message), 'duplicate') !== false || strpos(strtolower($message), 'failed') !== false ? 'exclamation-circle' : 'check-circle' ?>"></i>
+				<i class="fas fa-<?= (strpos(strtolower($message), 'error') !== false || strpos(strtolower($message), 'duplicate') !== false || strpos(strtolower($message), 'failed') !== false || strpos(strtolower($message), 'invalid') !== false || strpos(strtolower($message), 'required') !== false) ? 'exclamation-circle' : 'check-circle' ?>"></i>
 			</div>
 			<div class="alert-content">
-				<strong><?= strpos(strtolower($message), 'error') !== false || strpos(strtolower($message), 'duplicate') !== false || strpos(strtolower($message), 'failed') !== false ? 'Error!' : 'Success!' ?></strong>
+				<strong><?= (strpos(strtolower($message), 'error') !== false || strpos(strtolower($message), 'duplicate') !== false || strpos(strtolower($message), 'failed') !== false || strpos(strtolower($message), 'invalid') !== false || strpos(strtolower($message), 'required') !== false) ? 'Error!' : 'Success!' ?></strong>
 				<p><?= htmlspecialchars($message) ?></p>
 			</div>
 		</div>
@@ -1939,6 +2001,46 @@ try {
 		function openTransferModal(seniorId) {
 			// Set the senior ID
 			document.getElementById('transferSeniorId').value = seniorId;
+			// Refresh CSRF before showing modal
+			refreshCsrfInputs();
+			
+			// Reset radio/other input requirements
+			const otherRadio = document.querySelector('input[name="transfer_reason"][value="other"]');
+			const otherInput = document.querySelector('input[name="transfer_reason_other"]');
+			if (otherInput) {
+				otherInput.required = false;
+				otherInput.disabled = true;
+				otherInput.value = '';
+			}
+			// Wire change handlers once
+			if (openTransferModal._wired !== true) {
+				document.querySelectorAll('input[name="transfer_reason"]').forEach(r => {
+					r.addEventListener('change', function() {
+						if (this.value === 'other') {
+							if (otherInput) { otherInput.disabled = false; otherInput.required = true; otherInput.focus(); }
+						} else {
+							if (otherInput) { otherInput.required = false; otherInput.disabled = true; otherInput.value = ''; }
+						}
+					});
+				});
+				// Client-side validation for required fields
+				const form = document.getElementById('transferForm');
+				if (form && !form.dataset.validationWired) {
+					form.dataset.validationWired = 'true';
+					form.addEventListener('submit', function(e) {
+						const reason = (document.querySelector('input[name="transfer_reason"]:checked') || {}).value || '';
+						const otherVal = (document.querySelector('input[name="transfer_reason_other"]') || {}).value || '';
+						const addr = (document.getElementById('newAddress') || {}).value || '';
+						const date = (document.getElementById('effectiveDate') || {}).value || '';
+						if (!reason || !addr || !date || (reason === 'other' && !otherVal.trim())) {
+							e.preventDefault();
+							alert('Please fill in all required transfer information fields.');
+							return false;
+						}
+					});
+				}
+				openTransferModal._wired = true;
+			}
 			
 			// Set default effective date to today
 			const today = new Date().toISOString().split('T')[0];
@@ -1962,6 +2064,8 @@ try {
 		function openDeceasedModal(seniorId) {
 			// Set the senior ID
 			document.getElementById('deceasedSeniorId').value = seniorId;
+			// Refresh CSRF before showing modal
+			refreshCsrfInputs();
 			
 			// Set default death date to today
 			const today = new Date().toISOString().split('T')[0];
@@ -2233,12 +2337,12 @@ try {
 			</div>
 			<div class="modal-body">
 				<?php if ($message && $_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['op'] ?? '') === 'create'): ?>
-				<div class="alert <?= strpos(strtolower($message), 'error') !== false || strpos(strtolower($message), 'duplicate') !== false || strpos(strtolower($message), 'failed') !== false ? 'alert-error' : 'alert-success' ?>" style="margin-bottom: 1rem;">
+				<div class="alert <?= (strpos(strtolower($message), 'error') !== false || strpos(strtolower($message), 'duplicate') !== false || strpos(strtolower($message), 'failed') !== false || strpos(strtolower($message), 'invalid') !== false || strpos(strtolower($message), 'required') !== false) ? 'alert-error' : 'alert-success' ?>" style="margin-bottom: 1rem;">
 					<div class="alert-icon">
-						<i class="fas fa-<?= strpos(strtolower($message), 'error') !== false || strpos(strtolower($message), 'duplicate') !== false || strpos(strtolower($message), 'failed') !== false ? 'exclamation-circle' : 'check-circle' ?>"></i>
+						<i class="fas fa-<?= (strpos(strtolower($message), 'error') !== false || strpos(strtolower($message), 'duplicate') !== false || strpos(strtolower($message), 'failed') !== false || strpos(strtolower($message), 'invalid') !== false || strpos(strtolower($message), 'required') !== false) ? 'exclamation-circle' : 'check-circle' ?>"></i>
 					</div>
 					<div class="alert-content">
-						<strong><?= strpos(strtolower($message), 'error') !== false || strpos(strtolower($message), 'duplicate') !== false || strpos(strtolower($message), 'failed') !== false ? 'Error!' : 'Success!' ?></strong>
+						<strong><?= (strpos(strtolower($message), 'error') !== false || strpos(strtolower($message), 'duplicate') !== false || strpos(strtolower($message), 'failed') !== false || strpos(strtolower($message), 'invalid') !== false || strpos(strtolower($message), 'required') !== false) ? 'Error!' : 'Success!' ?></strong>
 						<p><?= htmlspecialchars($message) ?></p>
 					</div>
 				</div>
@@ -3150,14 +3254,23 @@ try {
 					<textarea id="editRemarks" name="remarks" rows="3" style="width: 100%; padding: 0.5rem; border: 1px solid #d1d5db; border-radius: 6px;"></textarea>
 				</div>
 
-				<div style="display: flex; align-items: center; gap: 1rem;">
-					<label for="editCategory" style="font-weight: 600; display: flex; align-items: center; gap: 0.5rem;">
-						Category:
-						<select id="editCategory" name="category" style="padding: 0.25rem; border: 1px solid #d1d5db; border-radius: 6px;">
+				<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1rem; align-items: center;">
+					<div style="display: flex; flex-direction: column; gap: 0.5rem;">
+						<label for="editLifeStatus" style="font-weight: 600;">Life Status</label>
+						<select id="editLifeStatus" name="life_status" style="padding: 0.35rem; border: 1px solid #d1d5db; border-radius: 6px;">
+							<option value="living">Living</option>
+							<option value="deceased">Deceased</option>
+						</select>
+					</div>
+					<div style="display: flex; flex-direction: column; gap: 0.5rem;">
+						<label for="editCategory" style="font-weight: 600;">Category</label>
+						<select id="editCategory" name="category" style="padding: 0.35rem; border: 1px solid #d1d5db; border-radius: 6px;">
 							<option value="local">Local</option>
 							<option value="national">National</option>
+							<option value="waiting">Waiting</option>
+							<option value="transferred">Transferred</option>
 						</select>
-					</label>
+					</div>
 				</div>
 
 				<div style="display: flex; justify-content: space-between; align-items: center; margin-top: 1rem; padding-top: 1rem; border-top: 1px solid #e5e7eb;">
@@ -3280,6 +3393,8 @@ try {
 
 		// When loading senior data for edit, set waiting list checkbox accordingly
 		function openEditSeniorModal(id) {
+			// Refresh CSRF token for safety before opening modal
+			refreshCsrfInputs();
 			fetch(`seniors.php?action=get_senior&id=${id}`)
 				.then(response => response.json())
 				.then(data => {
@@ -3310,7 +3425,8 @@ try {
 					document.getElementById('editCellphone').value = senior.cellphone || '';
 					document.getElementById('editHealthCondition').value = senior.health_condition || '';
 					document.getElementById('editRemarks').value = senior.remarks || '';
-					document.getElementById('editCategory').value = senior.category || '';
+					document.getElementById('editCategory').value = senior.category || 'local';
+					document.getElementById('editLifeStatus').value = senior.life_status || 'living';
 
 					// Show modal
 					document.getElementById('editSeniorModal').classList.add('active');
@@ -3321,6 +3437,23 @@ try {
 					alert('Error loading senior data.');
 				});
 		}
+		
+		// Refresh CSRF helper to keep hidden inputs current for all forms on this page
+		async function refreshCsrfInputs() {
+			try {
+				const res = await fetch('seniors.php?action=csrf', { credentials: 'same-origin' });
+				const data = await res.json();
+				if (data && data.csrf) {
+					document.querySelectorAll('input[name="csrf"]').forEach(inp => { inp.value = data.csrf; });
+				}
+			} catch (_) {}
+		}
+		// Refresh CSRF on page load and periodically
+		document.addEventListener('DOMContentLoaded', function() {
+			refreshCsrfInputs();
+			// Refresh every 5 minutes to keep session fresh for long-lived pages
+			setInterval(refreshCsrfInputs, 5 * 60 * 1000);
+		});
 	</script>
 </body>
 </html>
