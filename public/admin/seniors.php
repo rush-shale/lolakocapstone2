@@ -180,8 +180,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 				$message = 'Age is required and must be at least 60.';
 			} elseif (empty($barangay)) {
 				$message = 'Barangay is required.';
-			} elseif (empty($osca_id_no)) {
-				$message = 'OSCA ID Number is required.';
 			} elseif (empty($sex)) {
 				$message = 'Sex is required.';
 			} elseif (empty($civil_status)) {
@@ -227,6 +225,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 						error_log("Executing INSERT query for senior: $first_name $last_name");
 						// For creation, default to 'living' unless explicitly submitted as 'deceased'
 						$life_status_create = ($life_status_input === 'deceased') ? 'deceased' : 'living';
+						// Auto-assign next OSCA ID if not provided
+						if ($osca_id_no === '') {
+							try {
+								$nextIdStmt = $pdo->query("SELECT COALESCE(MAX(CAST(osca_id_no AS UNSIGNED)),0)+1 FROM seniors");
+								$osca_id_no = (string)((int)$nextIdStmt->fetchColumn() ?: 1);
+							} catch (Exception $ignore) {
+								$osca_id_no = '1';
+							}
+						}
 						$stmt = $pdo->prepare('INSERT INTO seniors (first_name, middle_name, last_name, ext_name, age, date_of_birth, sex, place_of_birth, civil_status, educational_attainment, occupation, annual_income, other_skills, barangay, contact, osca_id_no, remarks, health_condition, purok, cellphone, benefits_received, life_status, category, validation_status, validation_date, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())');
 					$stmt->execute([
 						$first_name, $middle_name ?: null, $last_name, $ext_name ?: null, $age,
@@ -2571,20 +2578,8 @@ try {
 						<!-- Contact field removed per request -->
 
 						<div class="form-row">
-							<div class="form-group">
-								<label for="osca_id_no" class="form-label">
-									<span class="label-text">OSCA ID NO.</span>
-								</label>
-								<input
-									type="text"
-									name="osca_id_no"
-									id="osca_id_no"
-									class="form-input"
-									placeholder="Enter OSCA ID Number"
-									required
-								>
-							</div>
-
+							<!-- OSCA ID is now auto-assigned on create; field removed -->
+							
 							<div class="form-group">
 								<label for="remarks" class="form-label">
 									<span class="label-text">Remarks</span>
@@ -2978,8 +2973,7 @@ try {
 				'sex': form.querySelector('[name="sex"]'),
 				'civil_status': form.querySelector('[name="civil_status"]'),
 				'educational_attainment': form.querySelector('[name="educational_attainment"]'),
-				'barangay': form.querySelector('[name="barangay"]'),
-				'osca_id_no': form.querySelector('[name="osca_id_no"]')
+				'barangay': form.querySelector('[name="barangay"]')
 			};
 			
 			let isValid = true;
@@ -3235,8 +3229,8 @@ try {
 
 				<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
 					<div>
-						<label for="editOscaIdNo" style="font-weight: 600; margin-bottom: 0.25rem; display: block;">OSCA ID Number *</label>
-						<input type="text" id="editOscaIdNo" name="osca_id_no" required style="width: 100%; padding: 0.5rem; border: 1px solid #d1d5db; border-radius: 6px;">
+						<label for="editOscaIdNo" style="font-weight: 600; margin-bottom: 0.25rem; display: block;">OSCA ID Number</label>
+						<input type="text" id="editOscaIdNo" name="osca_id_no" readonly style="width: 100%; padding: 0.5rem; border: 1px solid #d1d5db; border-radius: 6px; background: #f9fafb;">
 					</div>
 					<div>
 						<label for="editPurok" style="font-weight: 600; margin-bottom: 0.25rem; display: block;">Purok</label>
