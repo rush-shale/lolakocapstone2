@@ -218,9 +218,31 @@ function removeSidebarOverlay() {
             // Remove any existing validation messages from login form
             const loginForm = document.querySelector('.login-form');
             if (loginForm) {
+                // Clean up existing messages
                 loginForm.querySelectorAll('.field-error, .field-success').forEach(el => el.remove());
                 loginForm.querySelectorAll('.form-group').forEach(group => {
                     group.classList.remove('error', 'success', 'validating');
+                });
+                
+                // Add aggressive cleanup on every input event for login form
+                loginForm.querySelectorAll('input, select, textarea').forEach(input => {
+                    input.addEventListener('input', function() {
+                        // Remove any error/success messages that might have been created
+                        const group = this.closest('.form-group');
+                        if (group) {
+                            group.querySelectorAll('.field-error, .field-success').forEach(el => el.remove());
+                            group.classList.remove('error', 'success', 'validating');
+                        }
+                    });
+                    
+                    input.addEventListener('blur', function() {
+                        // Remove any error/success messages that might have been created
+                        const group = this.closest('.form-group');
+                        if (group) {
+                            group.querySelectorAll('.field-error, .field-success').forEach(el => el.remove());
+                            group.classList.remove('error', 'success', 'validating');
+                        }
+                    });
                 });
             }
         }
@@ -272,8 +294,8 @@ function removeSidebarOverlay() {
                 });
             });
             
-            // Form validation on real-time
-            document.querySelectorAll('.modern-form').forEach(form => {
+            // Form validation on real-time (exclude login form)
+            document.querySelectorAll('.modern-form:not(.login-form)').forEach(form => {
                 const inputs = form.querySelectorAll('.form-input, .form-select, .form-textarea');
                 inputs.forEach(input => {
                     input.addEventListener('input', () => {
@@ -522,6 +544,12 @@ function throttle(func, limit) {
 // Modern Field Validation
 function validateField(e) {
     const field = e.target;
+    
+    // Skip validation entirely for login form
+    if (field.closest('.login-form')) {
+        return;
+    }
+    
     const value = field.value.trim();
     
     // Remove existing error
@@ -568,6 +596,11 @@ function clearFieldError(e) {
 
         // Modern Field Validation
         function validateModernField(field) {
+            // Skip validation entirely for login form
+            if (field.closest('.login-form')) {
+                return;
+            }
+            
             const group = field.closest('.form-group');
             if (!group) return;
             
@@ -628,7 +661,15 @@ function clearFieldError(e) {
         }
 
         function showModernFieldError(group, message) {
-            // Suppress inline error notifications
+            // Suppress inline error notifications - do not create any elements
+            // Also check if this is part of login form and skip entirely
+            if (group.closest('.login-form')) {
+                return;
+            }
+            const existingError = group.querySelector('.field-error');
+            if (existingError) {
+                existingError.remove();
+            }
         }
 
         // Theme Toggle Functionality
@@ -743,6 +784,11 @@ function clearFieldError(e) {
         }
 
         function validateFieldRealTime(field) {
+            // Skip validation entirely for login form
+            if (field.closest('.login-form')) {
+                return;
+            }
+            
             const group = field.closest('.form-group');
             if (!group) return;
             
