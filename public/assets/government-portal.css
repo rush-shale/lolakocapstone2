@@ -5637,11 +5637,30 @@ img, canvas, svg, video {
 		scrollbar-gutter: stable both-edges;
 		overscroll-behavior-x: contain;
 		-webkit-overflow-scrolling: touch;
+		max-width: 100vw; /* ensure scroll area fits viewport */
 	}
 	.table-scroll {
 		scrollbar-gutter: stable both-edges;
 		overscroll-behavior-x: contain;
 		-webkit-overflow-scrolling: touch;
+		overflow-x: scroll; /* force horizontal scrollbar on mobile when needed */
+		max-width: 100vw;
+		padding-bottom: var(--space-2); /* reserve space so bar isn't clipped */
+	}
+	/* Thicker, more visible scrollbar on mobile WebKit */
+	.table-scroll::-webkit-scrollbar {
+		height: 14px;
+	}
+	.table-scroll::-webkit-scrollbar-track {
+		background: #eef2f7;
+		border-radius: 8px;
+	}
+	.table-scroll::-webkit-scrollbar-thumb {
+		background: #b6c2d1;
+		border-radius: 8px;
+	}
+	.table-scroll::-webkit-scrollbar-thumb:hover {
+		background: #8fa2b8;
 	}
 	/* Ensure card body doesn't clip inner scrollbars */
 	.card .card-body {
@@ -5746,6 +5765,38 @@ img, canvas, svg, video {
 	.card-subtitle { font-size: 0.8rem; }
 	.table thead th { font-size: 0.72rem; }
 	.table tbody td { font-size: 0.85rem; }
+}
+
+/* --- Tablet portrait (iPad mini/Air/Pro portrait, Nest Hub Max height) --- */
+@media (min-width: 600px) and (max-width: 834px) {
+	.content { padding-left: var(--space-5); padding-right: var(--space-5); }
+	.dashboard-grid { grid-template-columns: 1fr 1fr !important; gap: 1rem !important; }
+	.modern-card-header { flex-wrap: wrap; }
+	.card-actions { gap: var(--space-2); }
+	.table thead th, .table tbody td { padding: 0.6rem 0.75rem; }
+}
+
+/* --- Large tablet / small laptop (iPad Pro 11/12.9 landscape, Surface Pro 7) --- */
+@media (min-width: 835px) and (max-width: 1180px) {
+	.content { padding-left: var(--space-6); padding-right: var(--space-6); }
+	.dashboard-grid { grid-template-columns: 1fr 1fr !important; gap: 1.25rem !important; }
+	.table thead th, .table tbody td { padding: 0.7rem 0.85rem; }
+	.table-container { padding-bottom: var(--space-3); }
+}
+
+/* --- Foldables and dual-screen widths (Surface Duo, Galaxy Fold) --- */
+@media (min-width: 540px) and (max-width: 768px) {
+	/* Keep single column stacking but give a bit more breathing room */
+	.dashboard-grid { gap: 0.9rem !important; padding: 0.9rem !important; }
+	.table-scroll { overflow-x: scroll; max-width: 100vw; }
+}
+
+/* --- Ultra-wide desktops and large monitors --- */
+@media (min-width: 1440px) {
+	.content .dashboard-grid { max-width: 1600px; margin: 0 auto; gap: 2rem; }
+}
+@media (min-width: 1920px) {
+	.content .dashboard-grid { max-width: 1800px; }
 }
 /* Always expose a horizontal scrollbar area on desktop for wide tables */
 @media (min-width: 1025px) {
