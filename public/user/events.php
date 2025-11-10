@@ -243,34 +243,105 @@ $events = $events->fetchAll();
 				if (e.target === modal) closeModal();
 			});
 
+			function formatDateTime(dateTimeString) {
+				if (!dateTimeString) return '—';
+				try {
+					const date = new Date(dateTimeString);
+					if (isNaN(date.getTime())) return dateTimeString;
+					const dateStr = date.toLocaleDateString('en-US', { 
+						year: 'numeric', 
+						month: 'short', 
+						day: 'numeric' 
+					});
+					const timeStr = date.toLocaleTimeString('en-US', { 
+						hour: '2-digit', 
+						minute: '2-digit',
+						hour12: true 
+					});
+					return `${dateStr} at ${timeStr}`;
+				} catch (e) {
+					return dateTimeString;
+				}
+			}
+
 			async function loadEventAttendees(eventId) {
 				try {
 					const res = await fetch(`fetch_event_attendees.php?event_id=${encodeURIComponent(eventId)}`, { credentials: 'same-origin' });
+					if (!res.ok) {
+						throw new Error('Failed to fetch attendees');
+					}
 					const data = await res.json();
+					
+					if (!data || typeof data !== 'object') {
+						throw new Error('Invalid response format');
+					}
+					
+					if (data.success === false) {
+						throw new Error(data.message || 'Failed to load attendees');
+					}
+					
 					const e = data.event || {};
 					modalTitle.textContent = e.title ? `Event Attendees — ${e.title}` : 'Event Attendees';
-					const when = e.event_time ? `${e.event_date} • ${e.event_time}` : (e.event_date || '');
-					modalSubtitle.textContent = when;
-					modalBodyTbody.innerHTML = '';
+					
+					// Format event date and time
+					let when = '';
+					if (e.event_date) {
+						const eventDate = new Date(e.event_date);
+						when = eventDate.toLocaleDateString('en-US', { 
+							year: 'numeric', 
+							month: 'long', 
+							day: 'numeric' 
+						});
+						if (e.event_time) {
+							const timeParts = e.event_time.split(':');
+							if (timeParts.length >= 2) {
+								const hours = parseInt(timeParts[0]);
+								const minutes = timeParts[1];
+								const ampm = hours >= 12 ? 'PM' : 'AM';
+								const displayHours = hours % 12 || 12;
+								when += ` at ${displayHours}:${minutes} ${ampm}`;
+							}
+						}
+					}
 					const list = Array.isArray(data.attendees) ? data.attendees : [];
+					const attendeeCount = list.length;
+					
+					// Update subtitle with event details and attendee count
+					let subtitleText = when || 'Event details not available';
+					if (attendeeCount > 0) {
+						subtitleText += ` • ${attendeeCount} attendee${attendeeCount !== 1 ? 's' : ''}`;
+					}
+					modalSubtitle.textContent = subtitleText;
+					
+					modalBodyTbody.innerHTML = '';
+					
 					if (list.length === 0) {
-						modalBodyTbody.innerHTML = '<tr class="no-data"><td colspan="5" style="text-align:center; padding:1rem;">No attendees yet.</td></tr>';
+						modalBodyTbody.innerHTML = '<tr class="no-data"><td colspan="5" style="text-align:center; padding:1rem; color:#6b7280;">No attendees have been marked for this event yet.<br><small style="font-size:0.875rem; margin-top:0.5rem; display:block;">Mark attendance in the Attendance Management page.</small></td></tr>';
 						return;
 					}
+					
 					for (const a of list) {
 						const tr = document.createElement('tr');
 						tr.innerHTML = `
-							<td>${a.last_name ? a.last_name : ''}</td>
-							<td>${a.first_name ? a.first_name : ''}</td>
-							<td>${a.middle_name ? a.middle_name : ''}</td>
-							<td>${a.ext_name ? a.ext_name : ''}</td>
-							<td>${a.marked_at ? a.marked_at : ''}</td>
+							<td>${escapeHtml(a.last_name || '—')}</td>
+							<td>${escapeHtml(a.first_name || '—')}</td>
+							<td>${escapeHtml(a.middle_name || '—')}</td>
+							<td>${escapeHtml(a.ext_name || '—')}</td>
+							<td>${formatDateTime(a.marked_at)}</td>
 						`;
 						modalBodyTbody.appendChild(tr);
 					}
 				} catch (err) {
-					modalBodyTbody.innerHTML = '<tr class="no-data"><td colspan="5" style="text-align:center; padding:1rem;">Failed to load attendees.</td></tr>';
+					console.error('Error loading attendees:', err);
+					modalBodyTbody.innerHTML = '<tr class="no-data"><td colspan="5" style="text-align:center; padding:1rem; color:#dc2626;">Failed to load attendees. Please try again.</td></tr>';
 				}
+			}
+			
+			function escapeHtml(text) {
+				if (!text) return '—';
+				const div = document.createElement('div');
+				div.textContent = text;
+				return div.innerHTML;
 			}
 
 			document.addEventListener('click', function(ev) {
@@ -283,6 +354,60 @@ $events = $events->fetchAll();
 				modalSubtitle.textContent = '';
 				modalBodyTbody.innerHTML = '<tr class="no-data"><td colspan="5" style="text-align:center; padding:1rem;">Loading…</td></tr>';
 				loadEventAttendees(eventId);
+			});
+
+			// Store current event ID when modal is open
+			let currentEventId = null;
+			
+			// Wrap loadEventAttendees to track current event
+			const originalLoadEventAttendees = loadEventAttendees;
+			loadEventAttendees = async function(eventId) {
+				currentEventId = eventId;
+				return await originalLoadEventAttendees(eventId);
+			};
+
+			// Listen for real-time attendance updates
+			window.addEventListener('storage', function(event) {
+				if (event.key && event.key.startsWith('attendance-updated-')) {
+					const eventId = event.key.replace('attendance-updated-', '');
+					// If modal is open and showing this event, refresh the attendees list
+					if (modal.classList.contains('active') && currentEventId === eventId) {
+						// Show a brief notification
+						const notification = document.createElement('div');
+						notification.style.cssText = 'position: fixed; top: 20px; right: 20px; background: #10b981; color: white; padding: 0.75rem 1rem; border-radius: 6px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); z-index: 10000; font-size: 0.875rem;';
+						notification.textContent = '✓ Attendance updated! Refreshing list...';
+						document.body.appendChild(notification);
+						
+						setTimeout(() => {
+							notification.style.opacity = '0';
+							notification.style.transition = 'opacity 0.3s';
+							setTimeout(() => notification.remove(), 300);
+						}, 2000);
+						
+						loadEventAttendees(eventId);
+					}
+				} else if (event.key === 'attendance-updated') {
+					try {
+						const updateData = JSON.parse(event.newValue || '{}');
+						if (updateData.event_id && modal.classList.contains('active') && currentEventId === updateData.event_id) {
+							// Show a brief notification
+							const notification = document.createElement('div');
+							notification.style.cssText = 'position: fixed; top: 20px; right: 20px; background: #10b981; color: white; padding: 0.75rem 1rem; border-radius: 6px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); z-index: 10000; font-size: 0.875rem;';
+							notification.textContent = '✓ Attendance updated! Refreshing list...';
+							document.body.appendChild(notification);
+							
+							setTimeout(() => {
+								notification.style.opacity = '0';
+								notification.style.transition = 'opacity 0.3s';
+								setTimeout(() => notification.remove(), 300);
+							}, 2000);
+							
+							loadEventAttendees(updateData.event_id);
+						}
+					} catch (e) {
+						// Ignore parse errors
+					}
+				}
 			});
 		})();
 	</script>

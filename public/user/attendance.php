@@ -62,33 +62,71 @@ $activeSeniorsStmt = $pdo->prepare("
 $activeSeniorsStmt->execute([$user['barangay']]);
 $activeSeniors = $activeSeniorsStmt->fetchAll();
 
+// Handle AJAX requests for real-time attendance marking
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+	header('Content-Type: application/json');
+	
 	if (!validate_csrf_token($_POST['csrf'] ?? '')) {
-		$message = 'Invalid session token';
-	} else {
-		$op = $_POST['op'] ?? '';
-		if ($op === 'bulk_mark') {
-			$event_id = (int)($_POST['event_id'] ?? 0);
-			$present_ids = isset($_POST['present_ids']) && is_array($_POST['present_ids']) ? array_map('intval', $_POST['present_ids']) : [];
-			if ($event_id && !empty($present_ids)) {
-				$inserted = 0;
-				foreach ($present_ids as $sid) {
-					try {
-						$stmt = $pdo->prepare('INSERT INTO attendance (senior_id, event_id) VALUES (?,?)');
-						$stmt->execute([$sid, $event_id]);
-						$inserted++;
-					} catch (Throwable $e) {
-						// ignore duplicates or errors for individual entries
-					}
+		echo json_encode(['success' => false, 'message' => 'Invalid session token']);
+		exit;
+	}
+	
+	$op = $_POST['op'] ?? '';
+	if ($op === 'bulk_mark') {
+		$event_id = (int)($_POST['event_id'] ?? 0);
+		$present_ids = isset($_POST['present_ids']) && is_array($_POST['present_ids']) ? array_map('intval', $_POST['present_ids']) : [];
+		
+		if ($event_id && !empty($present_ids)) {
+			$inserted = 0;
+			$errors = [];
+			foreach ($present_ids as $sid) {
+				try {
+					$stmt = $pdo->prepare('INSERT INTO attendance (senior_id, event_id) VALUES (?,?)');
+					$stmt->execute([$sid, $event_id]);
+					$inserted++;
+				} catch (Throwable $e) {
+					// ignore duplicates or errors for individual entries
+					$errors[] = $e->getMessage();
 				}
-				$message = $inserted > 0 ? "Attendance saved for $inserted senior(s)." : 'No new attendance saved (possibly already marked).';
+			}
+			
+			if ($inserted > 0) {
+				// Broadcast update to other tabs/pages
+				$updateData = [
+					'event_id' => $event_id,
+					'count' => $inserted,
+					'timestamp' => time()
+				];
+				
+				echo json_encode([
+					'success' => true,
+					'message' => "Attendance saved for $inserted senior(s).",
+					'inserted' => $inserted,
+					'event_id' => $event_id,
+					'update_key' => 'attendance-updated-' . $event_id
+				]);
 			} else {
-				$message = 'Please select an event and at least one senior';
+				echo json_encode([
+					'success' => false,
+					'message' => 'No new attendance saved (possibly already marked).'
+				]);
 			}
 		} else {
-			$message = 'Invalid operation';
+			echo json_encode([
+				'success' => false,
+				'message' => 'Please select an event and at least one senior'
+			]);
 		}
+		exit;
+	} else {
+		echo json_encode(['success' => false, 'message' => 'Invalid operation']);
+		exit;
 	}
+}
+
+// Regular page load - show message if redirected after POST
+if (isset($_GET['success']) && $_GET['success'] === '1') {
+	$message = isset($_GET['message']) ? urldecode($_GET['message']) : 'Attendance saved successfully';
 }
 
 $csrf = generate_csrf_token();
@@ -151,12 +189,21 @@ $csrf = generate_csrf_token();
 
 			<!-- Seniors Attendance List (Admin-like UI) -->
 			<div class="card animate-fade-in">
-				<form method="post">
-					<input type="hidden" name="csrf" value="<?= $csrf ?>">
+				<form method="post" id="attendanceForm">
+					<input type="hidden" name="csrf" value="<?= $csrf ?>" id="attendanceCsrf">
 					<input type="hidden" name="op" value="bulk_mark">
 					<div class="card-header">
 						<h2 class="card-title">All Seniors</h2>
 						<p class="card-subtitle">Check attendees, then save for the selected event</p>
+					</div>
+					<div id="attendanceMessage" style="display:none; margin: 1rem;" class="alert alert-success">
+						<div class="alert-icon">
+							<i class="fas fa-check-circle"></i>
+						</div>
+						<div class="alert-content">
+							<strong>Success!</strong>
+							<p id="attendanceMessageText"></p>
+						</div>
 					</div>
 					<div class="table-controls">
 						<input type="text" id="searchInput" placeholder="Search seniors..." class="form-input">
@@ -169,7 +216,9 @@ $csrf = generate_csrf_token();
 								</option>
 							<?php endforeach; ?>
 						</select>
-						<button type="submit" class="button primary"><i class="fas fa-save"></i> Save Attendance</button>
+						<button type="submit" class="button primary" id="saveAttendanceBtn">
+							<i class="fas fa-save"></i> <span id="saveBtnText">Save Attendance</span>
+						</button>
 					</div>
 					<div class="card-body">
 						<div class="table-container table-scroll attendance-table-scroll">
@@ -295,6 +344,34 @@ $csrf = generate_csrf_token();
 		const attendeesSubtitle = document.getElementById('attendeesEventSubtitle');
 		const attendeesTableBody = document.getElementById('attendeesTableBody');
 
+		function formatDateTime(dateTimeString) {
+			if (!dateTimeString) return '—';
+			try {
+				const date = new Date(dateTimeString);
+				if (isNaN(date.getTime())) return dateTimeString;
+				const dateStr = date.toLocaleDateString('en-US', { 
+					year: 'numeric', 
+					month: 'short', 
+					day: 'numeric' 
+				});
+				const timeStr = date.toLocaleTimeString('en-US', { 
+					hour: '2-digit', 
+					minute: '2-digit',
+					hour12: true 
+				});
+				return `${dateStr} at ${timeStr}`;
+			} catch (e) {
+				return dateTimeString;
+			}
+		}
+
+		function escapeHtml(text) {
+			if (!text) return '—';
+			const div = document.createElement('div');
+			div.textContent = text;
+			return div.innerHTML;
+		}
+
 		function renderAttendees(data) {
 			if (!data || !Array.isArray(data.attendees)) {
 				attendeesCard.style.display = 'none';
@@ -302,24 +379,45 @@ $csrf = generate_csrf_token();
 			}
 			attendeesCard.style.display = '';
 			const e = data.event || {};
-			const when = e.event_time ? `${e.event_date} ${e.event_time}` : e.event_date;
-			attendeesSubtitle.textContent = `${e.title || ''} — ${when || ''}`;
+			
+			// Format event date and time
+			let when = '';
+			if (e.event_date) {
+				const eventDate = new Date(e.event_date);
+				when = eventDate.toLocaleDateString('en-US', { 
+					year: 'numeric', 
+					month: 'long', 
+					day: 'numeric' 
+				});
+				if (e.event_time) {
+					const timeParts = e.event_time.split(':');
+					if (timeParts.length >= 2) {
+						const hours = parseInt(timeParts[0]);
+						const minutes = timeParts[1];
+						const ampm = hours >= 12 ? 'PM' : 'AM';
+						const displayHours = hours % 12 || 12;
+						when += ` at ${displayHours}:${minutes} ${ampm}`;
+					}
+				}
+			}
+			
+			attendeesSubtitle.textContent = `${e.title || ''}${when ? ' — ' + when : ''} • ${data.attendees.length} attendee${data.attendees.length !== 1 ? 's' : ''}`;
 			attendeesTableBody.innerHTML = '';
 			if (data.attendees.length === 0) {
-				attendeesTableBody.innerHTML = '<tr class="no-data"><td colspan="8" style="text-align:center; padding: 1rem;">No attendees yet.</td></tr>';
+				attendeesTableBody.innerHTML = '<tr class="no-data"><td colspan="8" style="text-align:center; padding: 1rem; color:#6b7280;">No attendees yet.</td></tr>';
 				return;
 			}
 			for (const a of data.attendees) {
 				const tr = document.createElement('tr');
 				tr.innerHTML = `
-					<td>${a.last_name ? a.last_name : ''}</td>
-					<td>${a.first_name ? a.first_name : ''}</td>
-					<td>${a.middle_name ? a.middle_name : ''}</td>
-					<td>${a.ext_name ? a.ext_name : ''}</td>
-					<td>${a.age ? a.age : ''}</td>
-					<td>${a.sex ? (a.sex.charAt(0).toUpperCase()+a.sex.slice(1)) : ''}</td>
-					<td>${a.osca_id_no ? a.osca_id_no : ''}</td>
-					<td>${a.marked_at ? a.marked_at : ''}</td>
+					<td>${escapeHtml(a.last_name || '—')}</td>
+					<td>${escapeHtml(a.first_name || '—')}</td>
+					<td>${escapeHtml(a.middle_name || '—')}</td>
+					<td>${escapeHtml(a.ext_name || '—')}</td>
+					<td>${a.age ? a.age : '—'}</td>
+					<td>${a.sex ? (a.sex.charAt(0).toUpperCase() + a.sex.slice(1)) : '—'}</td>
+					<td>${escapeHtml(a.osca_id_no || '—')}</td>
+					<td>${formatDateTime(a.marked_at)}</td>
 				`;
 				attendeesTableBody.appendChild(tr);
 			}
@@ -349,6 +447,101 @@ $csrf = generate_csrf_token();
 		if (eventSelect && eventSelect.value) {
 			loadAttendeesByEventId(eventSelect.value);
 		}
+
+		// Real-time attendance submission via AJAX
+		const attendanceForm = document.getElementById('attendanceForm');
+		const saveBtn = document.getElementById('saveAttendanceBtn');
+		const saveBtnText = document.getElementById('saveBtnText');
+		const attendanceMessage = document.getElementById('attendanceMessage');
+		const attendanceMessageText = document.getElementById('attendanceMessageText');
+		const attendanceCsrf = document.getElementById('attendanceCsrf');
+
+		if (attendanceForm) {
+			attendanceForm.addEventListener('submit', async function(e) {
+				e.preventDefault();
+				
+				const eventId = eventSelect.value;
+				const checkboxes = document.querySelectorAll('input[name="present_ids[]"]:checked');
+				const presentIds = Array.from(checkboxes).map(cb => cb.value);
+				
+				if (!eventId || presentIds.length === 0) {
+					showMessage('Please select an event and at least one senior', 'error');
+					return;
+				}
+
+				// Disable button and show loading
+				saveBtn.disabled = true;
+				saveBtnText.textContent = 'Saving...';
+				
+				const formData = new FormData(attendanceForm);
+				
+				try {
+					const response = await fetch(window.location.href, {
+						method: 'POST',
+						body: formData,
+						credentials: 'same-origin'
+					});
+					
+					const data = await response.json();
+					
+					if (data.success) {
+						showMessage(data.message || 'Attendance saved successfully!', 'success');
+						
+						// Refresh attendees list immediately
+						if (eventId) {
+							await loadAttendeesByEventId(eventId);
+						}
+						
+						// Broadcast update to other tabs/pages
+						if (data.event_id) {
+							window.localStorage.setItem('attendance-updated-' + data.event_id, Date.now().toString());
+							window.localStorage.setItem('attendance-updated', JSON.stringify({
+								event_id: data.event_id,
+								timestamp: Date.now()
+							}));
+						}
+						
+						// Uncheck all checkboxes after successful save
+						checkboxes.forEach(cb => cb.checked = false);
+						
+						// Refresh CSRF token
+						if (data.csrf) {
+							attendanceCsrf.value = data.csrf;
+						}
+					} else {
+						showMessage(data.message || 'Failed to save attendance', 'error');
+					}
+				} catch (error) {
+					console.error('Error saving attendance:', error);
+					showMessage('An error occurred while saving attendance. Please try again.', 'error');
+				} finally {
+					saveBtn.disabled = false;
+					saveBtnText.textContent = 'Save Attendance';
+				}
+			});
+		}
+
+		function showMessage(text, type) {
+			attendanceMessageText.textContent = text;
+			attendanceMessage.className = 'alert ' + (type === 'error' ? 'alert-error' : 'alert-success');
+			attendanceMessage.style.display = 'flex';
+			attendanceMessage.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+			
+			// Auto-hide after 5 seconds
+			setTimeout(() => {
+				attendanceMessage.style.display = 'none';
+			}, 5000);
+		}
+
+		// Listen for attendance updates from other tabs/pages
+		window.addEventListener('storage', function(event) {
+			if (event.key && event.key.startsWith('attendance-updated-')) {
+				const eventId = event.key.replace('attendance-updated-', '');
+				if (eventSelect && eventSelect.value === eventId) {
+					loadAttendeesByEventId(eventId);
+				}
+			}
+		});
 	</script>
 </body>
 </html>
