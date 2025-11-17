@@ -136,8 +136,8 @@ if ($action === 'edit' && $id) {
 							<div class="form-group">
 								<label class="form-label">Role</label>
 								<select name="role" id="roleSelect" class="form-input" required>
-									<option value="user" <?= ($editUser['role'] ?? '')==='user' ? 'selected' : '' ?>>User (Barangay Staff)</option>
-									<option value="admin" <?= ($editUser['role'] ?? '')==='admin' ? 'selected' : '' ?>>Admin (OSCA Head)</option>
+									<option value="user" <?= ($editUser['role'] ?? '')==='user' ? 'selected' : '' ?>>User (SENIOR CITIZEN OFFICER)</option>
+									<option value="admin" <?= ($editUser['role'] ?? '')==='admin' ? 'selected' : '' ?>>Admin (OSCA STAFF)</option>
 								</select>
 							</div>
 							
