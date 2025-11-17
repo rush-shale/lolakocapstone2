@@ -7,6 +7,34 @@ require_role('admin');
 $pdo = get_db_connection();
 start_app_session();
 
+if (!function_exists('ensure_waiting_document_columns')) {
+	function ensure_waiting_document_columns(PDO $pdo) {
+		static $ensured = false;
+		if ($ensured) {
+			return;
+		}
+		try {
+			$hasBirth = $pdo->query("SHOW COLUMNS FROM seniors LIKE 'waiting_birth_certificate'")->rowCount() > 0;
+			if (!$hasBirth) {
+				$pdo->exec("ALTER TABLE seniors ADD COLUMN waiting_birth_certificate TINYINT(1) NOT NULL DEFAULT 0 AFTER validation_date");
+			}
+			$hasMarriage = $pdo->query("SHOW COLUMNS FROM seniors LIKE 'waiting_marriage_contract'")->rowCount() > 0;
+			if (!$hasMarriage) {
+				$pdo->exec("ALTER TABLE seniors ADD COLUMN waiting_marriage_contract TINYINT(1) NOT NULL DEFAULT 0 AFTER waiting_birth_certificate");
+			}
+			$hasValidId = $pdo->query("SHOW COLUMNS FROM seniors LIKE 'waiting_valid_id'")->rowCount() > 0;
+			if (!$hasValidId) {
+				$pdo->exec("ALTER TABLE seniors ADD COLUMN waiting_valid_id TINYINT(1) NOT NULL DEFAULT 0 AFTER waiting_marriage_contract");
+			}
+		} catch (Exception $e) {
+			error_log('Failed to ensure waiting document columns exist: ' . $e->getMessage());
+		}
+		$ensured = true;
+	}
+}
+
+ensure_waiting_document_columns($pdo);
+
 $message = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -19,6 +47,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 			if ($id) {
 				try {
 					$pdo = get_db_connection();
+					ensure_waiting_document_columns($pdo);
 					$stmt = $pdo->prepare('UPDATE seniors SET category = ?, validation_status = ?, validation_date = NOW() WHERE id = ?');
 					$stmt->execute(['local', 'Validated', $id]);
 					$message = 'Senior validated successfully';
@@ -63,6 +92,15 @@ try {
 			overflow-y: visible;
 			-webkit-overflow-scrolling: touch;
 			max-width: 100%;
+		}
+
+		.missing-docs-list {
+			margin: 0.5rem 0 0;
+			padding-left: 1.25rem;
+		}
+
+		.missing-docs-list li {
+			margin-bottom: 0.25rem;
 		}
 		
 		.table-scroll {
@@ -210,6 +248,7 @@ try {
 										<th>CELLPHONE #</th>
 										<th>LIFE STATUS</th>
 										<th>CATEGORY</th>
+                                        <th>MISSING DOCUMENTS</th>
                                         <th>VALIDATION STATUS</th>
                                         <th>VALIDATED</th>
 									</tr>
@@ -217,7 +256,37 @@ try {
 								<tbody>
 									<?php if (!empty($seniors)): ?>
 										<?php foreach ($seniors as $senior): ?>
-										<tr>
+										<?php
+											$docStatus = [];
+											$missingDocs = [];
+
+											// In this system: 1 means MISSING, 0 means NOT missing
+											$isBirthMissing = !empty($senior['waiting_birth_certificate']);
+											$isMarriageMissing = !empty($senior['waiting_marriage_contract']);
+											$isValidIdMissing = !empty($senior['waiting_valid_id']);
+
+											$docStatus[] = ($isBirthMissing ? '❌ Missing: ' : '✔ Provided: ') . 'Birth Certificate';
+											$docStatus[] = ($isMarriageMissing ? '❌ Missing: ' : '✔ Provided: ') . 'Marriage Contract';
+											$docStatus[] = ($isValidIdMissing ? '❌ Missing: ' : '✔ Provided: ') . 'Valid ID';
+
+											if ($isBirthMissing) $missingDocs[] = 'Birth Certificate';
+											if ($isMarriageMissing) $missingDocs[] = 'Marriage Contract';
+											if ($isValidIdMissing) $missingDocs[] = 'Valid ID';
+
+											$missingDocsText = $missingDocs ? implode(', ', $missingDocs) : 'None';
+											$docStatusText = implode(' • ', $docStatus);
+											$seniorFullName = trim(implode(' ', array_filter([
+												$senior['first_name'] ?? '',
+												$senior['middle_name'] ?? '',
+												$senior['last_name'] ?? '',
+												$senior['ext_name'] ?? '',
+											])));
+										?>
+										<tr class="waiting-row"
+											data-senior-id="<?= (int)$senior['id'] ?>"
+											data-senior-name="<?= htmlspecialchars($seniorFullName) ?>"
+											data-missing-docs="<?= htmlspecialchars($missingDocsText, ENT_QUOTES) ?>"
+											data-doc-status="<?= htmlspecialchars($docStatusText, ENT_QUOTES) ?>">
 											<td><?= htmlspecialchars($senior['last_name']) ?></td>
 											<td><?= htmlspecialchars($senior['first_name']) ?></td>
 											<td><?= htmlspecialchars($senior['middle_name'] ?: '') ?></td>
@@ -246,6 +315,7 @@ try {
 												<span class="badge <?= $senior['life_status'] === 'living' ? 'badge-success' : 'badge-danger' ?>"><?= ucfirst($senior['life_status']) ?></span>
 											</td>
 											<td><span class="badge badge-info">Waiting</span></td>
+											<td><?= htmlspecialchars($docStatusText) ?></td>
                                             <td>
                                                 <span class="badge badge-warning">Not Validated</span>
                                                 <form method="post" style="display:inline; margin-left: 6px;">
@@ -274,17 +344,113 @@ try {
 		</div>
 	</main>
 
+	<!-- Missing Documents Modal -->
+	<div id="missingDocsModal" class="modal-overlay">
+		<div class="modal" style="max-width: 480px;">
+			<div class="modal-header">
+				<h2 class="modal-title">Missing Required Documents</h2>
+				<button id="closeMissingDocsModal" class="modal-close" aria-label="Close missing documents modal">&times;</button>
+			</div>
+			<div class="modal-body">
+				<p id="missingDocsName" style="font-weight: 600; margin-bottom: 0.5rem;"></p>
+				<ul id="missingDocsList" class="missing-docs-list"></ul>
+				<p class="help-text" style="margin-top: 0.75rem; font-size: 0.85rem; color: var(--text-muted);">
+					These documents are required before the senior can be validated.
+				</p>
+			</div>
+		</div>
+	</div>
+
 	<script src="<?= BASE_URL ?>/assets/app.js"></script>
 	<script>
 		// Search filter for waiting seniors table
 		document.getElementById('searchInput').addEventListener('input', function() {
 			const filter = this.value.toLowerCase();
-			const rows = document.querySelectorAll('tbody tr');
+			const rows = document.querySelectorAll('tbody tr.waiting-row');
 			
 			rows.forEach(row => {
 				const text = row.textContent.toLowerCase();
 				const isVisible = text.includes(filter);
 				row.style.display = isVisible ? '' : 'none';
+			});
+		});
+
+		// Missing documents modal behavior
+		document.addEventListener('DOMContentLoaded', function() {
+			const modal = document.getElementById('missingDocsModal');
+			const nameEl = document.getElementById('missingDocsName');
+			const listEl = document.getElementById('missingDocsList');
+			const closeBtn = document.getElementById('closeMissingDocsModal');
+
+			if (!modal || !nameEl || !listEl) return;
+
+			function openMissingDocsModal(name, missingDocsText, docStatusText) {
+				nameEl.textContent = name || 'Senior';
+				listEl.innerHTML = '';
+
+				const docs = (missingDocsText || '').split(',').map(d => d.trim()).filter(Boolean);
+
+				const docStatusItems = (docStatusText || '').split('•').map(d => d.trim()).filter(Boolean);
+
+				docStatusItems.forEach(item => {
+					const li = document.createElement('li');
+					li.textContent = item;
+					listEl.appendChild(li);
+				});
+
+				if (!docStatusItems.length) {
+					const li = document.createElement('li');
+					li.textContent = 'No document info available.';
+					listEl.appendChild(li);
+				}
+
+				if (!docs.length || missingDocsText === 'None') {
+					const li = document.createElement('li');
+					li.innerHTML = '<strong>No missing documents.</strong>';
+					listEl.appendChild(li);
+				}
+
+				modal.classList.add('active');
+				document.body.classList.add('modal-active');
+				document.body.style.overflow = 'hidden';
+			}
+
+			function closeMissingDocsModal() {
+				modal.classList.remove('active');
+				document.body.classList.remove('modal-active');
+				document.body.style.overflow = '';
+			}
+
+			document.querySelectorAll('.waiting-seniors-table tbody tr.waiting-row').forEach(row => {
+				row.addEventListener('click', function(e) {
+					// Ignore clicks on buttons or form controls (e.g., Validate button)
+					if (e.target.closest('button, input, select, a')) {
+						return;
+					}
+					const name = this.dataset.seniorName || '';
+					const missingDocs = this.dataset.missingDocs || '';
+					const docStatus = this.dataset.docStatus || '';
+					openMissingDocsModal(name, missingDocs, docStatus);
+				});
+			});
+
+			if (closeBtn) {
+				closeBtn.addEventListener('click', function(e) {
+					e.stopPropagation();
+					closeMissingDocsModal();
+				});
+			}
+
+			modal.addEventListener('click', function(e) {
+				if (e.target === modal) {
+					closeMissingDocsModal();
+				}
+			});
+
+			document.addEventListener('keydown', function(e) {
+				if (e.key === 'Escape' && modal.classList.contains('active')) {
+					closeMissingDocsModal();
+				}
 			});
 		});
 	</script>

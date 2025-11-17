@@ -64,6 +64,36 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
 
 $pdo = get_db_connection();
 
+if (!function_exists('ensure_waiting_document_columns')) {
+	function ensure_waiting_document_columns(PDO $pdo) {
+		static $ensured = false;
+		if ($ensured) {
+			return;
+		}
+		try {
+			$columns = $pdo->query("SHOW COLUMNS FROM seniors LIKE 'waiting_birth_certificate'");
+			$hasBirth = $columns && $columns->rowCount() > 0;
+			$hasMarriage = $pdo->query("SHOW COLUMNS FROM seniors LIKE 'waiting_marriage_contract'")->rowCount() > 0;
+			$hasValidId = $pdo->query("SHOW COLUMNS FROM seniors LIKE 'waiting_valid_id'")->rowCount() > 0;
+
+			if (!$hasBirth) {
+				$pdo->exec("ALTER TABLE seniors ADD COLUMN waiting_birth_certificate TINYINT(1) NOT NULL DEFAULT 0 AFTER validation_date");
+			}
+			if (!$hasMarriage) {
+				$pdo->exec("ALTER TABLE seniors ADD COLUMN waiting_marriage_contract TINYINT(1) NOT NULL DEFAULT 0 AFTER waiting_birth_certificate");
+			}
+			if (!$hasValidId) {
+				$pdo->exec("ALTER TABLE seniors ADD COLUMN waiting_valid_id TINYINT(1) NOT NULL DEFAULT 0 AFTER waiting_marriage_contract");
+			}
+		} catch (Exception $e) {
+			error_log('Failed to ensure waiting document columns exist: ' . $e->getMessage());
+		}
+		$ensured = true;
+	}
+}
+
+ensure_waiting_document_columns($pdo);
+
 // Handle AJAX requests for getting senior data
 if ($action === 'get_senior') {
     $id = (int)($_GET['id'] ?? 0);
@@ -168,6 +198,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 		$purok = trim($_POST['purok'] ?? '') ?: '';
 		$cellphone = trim($_POST['cellphone'] ?? '') ?: '';
 		$benefits_received = isset($_POST['benefits_received']) ? 1 : 0;
+		// Waiting list documents flags (1 = submitted)
+		$waiting_birth_certificate = isset($_POST['doc_birth_certificate']) ? 1 : 0;
+		$waiting_marriage_contract = isset($_POST['doc_marriage_contract']) ? 1 : 0;
+		$waiting_valid_id = isset($_POST['doc_valid_id']) ? 1 : 0;
         // Preserve existing life_status on update if not provided by the form (edit modal may omit it)
         $life_status_input = $_POST['life_status'] ?? null;
         // Normalize explicit inputs; otherwise leave null for preservation on update
@@ -218,6 +252,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 			try {
 				// Ensure we have a fresh connection
 				$pdo = get_db_connection();
+				ensure_waiting_document_columns($pdo);
 				error_log("Database connection established");
 				$pdo->beginTransaction();
 				error_log("Transaction started");
@@ -260,7 +295,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 								$osca_id_no = '1';
 							}
 						}
-						$stmt = $pdo->prepare('INSERT INTO seniors (first_name, middle_name, last_name, ext_name, age, date_of_birth, sex, place_of_birth, civil_status, educational_attainment, occupation, annual_income, other_skills, barangay, contact, osca_id_no, remarks, health_condition, purok, cellphone, benefits_received, life_status, category, validation_status, validation_date, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())');
+						$stmt = $pdo->prepare('INSERT INTO seniors (first_name, middle_name, last_name, ext_name, age, date_of_birth, sex, place_of_birth, civil_status, educational_attainment, occupation, annual_income, other_skills, barangay, contact, osca_id_no, remarks, health_condition, purok, cellphone, benefits_received, life_status, category, validation_status, validation_date, waiting_birth_certificate, waiting_marriage_contract, waiting_valid_id, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())');
 					$stmt->execute([
 						$first_name, $middle_name ?: null, $last_name, $ext_name ?: null, $age,
 						$date_of_birth ?: null, $sex ?: null, $place_of_birth ?: null,
@@ -268,7 +303,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 						$occupation ?: null, $annual_income, $other_skills,
 						$barangay, $contact, $osca_id_no, $remarks,
 						$health_condition, $purok, $cellphone,
-						$benefits_received, $life_status_create, $category, $validation_status, $validation_date
+						$benefits_received, $life_status_create, $category, $validation_status, $validation_date,
+						$waiting_birth_certificate, $waiting_marriage_contract, $waiting_valid_id
 					]);
 						$senior_id = $pdo->lastInsertId();
 					
@@ -367,7 +403,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 							$life_status = 'living';
 						}
 					}
-					$stmt = $pdo->prepare('UPDATE seniors SET first_name=?, middle_name=?, last_name=?, ext_name=?, age=?, date_of_birth=?, sex=?, place_of_birth=?, civil_status=?, educational_attainment=?, occupation=?, annual_income=?, other_skills=?, barangay=?, contact=?, osca_id_no=?, remarks=?, health_condition=?, purok=?, cellphone=?, benefits_received=?, life_status=?, category=?, validation_status=?, validation_date=? WHERE id=?');
+					$stmt = $pdo->prepare('UPDATE seniors SET first_name=?, middle_name=?, last_name=?, ext_name=?, age=?, date_of_birth=?, sex=?, place_of_birth=?, civil_status=?, educational_attainment=?, occupation=?, annual_income=?, other_skills=?, barangay=?, contact=?, osca_id_no=?, remarks=?, health_condition=?, purok=?, cellphone=?, benefits_received=?, life_status=?, category=?, validation_status=?, validation_date=?, waiting_birth_certificate=?, waiting_marriage_contract=?, waiting_valid_id=? WHERE id=?');
 					$stmt->execute([
 						$first_name, $middle_name ?: null, $last_name, $ext_name ?: null, $age,
 						$date_of_birth ?: null, $sex ?: null, $place_of_birth ?: null,
@@ -375,7 +411,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 						$occupation ?: null, $annual_income, $other_skills,
 						$barangay, $contact, $osca_id_no, $remarks,
 						$health_condition, $purok, $cellphone,
-						$benefits_received, $life_status, $category, $validation_status, $validation_date, $id
+						$benefits_received, $life_status, $category, $validation_status, $validation_date,
+						$waiting_birth_certificate, $waiting_marriage_contract, $waiting_valid_id,
+						$id
 					]);
 					$senior_id = $id;
 					
@@ -494,6 +532,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 			if ($id) {
 				try {
 					$pdo = get_db_connection();
+					ensure_waiting_document_columns($pdo);
 					$stmt = $pdo->prepare('UPDATE seniors SET category = ?, validation_status = ?, validation_date = NOW() WHERE id = ?');
 					$stmt->execute(['local', 'Validated', $id]);
 					$message = 'Senior validated successfully';
@@ -509,6 +548,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 			if ($id) {
 				try {
 					$pdo = get_db_connection();
+					ensure_waiting_document_columns($pdo);
 					$stmt = $pdo->prepare('UPDATE seniors SET benefits_received=? WHERE id=?');
 					$stmt->execute([$to, $id]);
 					$message = 'Benefits status updated';
@@ -524,6 +564,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 			if ($id) {
 				try {
 					$pdo = get_db_connection();
+					ensure_waiting_document_columns($pdo);
 					$stmt = $pdo->prepare('UPDATE seniors SET life_status=? WHERE id=?');
 					$stmt->execute([$to, $id]);
 					$message = 'Life status updated';
@@ -543,6 +584,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 			if ($id && $death_date && $death_place && $death_cause) {
 				try {
 					$pdo = get_db_connection();
+					ensure_waiting_document_columns($pdo);
 					$pdo->beginTransaction();
 					
 					// Create senior_deaths table if it doesn't exist
@@ -618,6 +660,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 			if ($valid) {
 				try {
 					$pdo = get_db_connection();
+					ensure_waiting_document_columns($pdo);
 					$pdo->beginTransaction();
 					
 					// Create senior_transfers table if it doesn't exist
@@ -755,6 +798,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 try {
 	$pdo = get_db_connection();
+	ensure_waiting_document_columns($pdo);
 	$barangays = $pdo->query('SELECT name FROM barangays ORDER BY name')->fetchAll();
 } catch (Exception $e) {
 	error_log("Failed to load barangays: " . $e->getMessage());
@@ -782,6 +826,7 @@ $params = [];
 // Handle different status views
 try {
 	$pdo = get_db_connection();
+	ensure_waiting_document_columns($pdo);
 	
 	if ($status === 'active') {
 		// Active seniors: those who have attended events
@@ -873,6 +918,7 @@ unset($seniors_in_barangay);
 
 try {
 	$pdo = get_db_connection();
+	ensure_waiting_document_columns($pdo);
 	$livingCount = (int)$pdo->query("SELECT COUNT(*) FROM seniors WHERE life_status='living'")->fetchColumn();
 	$deceasedCount = (int)$pdo->query("SELECT COUNT(*) FROM seniors WHERE life_status='deceased'")->fetchColumn();
 	$waitingCount = (int)$pdo->query("SELECT COUNT(*) FROM seniors WHERE life_status='living' AND category='waiting'")->fetchColumn();
