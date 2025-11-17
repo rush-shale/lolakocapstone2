@@ -79,7 +79,7 @@ CREATE TABLE `seniors` (
   `cellphone` varchar(50) DEFAULT NULL,
   `benefits_received` tinyint(1) NOT NULL DEFAULT 0,
   `life_status` enum('living','deceased') NOT NULL DEFAULT 'living',
-  `category` enum('local','national','waiting') NOT NULL DEFAULT 'local',
+  `category` enum('local','national','waiting','transferred') NOT NULL DEFAULT 'local',
   `validation_status` enum('Validated','Not Validated') DEFAULT 'Validated',
   `validation_date` timestamp NULL DEFAULT NULL,
   `waiting_birth_certificate` tinyint(1) NOT NULL DEFAULT 0,

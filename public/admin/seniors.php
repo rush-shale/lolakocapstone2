@@ -5,6 +5,7 @@ require_once __DIR__ . '/../../config/db.php';
 
 require_role('admin');
 start_app_session();
+$todayDate = date('Y-m-d');
 
 if (!function_exists('is_ajax_request')) {
 	/**
@@ -64,6 +65,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
 
 $pdo = get_db_connection();
 
+if (!function_exists('column_exists')) {
+	function column_exists(PDO $pdo, string $table, string $column): bool {
+		try {
+			$stmt = $pdo->prepare("SHOW COLUMNS FROM `$table` LIKE ?");
+			$stmt->execute([$column]);
+			return (bool)$stmt->fetch(PDO::FETCH_ASSOC);
+		} catch (Exception $e) {
+			error_log("column_exists check failed for {$table}.{$column}: " . $e->getMessage());
+			return false;
+		}
+	}
+}
+
 if (!function_exists('ensure_waiting_document_columns')) {
 	function ensure_waiting_document_columns(PDO $pdo) {
 		static $ensured = false;
@@ -71,24 +85,48 @@ if (!function_exists('ensure_waiting_document_columns')) {
 			return;
 		}
 		try {
-			$columns = $pdo->query("SHOW COLUMNS FROM seniors LIKE 'waiting_birth_certificate'");
-			$hasBirth = $columns && $columns->rowCount() > 0;
-			$hasMarriage = $pdo->query("SHOW COLUMNS FROM seniors LIKE 'waiting_marriage_contract'")->rowCount() > 0;
-			$hasValidId = $pdo->query("SHOW COLUMNS FROM seniors LIKE 'waiting_valid_id'")->rowCount() > 0;
-
-			if (!$hasBirth) {
+			if (!column_exists($pdo, 'seniors', 'waiting_birth_certificate')) {
 				$pdo->exec("ALTER TABLE seniors ADD COLUMN waiting_birth_certificate TINYINT(1) NOT NULL DEFAULT 0 AFTER validation_date");
 			}
-			if (!$hasMarriage) {
+			if (!column_exists($pdo, 'seniors', 'waiting_marriage_contract')) {
 				$pdo->exec("ALTER TABLE seniors ADD COLUMN waiting_marriage_contract TINYINT(1) NOT NULL DEFAULT 0 AFTER waiting_birth_certificate");
 			}
-			if (!$hasValidId) {
+			if (!column_exists($pdo, 'seniors', 'waiting_valid_id')) {
 				$pdo->exec("ALTER TABLE seniors ADD COLUMN waiting_valid_id TINYINT(1) NOT NULL DEFAULT 0 AFTER waiting_marriage_contract");
 			}
+
+			// Ensure category column can store transferred state
+	if (!column_exists($pdo, 'seniors', 'category')) {
+		$pdo->exec("ALTER TABLE seniors ADD COLUMN category ENUM('local','national','waiting','transferred') NOT NULL DEFAULT 'local'");
+	} else {
+		$column = $pdo->query("SHOW COLUMNS FROM seniors LIKE 'category'")->fetch(PDO::FETCH_ASSOC);
+		if ($column && isset($column['Type']) && stripos($column['Type'], 'transferred') === false) {
+			$pdo->exec("ALTER TABLE seniors MODIFY COLUMN category ENUM('local','national','waiting','transferred') NOT NULL DEFAULT 'local'");
+		}
+	}
+	if (!column_exists($pdo, 'seniors', 'life_status')) {
+		$pdo->exec("ALTER TABLE seniors ADD COLUMN life_status ENUM('living','deceased') NOT NULL DEFAULT 'living'");
+	}
 		} catch (Exception $e) {
 			error_log('Failed to ensure waiting document columns exist: ' . $e->getMessage());
 		}
 		$ensured = true;
+	}
+}
+
+if (!function_exists('message_is_error')) {
+	function message_is_error(string $message = null): bool {
+		if (!$message) {
+			return false;
+		}
+		$lower = strtolower($message);
+		$keywords = ['error', 'duplicate', 'failed', 'invalid', 'required', 'cannot', 'denied'];
+		foreach ($keywords as $keyword) {
+			if (strpos($lower, $keyword) !== false) {
+				return true;
+			}
+		}
+		return false;
 	}
 }
 
@@ -580,8 +618,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 			$death_time = $_POST['death_time'] ?? '';
 			$death_place = trim($_POST['death_place'] ?? '');
 			$death_cause = trim($_POST['death_cause'] ?? '');
+			$deathDateValid = true;
+			if ($death_date) {
+				$todayStr = date('Y-m-d');
+				if ($death_date > $todayStr) {
+					$deathDateValid = false;
+				}
+			}
 			
-			if ($id && $death_date && $death_place && $death_cause) {
+			if ($id && $death_date && $death_place && $death_cause && $deathDateValid) {
 				try {
 					$pdo = get_db_connection();
 					ensure_waiting_document_columns($pdo);
@@ -639,7 +684,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 					$message = 'Error marking as deceased: ' . $e->getMessage();
 				}
 			} else {
-				$message = 'Please fill in all required death information fields.';
+				if (!$deathDateValid) {
+					$message = 'Date of death cannot be in the future.';
+				} else {
+					$message = 'Please fill in all required death information fields.';
+				}
 			}
 		}
 		if ($op === 'transfer_details') {
@@ -648,9 +697,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 			$transfer_reason_other = trim($_POST['transfer_reason_other'] ?? '');
 			$new_address = trim($_POST['new_address'] ?? '');
 			$effective_date = $_POST['effective_date'] ?? '';
+			$dateError = '';
+			$effectiveDateValid = true;
+			if ($effective_date) {
+				$todayStr = date('Y-m-d');
+				if ($effective_date > $todayStr) {
+					$effectiveDateValid = false;
+					$dateError = 'Effective transfer date cannot be in the future.';
+				}
+			}
 			
 			// Validate required fields
-			$valid = $id && $transfer_reason && $new_address && $effective_date;
+			$valid = $id && $transfer_reason && $new_address && $effective_date && $effectiveDateValid;
 			
 			// If reason is 'other', validate that other reason is provided
 			if ($transfer_reason === 'other' && empty($transfer_reason_other)) {
@@ -750,7 +808,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 					$message = 'Error processing transfer: ' . $e->getMessage();
 				}
 			} else {
-				$message = 'Please fill in all required transfer information fields.';
+				$message = $dateError ?: 'Please fill in all required transfer information fields.';
 				error_log("Transfer validation failed - ID: $id, Reason: $transfer_reason, Address: $new_address, Date: $effective_date");
 			}
 		}
@@ -1743,12 +1801,12 @@ try {
         }
         ?>
         <?php if ($message): ?>
-		<div class="alert <?= (strpos(strtolower($message), 'error') !== false || strpos(strtolower($message), 'duplicate') !== false || strpos(strtolower($message), 'failed') !== false || strpos(strtolower($message), 'invalid') !== false || strpos(strtolower($message), 'required') !== false) ? 'alert-error' : 'alert-success' ?>">
+		<div class="alert <?= message_is_error($message) ? 'alert-error' : 'alert-success' ?>">
 			<div class="alert-icon">
-				<i class="fas fa-<?= (strpos(strtolower($message), 'error') !== false || strpos(strtolower($message), 'duplicate') !== false || strpos(strtolower($message), 'failed') !== false || strpos(strtolower($message), 'invalid') !== false || strpos(strtolower($message), 'required') !== false) ? 'exclamation-circle' : 'check-circle' ?>"></i>
+				<i class="fas fa-<?= message_is_error($message) ? 'exclamation-circle' : 'check-circle' ?>"></i>
 			</div>
 			<div class="alert-content">
-				<strong><?= (strpos(strtolower($message), 'error') !== false || strpos(strtolower($message), 'duplicate') !== false || strpos(strtolower($message), 'failed') !== false || strpos(strtolower($message), 'invalid') !== false || strpos(strtolower($message), 'required') !== false) ? 'Error!' : 'Success!' ?></strong>
+				<strong><?= message_is_error($message) ? 'Error!' : 'Success!' ?></strong>
 				<p><?= htmlspecialchars($message) ?></p>
 			</div>
 		</div>
@@ -2441,12 +2499,12 @@ try {
 			</div>
 			<div class="modal-body">
 				<?php if ($message && $_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['op'] ?? '') === 'create'): ?>
-				<div class="alert <?= (strpos(strtolower($message), 'error') !== false || strpos(strtolower($message), 'duplicate') !== false || strpos(strtolower($message), 'failed') !== false || strpos(strtolower($message), 'invalid') !== false || strpos(strtolower($message), 'required') !== false) ? 'alert-error' : 'alert-success' ?>" style="margin-bottom: 1rem;">
+				<div class="alert <?= message_is_error($message) ? 'alert-error' : 'alert-success' ?>" style="margin-bottom: 1rem;">
 					<div class="alert-icon">
-						<i class="fas fa-<?= (strpos(strtolower($message), 'error') !== false || strpos(strtolower($message), 'duplicate') !== false || strpos(strtolower($message), 'failed') !== false || strpos(strtolower($message), 'invalid') !== false || strpos(strtolower($message), 'required') !== false) ? 'exclamation-circle' : 'check-circle' ?>"></i>
+						<i class="fas fa-<?= message_is_error($message) ? 'exclamation-circle' : 'check-circle' ?>"></i>
 					</div>
 					<div class="alert-content">
-						<strong><?= (strpos(strtolower($message), 'error') !== false || strpos(strtolower($message), 'duplicate') !== false || strpos(strtolower($message), 'failed') !== false || strpos(strtolower($message), 'invalid') !== false || strpos(strtolower($message), 'required') !== false) ? 'Error!' : 'Success!' ?></strong>
+						<strong><?= message_is_error($message) ? 'Error!' : 'Success!' ?></strong>
 						<p><?= htmlspecialchars($message) ?></p>
 					</div>
 				</div>
@@ -3472,7 +3530,7 @@ try {
 				
 				<div>
 					<div style="font-weight: 600; margin-bottom: 0.5rem; font-size: 1rem;">Effective Date of Transfer:</div>
-					<input type="date" id="effectiveDate" name="effective_date" required style="width: 100%; padding: 0.5rem; border: none; border-bottom: 1px solid #d1d5db; background: transparent; outline: none; font-size: 1rem;">
+					<input type="date" id="effectiveDate" name="effective_date" required style="width: 100%; padding: 0.5rem; border: none; border-bottom: 1px solid #d1d5db; background: transparent; outline: none; font-size: 1rem;" max="<?= $todayDate ?>">
 				</div>
 				
 				<div style="display: flex; justify-content: flex-end; gap: 1rem; margin-top: 2rem;">
@@ -3497,7 +3555,7 @@ try {
 				
 				<div>
 					<div style="font-weight: 600; margin-bottom: 0.5rem; font-size: 1rem;">Date of Death:</div>
-					<input type="date" id="deathDate" name="death_date" required style="width: 100%; padding: 0.5rem; border: 1px solid #d1d5db; border-radius: 6px;">
+					<input type="date" id="deathDate" name="death_date" required style="width: 100%; padding: 0.5rem; border: 1px solid #d1d5db; border-radius: 6px;" max="<?= $todayDate ?>">
 				</div>
 				
 				<div>

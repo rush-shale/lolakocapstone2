@@ -7,6 +7,19 @@ require_role('admin');
 $pdo = get_db_connection();
 start_app_session();
 
+if (!function_exists('column_exists')) {
+	function column_exists(PDO $pdo, string $table, string $column): bool {
+		try {
+			$stmt = $pdo->prepare("SHOW COLUMNS FROM `$table` LIKE ?");
+			$stmt->execute([$column]);
+			return (bool)$stmt->fetch(PDO::FETCH_ASSOC);
+		} catch (Exception $e) {
+			error_log("column_exists check failed for {$table}.{$column}: " . $e->getMessage());
+			return false;
+		}
+	}
+}
+
 if (!function_exists('ensure_waiting_document_columns')) {
 	function ensure_waiting_document_columns(PDO $pdo) {
 		static $ensured = false;
@@ -14,16 +27,13 @@ if (!function_exists('ensure_waiting_document_columns')) {
 			return;
 		}
 		try {
-			$hasBirth = $pdo->query("SHOW COLUMNS FROM seniors LIKE 'waiting_birth_certificate'")->rowCount() > 0;
-			if (!$hasBirth) {
+			if (!column_exists($pdo, 'seniors', 'waiting_birth_certificate')) {
 				$pdo->exec("ALTER TABLE seniors ADD COLUMN waiting_birth_certificate TINYINT(1) NOT NULL DEFAULT 0 AFTER validation_date");
 			}
-			$hasMarriage = $pdo->query("SHOW COLUMNS FROM seniors LIKE 'waiting_marriage_contract'")->rowCount() > 0;
-			if (!$hasMarriage) {
+			if (!column_exists($pdo, 'seniors', 'waiting_marriage_contract')) {
 				$pdo->exec("ALTER TABLE seniors ADD COLUMN waiting_marriage_contract TINYINT(1) NOT NULL DEFAULT 0 AFTER waiting_birth_certificate");
 			}
-			$hasValidId = $pdo->query("SHOW COLUMNS FROM seniors LIKE 'waiting_valid_id'")->rowCount() > 0;
-			if (!$hasValidId) {
+			if (!column_exists($pdo, 'seniors', 'waiting_valid_id')) {
 				$pdo->exec("ALTER TABLE seniors ADD COLUMN waiting_valid_id TINYINT(1) NOT NULL DEFAULT 0 AFTER waiting_marriage_contract");
 			}
 		} catch (Exception $e) {

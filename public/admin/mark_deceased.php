@@ -6,6 +6,7 @@ require_once __DIR__ . '/../../config/db.php';
 require_role('admin');
 $pdo = get_db_connection();
 start_app_session();
+$todayDate = date('Y-m-d');
 
 $seniorId = (int)($_GET['id'] ?? ($_POST['id'] ?? 0));
 if ($seniorId <= 0) {
@@ -36,40 +37,47 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $timeOfDeath = trim($_POST['time_of_death'] ?? '');
         $placeOfDeath = trim($_POST['place_of_death'] ?? '');
         $causeOfDeath = trim($_POST['cause_of_death'] ?? '');
-
-        // Upsert: if record exists for this senior, update it; else insert
-        $existingId = (int)$pdo->prepare('SELECT id FROM senior_deaths WHERE senior_id = ?')->execute([$seniorId]) ? (int)$pdo->query('SELECT LAST_INSERT_ID()')->fetchColumn() : 0;
-
-        $stmtCheck = $pdo->prepare('SELECT id FROM senior_deaths WHERE senior_id = ?');
-        $stmtCheck->execute([$seniorId]);
-        $existing = $stmtCheck->fetch();
-
-        if ($existing) {
-            $stmt = $pdo->prepare('UPDATE senior_deaths SET date_of_death = ?, time_of_death = ?, place_of_death = ?, cause_of_death = ? WHERE id = ?');
-            $stmt->execute([
-                $dateOfDeath ?: null,
-                $timeOfDeath ?: null,
-                $placeOfDeath ?: null,
-                $causeOfDeath ?: null,
-                (int)$existing['id']
-            ]);
-        } else {
-            $stmt = $pdo->prepare('INSERT INTO senior_deaths (senior_id, date_of_death, time_of_death, place_of_death, cause_of_death) VALUES (?,?,?,?,?)');
-            $stmt->execute([
-                $seniorId,
-                $dateOfDeath ?: null,
-                $timeOfDeath ?: null,
-                $placeOfDeath ?: null,
-                $causeOfDeath ?: null
-            ]);
+        $dateValid = true;
+        if ($dateOfDeath) {
+            $todayStr = date('Y-m-d');
+            if ($dateOfDeath > $todayStr) {
+                $dateValid = false;
+                $message = 'Date of death cannot be in the future.';
+            }
         }
 
-        // Mark senior as deceased
-        $pdo->prepare('UPDATE seniors SET life_status = ? WHERE id = ?')->execute(['deceased', $seniorId]);
+        if ($dateValid) {
+            // Upsert logic and update life status
+            $stmtCheck = $pdo->prepare('SELECT id FROM senior_deaths WHERE senior_id = ?');
+            $stmtCheck->execute([$seniorId]);
+            $existing = $stmtCheck->fetch();
 
-        // Redirect back to All Seniors with success
-        header('Location: seniors.php?success=deceased_marked');
-        exit;
+            if ($existing) {
+                $stmt = $pdo->prepare('UPDATE senior_deaths SET date_of_death = ?, time_of_death = ?, place_of_death = ?, cause_of_death = ? WHERE id = ?');
+                $stmt->execute([
+                    $dateOfDeath ?: null,
+                    $timeOfDeath ?: null,
+                    $placeOfDeath ?: null,
+                    $causeOfDeath ?: null,
+                    (int)$existing['id']
+                ]);
+            } else {
+                $stmt = $pdo->prepare('INSERT INTO senior_deaths (senior_id, date_of_death, time_of_death, place_of_death, cause_of_death) VALUES (?,?,?,?,?)');
+                $stmt->execute([
+                    $seniorId,
+                    $dateOfDeath ?: null,
+                    $timeOfDeath ?: null,
+                    $placeOfDeath ?: null,
+                    $causeOfDeath ?: null
+                ]);
+            }
+
+            // Mark senior as deceased
+            $pdo->prepare('UPDATE seniors SET life_status = ? WHERE id = ?')->execute(['deceased', $seniorId]);
+
+            header('Location: seniors.php?success=deceased_marked');
+            exit;
+        }
     }
 }
 
@@ -138,7 +146,7 @@ $csrf = generate_csrf_token();
             <div class="form-grid">
                 <div class="field">
                     <label for="date_of_death">Date of Death</label>
-                    <input type="date" id="date_of_death" name="date_of_death" value="<?= htmlspecialchars($death['date_of_death'] ?? '') ?>">
+                    <input type="date" id="date_of_death" name="date_of_death" value="<?= htmlspecialchars($death['date_of_death'] ?? '') ?>" max="<?= $todayDate ?>">
                 </div>
                 <div class="field" style="grid-column:1 / -1;">
                     <label for="place_of_death">Place of Death</label>
