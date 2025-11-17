@@ -80,10 +80,11 @@ $barangays = $pdo->query('SELECT * FROM barangays ORDER BY name ASC')->fetchAll(
 			border: none;
 			font-size: 1.5rem;
 			cursor: pointer;
-			color: #333;
+			color: #fff;
+			transition: color 0.2s ease;
 		}
 		.modal-close:hover {
-			color: #000;
+			color: rgba(255, 255, 255, 0.75);
 		}
 	</style>
 </head>

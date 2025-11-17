@@ -155,6 +155,8 @@ $events = $pdo->query("SELECT * FROM events WHERE scope='admin' ORDER BY event_d
 			border: none;
 			font-size: 1.5rem;
 			cursor: pointer;
+			color: #fff;
+			transition: color 0.2s ease;
 		}
 		.form-group {
 			margin-bottom: 1rem;
