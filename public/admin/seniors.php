@@ -2408,6 +2408,7 @@ try {
 				<form id="addSeniorForm" method="post" action="<?= htmlspecialchars($_SERVER['PHP_SELF']) ?>">
 					<input type="hidden" name="csrf" value="<?= htmlspecialchars($csrf) ?>">
 					<input type="hidden" name="op" value="create">
+					<input type="hidden" name="has_waiting_documents_fields" value="1">
 
 					<!-- Form Progress -->
 					<div class="form-progress">
@@ -2736,6 +2737,30 @@ try {
 									<span class="checkbox-custom"></span>
 									On Waiting List
 								</label>
+							</div>
+						</div>
+
+						<div id="waitingDocumentsWrapper" class="form-row waiting-documents">
+							<div class="form-group document-group">
+								<span class="form-label" style="font-weight: 600;">Required Documents</span>
+								<div class="document-checkboxes">
+									<label class="checkbox-label">
+										<input type="checkbox" name="doc_birth_certificate" id="doc_birth_certificate" class="checkbox-input waiting-doc-checkbox" value="1" disabled>
+										<span class="checkbox-custom"></span>
+										Birth Certificate
+									</label>
+									<label class="checkbox-label">
+										<input type="checkbox" name="doc_marriage_contract" id="doc_marriage_contract" class="checkbox-input waiting-doc-checkbox" value="1" disabled>
+										<span class="checkbox-custom"></span>
+										Marriage Contract
+									</label>
+									<label class="checkbox-label">
+										<input type="checkbox" name="doc_valid_id" id="doc_valid_id" class="checkbox-input waiting-doc-checkbox" value="1" disabled>
+										<span class="checkbox-custom"></span>
+										Valid ID
+									</label>
+								</div>
+								<small class="help-text">Enable the waiting list checkbox first to mark submitted documents.</small>
 							</div>
 						</div>
 					</div>
@@ -3105,7 +3130,7 @@ try {
 			return true;
 		}
 		
-		// Override app.js form handler for add senior form
+		// Override app.js form handler for add senior form and wire waiting-list documents
 		document.addEventListener('DOMContentLoaded', function() {
 			const addSeniorForm = document.getElementById('addSeniorForm');
 			if (addSeniorForm) {
@@ -3125,6 +3150,30 @@ try {
 					// Allow form to submit normally
 					return true;
 				}, true); // Use capture phase to run before other handlers
+
+				// Hook up waiting list documents enabling logic
+				const waitingCheckbox = form.querySelector('#waiting_list');
+				const docCheckboxes = form.querySelectorAll('.waiting-doc-checkbox');
+				const wrapper = document.getElementById('waitingDocumentsWrapper');
+
+				function updateWaitingDocumentsState() {
+					const enabled = !!(waitingCheckbox && waitingCheckbox.checked);
+					docCheckboxes.forEach(cb => {
+						cb.disabled = !enabled;
+						if (!enabled) {
+							cb.checked = false;
+						}
+					});
+					if (wrapper) {
+						wrapper.style.opacity = enabled ? '1' : '0.6';
+					}
+				}
+
+				if (waitingCheckbox) {
+					waitingCheckbox.addEventListener('change', updateWaitingDocumentsState);
+					// Initialize on load
+					updateWaitingDocumentsState();
+				}
 			}
 		});
 

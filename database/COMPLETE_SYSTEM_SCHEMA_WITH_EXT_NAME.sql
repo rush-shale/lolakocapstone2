@@ -82,6 +82,9 @@ CREATE TABLE `seniors` (
   `category` enum('local','national','waiting') NOT NULL DEFAULT 'local',
   `validation_status` enum('Validated','Not Validated') DEFAULT 'Validated',
   `validation_date` timestamp NULL DEFAULT NULL,
+  `waiting_birth_certificate` tinyint(1) NOT NULL DEFAULT 0,
+  `waiting_marriage_contract` tinyint(1) NOT NULL DEFAULT 0,
+  `waiting_valid_id` tinyint(1) NOT NULL DEFAULT 0,
   `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
