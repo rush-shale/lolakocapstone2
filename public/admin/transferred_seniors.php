@@ -113,13 +113,7 @@ $transferredThisMonthCount = count($transferredThisMonth);
 			font-size: 0.875rem;
 		}
 		
-		.clickable-row {
-			cursor: pointer;
-		}
 		
-		.clickable-row:hover {
-			background: var(--bg-secondary);
-		}
 		
 		.table-container {
 			overflow-x: auto;
@@ -241,7 +235,7 @@ $transferredThisMonthCount = count($transferredThisMonth);
 							<tbody id="transferredSeniorsTable">
 								<?php if (!empty($transferredSeniors)): ?>
 									<?php foreach ($transferredSeniors as $senior): ?>
-										<tr class="clickable-row" onclick="window.location.href='senior_details.php?id=<?= (int)$senior['id'] ?>&noedit=1'" style="cursor:pointer;">
+										<tr>
 											<td>
 												<div class="senior-info">
 													<strong><?= htmlspecialchars(ucfirst(strtolower($senior['last_name'] . ', ' . $senior['first_name']))) ?></strong>

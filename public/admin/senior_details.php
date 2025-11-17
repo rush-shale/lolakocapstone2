@@ -434,53 +434,6 @@ $lastEvent = !empty($attendanceHistory) ? $attendanceHistory[0] : null;
             color: #2563eb;
         }
         
-        /* Page overlay for senior details */
-        .page-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0,0,0,0.5);
-            backdrop-filter: blur(5px);
-            -webkit-backdrop-filter: blur(5px);
-            z-index: 1000;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            opacity: 0;
-            animation: fadeInBlur 0.5s ease forwards;
-        }
-        
-        .page-overlay .senior-profile {
-            transform: scale(0.7);
-            animation: zoomInProfile 0.5s ease forwards;
-        }
-        
-        @keyframes fadeInBlur {
-            from { 
-                opacity: 0;
-                backdrop-filter: blur(0px);
-                -webkit-backdrop-filter: blur(0px);
-            }
-            to { 
-                opacity: 1;
-                backdrop-filter: blur(5px);
-                -webkit-backdrop-filter: blur(5px);
-            }
-        }
-        
-        @keyframes zoomInProfile {
-            from {
-                transform: scale(0.7);
-                opacity: 0;
-            }
-            to {
-                transform: scale(1);
-                opacity: 1;
-            }
-        }
-
         /* Modal styles */
         .modal-overlay {
             position: fixed;
@@ -547,8 +500,7 @@ $lastEvent = !empty($attendanceHistory) ? $attendanceHistory[0] : null;
         </div>
         <?php endif; ?>
 
-        <div class="page-overlay">
-            <div class="senior-profile" data-senior-id="<?= $senior['id'] ?>">
+        <div class="senior-profile" data-senior-id="<?= $senior['id'] ?>">
             <!-- Profile Summary (Sticky) -->
             <div class="profile-summary-sticky">
                 <!-- Personal Information -->
@@ -569,7 +521,7 @@ $lastEvent = !empty($attendanceHistory) ? $attendanceHistory[0] : null;
                             </div>
                         </div>
                         <div class="profile-actions">
-                            <?php if (($_GET['noedit'] ?? '') !== '1'): ?>
+                            <?php if (($senior['category'] ?? '') !== 'transferred'): ?>
                             <button class="button primary" onclick="editSenior(<?= $senior['id'] ?>)" aria-label="Edit senior profile">
                                 <i class="fas fa-edit"></i>
                                 Edit Profile
@@ -723,10 +675,8 @@ $lastEvent = !empty($attendanceHistory) ? $attendanceHistory[0] : null;
                     <p>This senior has not attended any events yet.</p>
                 </div>
                 <?php endif; ?>
-            </div>
         </div>
     </main>
-    </div>
 
     <!-- Edit Senior Modal -->
     <div id="editSeniorModal" class="modal-overlay">

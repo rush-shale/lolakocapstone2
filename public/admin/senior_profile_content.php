@@ -24,7 +24,7 @@
                     </div>
                 </div>
                 <div class="profile-actions">
-                    <?php if (($_GET['noedit'] ?? '') !== '1'): ?>
+                    <?php if (($senior['category'] ?? '') !== 'transferred'): ?>
                     <button class="button primary" data-senior-id="<?= $senior['id'] ?>">
                         <i class="fas fa-edit"></i>
                         Edit Profile
