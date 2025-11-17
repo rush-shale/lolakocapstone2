@@ -3164,7 +3164,7 @@ try {
 	<div id="editSeniorModal" class="modal-overlay">
 		<div class="modal" style="background: white; border-radius: 12px; padding: 2rem; max-width: 600px; width: 90%; max-height: 90%; overflow-y: auto; position: relative;">
 			<div class="modal-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
-				<h2 style="margin: 0; font-size: 1.5rem; font-weight: 700; color: #111827;">Edit Senior Profile</h2>
+				<h2 class="modal-title">Edit Senior Profile</h2>
 				<button onclick="closeEditSeniorModal()" style="background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #6b7280;" aria-label="Close edit senior form">&times;</button>
 			</div>
 			<form id="editSeniorForm" method="POST" action="<?= htmlspecialchars($_SERVER['PHP_SELF']) ?>" style="display: flex; flex-direction: column; gap: 1rem;">
