@@ -140,10 +140,6 @@ $csrf = generate_csrf_token();
                     <label for="date_of_death">Date of Death</label>
                     <input type="date" id="date_of_death" name="date_of_death" value="<?= htmlspecialchars($death['date_of_death'] ?? '') ?>">
                 </div>
-                <div class="field">
-                    <label for="time_of_death">Time of Death</label>
-                    <input type="time" id="time_of_death" name="time_of_death" value="<?= htmlspecialchars($death['time_of_death'] ?? '') ?>">
-                </div>
                 <div class="field" style="grid-column:1 / -1;">
                     <label for="place_of_death">Place of Death</label>
                     <input type="text" id="place_of_death" name="place_of_death" value="<?= htmlspecialchars($death['place_of_death'] ?? '') ?>">

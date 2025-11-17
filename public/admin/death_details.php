@@ -87,10 +87,6 @@ $death = $stmtDeath->fetch();
             <div class="value"><?= $death && $death['date_of_death'] ? date('M d, Y', strtotime($death['date_of_death'])) : '<span class="muted">Not specified</span>' ?></div>
         </div>
         <div class="detail">
-            <div class="label">Time of Death</div>
-            <div class="value"><?= $death && $death['time_of_death'] ? date('g:i A', strtotime($death['time_of_death'])) : '<span class="muted">Not specified</span>' ?></div>
-        </div>
-        <div class="detail">
             <div class="label">Place of Death</div>
             <div class="value"><?= $death && $death['place_of_death'] ? htmlspecialchars($death['place_of_death']) : '<span class="muted">Not specified</span>' ?></div>
         </div>

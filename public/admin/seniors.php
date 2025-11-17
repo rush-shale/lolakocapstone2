@@ -3340,7 +3340,7 @@ try {
 	<div id="transferModal" class="modal-overlay">
 		<div class="modal" style="background: white; border-radius: 12px; padding: 2rem; max-width: 500px; width: 90%; max-height: 90%; overflow-y: auto; position: relative;">
 			<div class="modal-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
-				<h2 style="margin: 0; font-size: 1.5rem; font-weight: 700; color: #111827;">📦 Transfer Details</h2>
+				<h2 class="modal-title">📦 Transfer Details</h2>
 				<button onclick="closeTransferModal()" style="background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #6b7280;" aria-label="Close transfer form">&times;</button>
 			</div>
 			<form id="transferForm" method="POST" action="<?= htmlspecialchars($_SERVER['PHP_SELF']) ?>" style="display: flex; flex-direction: column; gap: 1.5rem;">
@@ -3392,7 +3392,7 @@ try {
 	<div id="deceasedModal" class="modal-overlay">
 		<div class="modal" style="background: white; border-radius: 12px; padding: 2rem; max-width: 500px; width: 90%; max-height: 90%; overflow-y: auto; position: relative;">
 			<div class="modal-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
-				<h2 style="margin: 0; font-size: 1.5rem; font-weight: 700; color: #111827;">💀 Death Information</h2>
+				<h2 class="modal-title">💀 Death Information</h2>
 				<button onclick="closeDeceasedModal()" style="background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #6b7280;" aria-label="Close deceased form">&times;</button>
 			</div>
 			<form id="deceasedForm" method="POST" action="<?= htmlspecialchars($_SERVER['PHP_SELF']) ?>" style="display: flex; flex-direction: column; gap: 1.5rem;">
@@ -3403,11 +3403,6 @@ try {
 				<div>
 					<div style="font-weight: 600; margin-bottom: 0.5rem; font-size: 1rem;">Date of Death:</div>
 					<input type="date" id="deathDate" name="death_date" required style="width: 100%; padding: 0.5rem; border: 1px solid #d1d5db; border-radius: 6px;">
-				</div>
-				
-				<div>
-					<div style="font-weight: 600; margin-bottom: 0.5rem; font-size: 1rem;">Time of Death:</div>
-					<input type="time" id="deathTime" name="death_time" style="width: 100%; padding: 0.5rem; border: 1px solid #d1d5db; border-radius: 6px;">
 				</div>
 				
 				<div>
