@@ -1,6 +1,14 @@
 <?php
 // This file contains only the senior profile content for AJAX loading
 // It should be included by senior_details.php when handling AJAX requests
+
+// Initialize variables if not set (for safety)
+if (!isset($familyComposition)) {
+    $familyComposition = [];
+}
+if (!isset($associationInfo)) {
+    $associationInfo = [];
+}
 ?>
 
 <div class="senior-profile" data-senior-id="<?= $senior['id'] ?>" style="font-family: 'Inter', sans-serif; max-width: 100%; margin: 0; padding: 0; background: transparent; border-radius: 0; box-shadow: none; color: #1f2937; font-size: 0.875rem; line-height: 1.4;">
@@ -114,6 +122,108 @@
                     <span class="value"><?= htmlspecialchars($senior['other_skills'] ?: 'None') ?></span>
                 </div>
             </div>
+        </div>
+
+        <div class="detail-section">
+            <h3><i class="fas fa-users"></i> Family Composition Details</h3>
+            <?php if (!empty($familyComposition)): ?>
+                <div class="family-composition-list">
+                    <?php foreach ($familyComposition as $index => $member): ?>
+                        <div class="family-member-card">
+                            <div class="family-member-header">
+                                <h4><?= htmlspecialchars($member['name']) ?></h4>
+                                <span class="family-relation-badge"><?= htmlspecialchars($member['relation']) ?></span>
+                            </div>
+                            <div class="detail-grid">
+                                <?php if ($member['birthday']): ?>
+                                <div class="detail-item">
+                                    <span class="label">Birthday:</span>
+                                    <span class="value"><?= date('F j, Y', strtotime($member['birthday'])) ?></span>
+                                </div>
+                                <?php endif; ?>
+                                <?php if ($member['age']): ?>
+                                <div class="detail-item">
+                                    <span class="label">Age:</span>
+                                    <span class="value"><?= htmlspecialchars($member['age']) ?> years</span>
+                                </div>
+                                <?php endif; ?>
+                                <?php if ($member['civil_status']): ?>
+                                <div class="detail-item">
+                                    <span class="label">Civil Status:</span>
+                                    <span class="value"><?= htmlspecialchars($member['civil_status']) ?></span>
+                                </div>
+                                <?php endif; ?>
+                                <?php if ($member['occupation']): ?>
+                                <div class="detail-item">
+                                    <span class="label">Occupation:</span>
+                                    <span class="value"><?= htmlspecialchars($member['occupation']) ?></span>
+                                </div>
+                                <?php endif; ?>
+                                <?php if ($member['income']): ?>
+                                <div class="detail-item">
+                                    <span class="label">Income:</span>
+                                    <span class="value">₱<?= number_format($member['income'], 2) ?></span>
+                                </div>
+                                <?php endif; ?>
+                            </div>
+                        </div>
+                    <?php endforeach; ?>
+                </div>
+            <?php else: ?>
+                <div class="empty-state">
+                    <p style="color: #6b7280; font-style: italic;">No family composition information available.</p>
+                </div>
+            <?php endif; ?>
+        </div>
+
+        <div class="detail-section">
+            <h3><i class="fas fa-handshake"></i> Association Information Details</h3>
+            <?php if (!empty($associationInfo)): ?>
+                <div class="association-info-list">
+                    <?php foreach ($associationInfo as $index => $association): ?>
+                        <div class="association-card">
+                            <div class="association-header">
+                                <h4><?= htmlspecialchars($association['association_name'] ?: 'Unnamed Association') ?></h4>
+                                <?php if ($association['is_officer']): ?>
+                                    <span class="officer-badge">
+                                        <i class="fas fa-star"></i> Officer
+                                    </span>
+                                <?php endif; ?>
+                            </div>
+                            <div class="detail-grid">
+                                <?php if ($association['association_address']): ?>
+                                <div class="detail-item">
+                                    <span class="label">Address:</span>
+                                    <span class="value"><?= htmlspecialchars($association['association_address']) ?></span>
+                                </div>
+                                <?php endif; ?>
+                                <?php if ($association['membership_date']): ?>
+                                <div class="detail-item">
+                                    <span class="label">Membership Date:</span>
+                                    <span class="value"><?= date('F j, Y', strtotime($association['membership_date'])) ?></span>
+                                </div>
+                                <?php endif; ?>
+                                <?php if ($association['is_officer'] && $association['position']): ?>
+                                <div class="detail-item">
+                                    <span class="label">Position:</span>
+                                    <span class="value"><?= htmlspecialchars($association['position']) ?></span>
+                                </div>
+                                <?php endif; ?>
+                                <?php if ($association['is_officer'] && $association['date_elected']): ?>
+                                <div class="detail-item">
+                                    <span class="label">Date Elected:</span>
+                                    <span class="value"><?= date('F j, Y', strtotime($association['date_elected'])) ?></span>
+                                </div>
+                                <?php endif; ?>
+                            </div>
+                        </div>
+                    <?php endforeach; ?>
+                </div>
+            <?php else: ?>
+                <div class="empty-state">
+                    <p style="color: #6b7280; font-style: italic;">No association information available.</p>
+                </div>
+            <?php endif; ?>
         </div>
 
         <div class="detail-section">

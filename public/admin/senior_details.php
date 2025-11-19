@@ -25,6 +25,16 @@ if (isset($_GET['ajax']) && $_GET['ajax'] == '1') {
         exit;
     }
     
+    // Fetch family composition data
+    $familyStmt = $pdo->prepare('SELECT * FROM family_composition WHERE senior_id = ? ORDER BY created_at ASC');
+    $familyStmt->execute([$id]);
+    $familyComposition = $familyStmt->fetchAll(PDO::FETCH_ASSOC);
+    
+    // Fetch association information data
+    $associationStmt = $pdo->prepare('SELECT * FROM association_info WHERE senior_id = ? ORDER BY created_at ASC');
+    $associationStmt->execute([$id]);
+    $associationInfo = $associationStmt->fetchAll(PDO::FETCH_ASSOC);
+    
     // Include only the senior profile content for AJAX
     ob_start();
     include 'senior_profile_content.php';
@@ -167,6 +177,16 @@ if (!$senior) {
     echo '<div class="error-state"><p>Senior not found</p></div>';
     exit;
 }
+
+// Fetch family composition data
+$familyStmt = $pdo->prepare('SELECT * FROM family_composition WHERE senior_id = ? ORDER BY created_at ASC');
+$familyStmt->execute([$senior_id]);
+$familyComposition = $familyStmt->fetchAll(PDO::FETCH_ASSOC);
+
+// Fetch association information data
+$associationStmt = $pdo->prepare('SELECT * FROM association_info WHERE senior_id = ? ORDER BY created_at ASC');
+$associationStmt->execute([$senior_id]);
+$associationInfo = $associationStmt->fetchAll(PDO::FETCH_ASSOC);
 
 // Handle JSON response for edit modal
 if (isset($_GET['edit'])) {
@@ -448,6 +468,137 @@ $lastEvent = !empty($attendanceHistory) ? $attendanceHistory[0] : null;
             font-size: 2rem;
             margin-bottom: 0.5rem;
             color: #2563eb;
+        }
+        
+        /* Detail section styles */
+        .detail-section {
+            background: white;
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+            border: 1px solid #e5e7eb;
+        }
+        .detail-section h3 {
+            font-size: 1rem;
+            font-weight: 600;
+            color: #374151;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .detail-section h3 i {
+            color: #2563eb;
+        }
+        .detail-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 0.75rem;
+        }
+        .detail-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.5rem 0;
+            border-bottom: 1px solid #f3f4f6;
+        }
+        .detail-item:last-child {
+            border-bottom: none;
+        }
+        .detail-item .label {
+            font-weight: 500;
+            color: #6b7280;
+            flex: 1;
+        }
+        .detail-item .value {
+            font-weight: 400;
+            color: #111827;
+            text-align: right;
+            flex: 1;
+        }
+        
+        /* Family Composition styles */
+        .family-composition-list {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+        .family-member-card {
+            background: #f9fafb;
+            border-radius: 8px;
+            padding: 1rem;
+            border: 1px solid #e5e7eb;
+        }
+        .family-member-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.75rem;
+            padding-bottom: 0.75rem;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        .family-member-header h4 {
+            margin: 0;
+            font-size: 0.9375rem;
+            font-weight: 600;
+            color: #111827;
+        }
+        .family-relation-badge {
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 500;
+            background-color: #dbeafe;
+            color: #1e40af;
+        }
+        
+        /* Association Information styles */
+        .association-info-list {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+        .association-card {
+            background: #f9fafb;
+            border-radius: 8px;
+            padding: 1rem;
+            border: 1px solid #e5e7eb;
+        }
+        .association-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.75rem;
+            padding-bottom: 0.75rem;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        .association-header h4 {
+            margin: 0;
+            font-size: 0.9375rem;
+            font-weight: 600;
+            color: #111827;
+        }
+        .officer-badge {
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 500;
+            background-color: #fef3c7;
+            color: #92400e;
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+        }
+        .officer-badge i {
+            font-size: 0.625rem;
+        }
+        .empty-state {
+            padding: 1rem;
+            text-align: center;
+        }
+        .empty-state p {
+            margin: 0;
         }
         
         /* Modal styles */
