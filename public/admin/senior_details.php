@@ -68,6 +68,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             exit;
         }
         
+        // Check if senior is deceased - deceased seniors cannot be transferred
+        try {
+            $lifeStatusCheck = $pdo->prepare('SELECT life_status FROM seniors WHERE id = ?');
+            $lifeStatusCheck->execute([$id]);
+            $life_status = $lifeStatusCheck->fetchColumn();
+            
+            if ($life_status === 'deceased') {
+                echo '<div class="error-state"><p>Cannot transfer a deceased senior. Only living seniors can be transferred.</p></div>';
+                exit;
+            }
+        } catch (Exception $e) {
+            error_log("Error checking life status for transfer: " . $e->getMessage());
+            echo '<div class="error-state"><p>Error verifying senior status. Transfer cannot be processed.</p></div>';
+            exit;
+        }
+        
         // If "other" is selected, use the custom reason
         if ($transfer_reason === 'other' && !empty($transfer_reason_other)) {
             $transfer_reason = $transfer_reason_other;
@@ -825,7 +841,7 @@ $lastEvent = !empty($attendanceHistory) ? $attendanceHistory[0] : null;
                 </div>
 
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 1rem; padding-top: 1rem; border-top: 1px solid #e5e7eb;">
-                    <button type="button" onclick="transferCurrentSenior()" style="padding: 0.5rem 1rem; background: #f59e0b; color: white; border: none; border-radius: 6px; cursor: pointer; display: flex; align-items: center; gap: 0.5rem;">
+                    <button type="button" id="transferSeniorBtn" onclick="transferCurrentSenior()" <?= ($senior['life_status'] ?? 'living') === 'deceased' ? 'disabled title="Cannot transfer a deceased senior"' : '' ?> style="padding: 0.5rem 1rem; background: #f59e0b; color: white; border: none; border-radius: 6px; cursor: pointer; display: flex; align-items: center; gap: 0.5rem; <?= ($senior['life_status'] ?? 'living') === 'deceased' ? 'opacity: 0.5; cursor: not-allowed;' : '' ?>">
                         <i class="fas fa-exchange-alt"></i>
                         Transfer Senior
                     </button>
@@ -988,6 +1004,14 @@ $lastEvent = !empty($attendanceHistory) ? $attendanceHistory[0] : null;
         // Transfer Functions
         function transferCurrentSenior() {
             console.log('Transfer button clicked, currentSeniorId:', currentSeniorId);
+            
+            // Check if transfer button is disabled (deceased senior)
+            const transferBtn = document.getElementById('transferSeniorBtn');
+            if (transferBtn && transferBtn.disabled) {
+                alert('Cannot transfer a deceased senior. Only living seniors can be transferred.');
+                return;
+            }
+            
             if (currentSeniorId) {
                 closeEditSeniorModal();
                 openTransferModal(currentSeniorId);

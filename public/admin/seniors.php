@@ -798,6 +798,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 				$valid = false;
 			}
 			
+			// Check if senior is deceased - deceased seniors cannot be transferred
+			if ($valid && $id) {
+				try {
+					$pdo = get_db_connection();
+					$lifeStatusCheck = $pdo->prepare('SELECT life_status FROM seniors WHERE id = ?');
+					$lifeStatusCheck->execute([$id]);
+					$life_status = $lifeStatusCheck->fetchColumn();
+					
+					if ($life_status === 'deceased') {
+						$valid = false;
+						$message = 'Cannot transfer a deceased senior. Only living seniors can be transferred.';
+						error_log("Transfer blocked - Senior ID $id is deceased");
+					}
+				} catch (Exception $e) {
+					error_log("Error checking life status for transfer: " . $e->getMessage());
+					// If we can't check, err on the side of caution and block the transfer
+					$valid = false;
+					$message = 'Error verifying senior status. Transfer cannot be processed.';
+				}
+			}
+			
 			if ($valid) {
 				try {
 					$pdo = get_db_connection();
@@ -2236,6 +2257,13 @@ try {
 				return;
 			}
 			
+			// Check if senior is deceased - prevent transfer
+			const lifeStatus = document.getElementById('editLifeStatus').value;
+			if (lifeStatus === 'deceased') {
+				alert('Cannot transfer a deceased senior. Only living seniors can be transferred.');
+				return;
+			}
+			
 			// Close edit modal first
 			closeEditSeniorModal();
 			
@@ -3558,7 +3586,7 @@ try {
 							<i class="fas fa-cross"></i>
 							Mark as Deceased
 						</button>
-						<button type="button" onclick="transferSenior()" style="padding: 0.5rem 1rem; background: #f59e0b; color: white; border: none; border-radius: 6px; cursor: pointer; display: flex; align-items: center; gap: 0.5rem;">
+						<button type="button" id="transferSeniorBtn" onclick="transferSenior()" style="padding: 0.5rem 1rem; background: #f59e0b; color: white; border: none; border-radius: 6px; cursor: pointer; display: flex; align-items: center; gap: 0.5rem;">
 							<i class="fas fa-exchange-alt"></i>
 							Transfer Senior
 						</button>
@@ -3706,6 +3734,22 @@ try {
 						categorySelect.value = categoryOption ? categoryOption.value : 'local';
 					}
 					document.getElementById('editLifeStatus').value = senior.life_status || 'living';
+
+					// Disable transfer button if senior is deceased
+					const transferBtn = document.getElementById('transferSeniorBtn');
+					if (transferBtn) {
+						if (senior.life_status === 'deceased') {
+							transferBtn.disabled = true;
+							transferBtn.style.opacity = '0.5';
+							transferBtn.style.cursor = 'not-allowed';
+							transferBtn.title = 'Cannot transfer a deceased senior';
+						} else {
+							transferBtn.disabled = false;
+							transferBtn.style.opacity = '1';
+							transferBtn.style.cursor = 'pointer';
+							transferBtn.title = '';
+						}
+					}
 
 					// Show modal
 					document.getElementById('editSeniorModal').classList.add('active');
