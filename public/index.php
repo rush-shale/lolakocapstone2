@@ -38,7 +38,11 @@ $csrf = generate_csrf_token();
 	<meta name="apple-mobile-web-app-title" content="OSCA MANOLO">
 	<title>OSCA MANOLO - SeniorCare Information System</title>
 	<link rel="manifest" href="<?= BASE_URL ?>/manifest.json">
+	<link rel="icon" type="image/png" href="<?= BASE_URL ?>/images/OSCA MAIN LOGO.png">
 	<link rel="apple-touch-icon" href="<?= BASE_URL ?>/images/OSCA MAIN LOGO.png">
+	<link rel="apple-touch-icon" sizes="180x180" href="<?= BASE_URL ?>/images/OSCA MAIN LOGO.png">
+	<link rel="apple-touch-icon" sizes="192x192" href="<?= BASE_URL ?>/images/OSCA MAIN LOGO.png">
+	<link rel="apple-touch-icon" sizes="512x512" href="<?= BASE_URL ?>/images/OSCA MAIN LOGO.png">
 	<link rel="stylesheet" href="<?= BASE_URL ?>/assets/government-portal.css">
 	<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
 </head>

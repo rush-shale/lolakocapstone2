@@ -167,7 +167,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <head>
 	<meta charset="utf-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<meta name="theme-color" content="#1e88e5">
+	<meta name="apple-mobile-web-app-capable" content="yes">
+	<meta name="apple-mobile-web-app-status-bar-style" content="default">
+	<meta name="apple-mobile-web-app-title" content="OSCA MANOLO">
 	<title>Staff Dashboard | SeniorCare Information System</title>
+	<link rel="manifest" href="<?= BASE_URL ?>/manifest.json">
+	<link rel="icon" type="image/png" href="<?= BASE_URL ?>/images/OSCA MAIN LOGO.png">
+	<link rel="apple-touch-icon" href="<?= BASE_URL ?>/images/OSCA MAIN LOGO.png">
+	<link rel="apple-touch-icon" sizes="180x180" href="<?= BASE_URL ?>/images/OSCA MAIN LOGO.png">
+	<link rel="apple-touch-icon" sizes="192x192" href="<?= BASE_URL ?>/images/OSCA MAIN LOGO.png">
+	<link rel="apple-touch-icon" sizes="512x512" href="<?= BASE_URL ?>/images/OSCA MAIN LOGO.png">
 	<?php 
 	$cssPath = __DIR__ . '/../assets/government-portal.css';
 	$cssVer = file_exists($cssPath) ? filemtime($cssPath) : time(); 
