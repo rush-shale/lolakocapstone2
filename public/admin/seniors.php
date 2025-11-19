@@ -294,34 +294,62 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 				error_log("Database connection established");
 				$pdo->beginTransaction();
 				error_log("Transaction started");
+				
+				// Initialize duplicate check flag
+				$duplicateFound = false;
 
 				if ($op === 'create') {
 					error_log("Processing CREATE operation");
-					// Check for duplicate senior based on name and other identifying information
-					$duplicateCheck = $pdo->prepare('
-						SELECT id, first_name, last_name, middle_name, ext_name, date_of_birth, barangay 
-						FROM seniors 
-						WHERE first_name = ? AND last_name = ? 
-						AND (middle_name = ? OR (middle_name IS NULL AND ? IS NULL))
-						AND (ext_name = ? OR (ext_name IS NULL AND ? IS NULL))
-						AND (date_of_birth = ? OR (date_of_birth IS NULL AND ? IS NULL))
-						AND barangay = ?
-					');
-					$duplicateCheck->execute([
-						$first_name, $last_name, 
-						$middle_name ?: null, $middle_name ?: null,
-						$ext_name ?: null, $ext_name ?: null,
-						$date_of_birth ?: null, $date_of_birth ?: null,
-						$barangay
-					]);
 					
-					if ($duplicateCheck->rowCount() > 0) {
-						$existing = $duplicateCheck->fetch(PDO::FETCH_ASSOC);
-						$existingName = trim($existing['first_name'] . ' ' . ($existing['middle_name'] ?: '') . ' ' . $existing['last_name'] . ($existing['ext_name'] ? ' ' . $existing['ext_name'] : ''));
-						$message = "Duplicate entry detected! A senior with the name '{$existingName}' already exists in {$existing['barangay']} barangay.";
+					// Comprehensive duplicate checking before insertion
+					$duplicateMessage = '';
+					
+					// Check 1: OSCA ID number duplicate (if provided)
+					if (!empty($osca_id_no)) {
+						$oscaCheck = $pdo->prepare('SELECT id, first_name, middle_name, last_name, ext_name, barangay, osca_id_no FROM seniors WHERE osca_id_no = ?');
+						$oscaCheck->execute([$osca_id_no]);
+						if ($oscaCheck->rowCount() > 0) {
+							$existing = $oscaCheck->fetch(PDO::FETCH_ASSOC);
+							$existingName = trim($existing['first_name'] . ' ' . ($existing['middle_name'] ? $existing['middle_name'] . ' ' : '') . $existing['last_name'] . ($existing['ext_name'] ? ' ' . $existing['ext_name'] : ''));
+							$duplicateFound = true;
+							$duplicateMessage = "Duplicate OSCA ID detected! A senior with OSCA ID '{$existing['osca_id_no']}' (Name: {$existingName}) already exists in {$existing['barangay']} barangay.";
+						}
+					}
+					
+					// Check 2: Name-based duplicate (only if OSCA ID check didn't find a duplicate)
+					if (!$duplicateFound) {
+						$duplicateCheck = $pdo->prepare('
+							SELECT id, first_name, last_name, middle_name, ext_name, date_of_birth, barangay, osca_id_no 
+							FROM seniors 
+							WHERE first_name = ? AND last_name = ? 
+							AND (middle_name = ? OR (middle_name IS NULL AND ? IS NULL))
+							AND (ext_name = ? OR (ext_name IS NULL AND ? IS NULL))
+							AND (date_of_birth = ? OR (date_of_birth IS NULL AND ? IS NULL))
+							AND barangay = ?
+						');
+						$duplicateCheck->execute([
+							$first_name, $last_name, 
+							$middle_name ?: null, $middle_name ?: null,
+							$ext_name ?: null, $ext_name ?: null,
+							$date_of_birth ?: null, $date_of_birth ?: null,
+							$barangay
+						]);
+						
+						if ($duplicateCheck->rowCount() > 0) {
+							$existing = $duplicateCheck->fetch(PDO::FETCH_ASSOC);
+							$existingName = trim($existing['first_name'] . ' ' . ($existing['middle_name'] ? $existing['middle_name'] . ' ' : '') . $existing['last_name'] . ($existing['ext_name'] ? ' ' . $existing['ext_name'] : ''));
+							$duplicateFound = true;
+							$oscaInfo = !empty($existing['osca_id_no']) ? " (OSCA ID: {$existing['osca_id_no']})" : '';
+							$duplicateMessage = "Duplicate entry detected! A senior with the name '{$existingName}'{$oscaInfo} already exists in {$existing['barangay']} barangay.";
+						}
+					}
+					
+					if ($duplicateFound) {
+						$message = $duplicateMessage;
 						$pdo->rollback();
+						error_log("Duplicate detected: " . $message);
 					} else {
-						error_log("Executing INSERT query for senior: $first_name $last_name");
+						error_log("No duplicates found. Executing INSERT query for senior: $first_name $last_name");
 						// For creation, default to 'living' unless explicitly submitted as 'deceased'
 						$life_status_create = ($life_status_input === 'deceased') ? 'deceased' : 'living';
 						// Auto-assign next OSCA ID if not provided
@@ -441,50 +469,102 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 							$life_status = 'living';
 						}
 					}
-					$stmt = $pdo->prepare('UPDATE seniors SET first_name=?, middle_name=?, last_name=?, ext_name=?, age=?, date_of_birth=?, sex=?, place_of_birth=?, civil_status=?, educational_attainment=?, occupation=?, annual_income=?, other_skills=?, barangay=?, contact=?, osca_id_no=?, remarks=?, health_condition=?, purok=?, cellphone=?, benefits_received=?, life_status=?, category=?, validation_status=?, validation_date=?, waiting_birth_certificate=?, waiting_marriage_contract=?, waiting_valid_id=? WHERE id=?');
-					$stmt->execute([
-						$first_name, $middle_name ?: null, $last_name, $ext_name ?: null, $age,
-						$date_of_birth ?: null, $sex ?: null, $place_of_birth ?: null,
-						$civil_status ?: '', $educational_attainment ?: '',
-						$occupation ?: null, $annual_income, $other_skills,
-						$barangay, $contact, $osca_id_no, $remarks,
-						$health_condition, $purok, $cellphone,
-						$benefits_received, $life_status, $category, $validation_status, $validation_date,
-						$waiting_birth_certificate, $waiting_marriage_contract, $waiting_valid_id,
-						$id
-					]);
-					$senior_id = $id;
 					
-					// Ensure a basic death record exists when marking as deceased
-					if ($life_status === 'deceased') {
-						try {
-							$pdo->exec("CREATE TABLE IF NOT EXISTS senior_deaths (
-								id INT AUTO_INCREMENT PRIMARY KEY,
-								senior_id INT NOT NULL,
-								death_date DATE NULL,
-								place_of_death VARCHAR(255) NULL,
-								cause_of_death VARCHAR(255) NULL,
-								remarks TEXT NULL,
-								created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-								updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-								INDEX idx_senior_death_senior_id (senior_id)
-							) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
-							
-							$exists = $pdo->prepare("SELECT id FROM senior_deaths WHERE senior_id = ? LIMIT 1");
-							$exists->execute([$senior_id]);
-							if (!$exists->fetch()) {
-								$ins = $pdo->prepare("INSERT INTO senior_deaths (senior_id) VALUES (?)");
-								$ins->execute([$senior_id]);
-							}
-						} catch (Exception $e) {
-							error_log("Failed to ensure senior_deaths record for senior {$senior_id}: " . $e->getMessage());
+					// Check for duplicates on update (excluding the current senior being updated)
+					$duplicateFound = false;
+					$duplicateMessage = '';
+					
+					// Check 1: OSCA ID number duplicate (if provided and different from current)
+					if (!empty($osca_id_no)) {
+						$oscaCheck = $pdo->prepare('SELECT id, first_name, middle_name, last_name, ext_name, barangay, osca_id_no FROM seniors WHERE osca_id_no = ? AND id != ?');
+						$oscaCheck->execute([$osca_id_no, $id]);
+						if ($oscaCheck->rowCount() > 0) {
+							$existing = $oscaCheck->fetch(PDO::FETCH_ASSOC);
+							$existingName = trim($existing['first_name'] . ' ' . ($existing['middle_name'] ? $existing['middle_name'] . ' ' : '') . $existing['last_name'] . ($existing['ext_name'] ? ' ' . $existing['ext_name'] : ''));
+							$duplicateFound = true;
+							$duplicateMessage = "Duplicate OSCA ID detected! Another senior with OSCA ID '{$existing['osca_id_no']}' (Name: {$existingName}) already exists in {$existing['barangay']} barangay.";
 						}
 					}
-					$message = 'Senior updated successfully';
+					
+					// Check 2: Name-based duplicate (only if OSCA ID check didn't find a duplicate)
+					if (!$duplicateFound) {
+						$duplicateCheck = $pdo->prepare('
+							SELECT id, first_name, last_name, middle_name, ext_name, date_of_birth, barangay, osca_id_no 
+							FROM seniors 
+							WHERE first_name = ? AND last_name = ? 
+							AND (middle_name = ? OR (middle_name IS NULL AND ? IS NULL))
+							AND (ext_name = ? OR (ext_name IS NULL AND ? IS NULL))
+							AND (date_of_birth = ? OR (date_of_birth IS NULL AND ? IS NULL))
+							AND barangay = ?
+							AND id != ?
+						');
+						$duplicateCheck->execute([
+							$first_name, $last_name, 
+							$middle_name ?: null, $middle_name ?: null,
+							$ext_name ?: null, $ext_name ?: null,
+							$date_of_birth ?: null, $date_of_birth ?: null,
+							$barangay, $id
+						]);
+						
+						if ($duplicateCheck->rowCount() > 0) {
+							$existing = $duplicateCheck->fetch(PDO::FETCH_ASSOC);
+							$existingName = trim($existing['first_name'] . ' ' . ($existing['middle_name'] ? $existing['middle_name'] . ' ' : '') . $existing['last_name'] . ($existing['ext_name'] ? ' ' . $existing['ext_name'] : ''));
+							$duplicateFound = true;
+							$oscaInfo = !empty($existing['osca_id_no']) ? " (OSCA ID: {$existing['osca_id_no']})" : '';
+							$duplicateMessage = "Duplicate entry detected! Another senior with the name '{$existingName}'{$oscaInfo} already exists in {$existing['barangay']} barangay.";
+						}
+					}
+					
+					if ($duplicateFound) {
+						$message = $duplicateMessage;
+						$pdo->rollback();
+						error_log("Duplicate detected on update: " . $message);
+					} else {
+						$stmt = $pdo->prepare('UPDATE seniors SET first_name=?, middle_name=?, last_name=?, ext_name=?, age=?, date_of_birth=?, sex=?, place_of_birth=?, civil_status=?, educational_attainment=?, occupation=?, annual_income=?, other_skills=?, barangay=?, contact=?, osca_id_no=?, remarks=?, health_condition=?, purok=?, cellphone=?, benefits_received=?, life_status=?, category=?, validation_status=?, validation_date=?, waiting_birth_certificate=?, waiting_marriage_contract=?, waiting_valid_id=? WHERE id=?');
+						$stmt->execute([
+							$first_name, $middle_name ?: null, $last_name, $ext_name ?: null, $age,
+							$date_of_birth ?: null, $sex ?: null, $place_of_birth ?: null,
+							$civil_status ?: '', $educational_attainment ?: '',
+							$occupation ?: null, $annual_income, $other_skills,
+							$barangay, $contact, $osca_id_no, $remarks,
+							$health_condition, $purok, $cellphone,
+							$benefits_received, $life_status, $category, $validation_status, $validation_date,
+							$waiting_birth_certificate, $waiting_marriage_contract, $waiting_valid_id,
+							$id
+						]);
+						$senior_id = $id;
+						
+						// Ensure a basic death record exists when marking as deceased
+						if ($life_status === 'deceased') {
+							try {
+								$pdo->exec("CREATE TABLE IF NOT EXISTS senior_deaths (
+									id INT AUTO_INCREMENT PRIMARY KEY,
+									senior_id INT NOT NULL,
+									death_date DATE NULL,
+									place_of_death VARCHAR(255) NULL,
+									cause_of_death VARCHAR(255) NULL,
+									remarks TEXT NULL,
+									created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+									updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+									INDEX idx_senior_death_senior_id (senior_id)
+								) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
+								
+								$exists = $pdo->prepare("SELECT id FROM senior_deaths WHERE senior_id = ? LIMIT 1");
+								$exists->execute([$senior_id]);
+								if (!$exists->fetch()) {
+									$ins = $pdo->prepare("INSERT INTO senior_deaths (senior_id) VALUES (?)");
+									$ins->execute([$senior_id]);
+								}
+							} catch (Exception $e) {
+								error_log("Failed to ensure senior_deaths record for senior {$senior_id}: " . $e->getMessage());
+							}
+						}
+						$message = 'Senior updated successfully';
+					}
 				}
 				
-				// Handle family composition
-				if ($op === 'update' || $op === 'create') {
+				// Handle family composition (only if no duplicate was found)
+				if (($op === 'update' || $op === 'create') && !$duplicateFound && isset($senior_id)) {
 					if ($op === 'update') {
 						// Delete existing family members
 						$stmt = $pdo->prepare('DELETE FROM family_composition WHERE senior_id = ?');
@@ -534,25 +614,28 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 					}
 				}
 				
-				error_log("About to commit transaction");
-                $pdo->commit();
-                error_log("Transaction committed successfully");
-                
-                // After write, force a full reload so the table reflects changes immediately
-        if ($op === 'create') {
-					error_log("Redirecting to success page with senior_id: $senior_id");
-                    header('Location: ' . $_SERVER['PHP_SELF'] . '?success=1&new_senior_id=' . $senior_id);
-                    exit;
-                }
-                if ($op === 'update') {
-					error_log("Redirecting to success page after update");
-					$update_success = true;
-					$updated_senior_id = $senior_id;
-					if (!is_ajax_request()) {
-						header('Location: ' . $_SERVER['PHP_SELF'] . '?success=1');
+				// Only commit if no duplicate was found
+				if (!$duplicateFound) {
+					error_log("About to commit transaction");
+					$pdo->commit();
+					error_log("Transaction committed successfully");
+					
+					// After write, force a full reload so the table reflects changes immediately
+					if ($op === 'create') {
+						error_log("Redirecting to success page with senior_id: $senior_id");
+						header('Location: ' . $_SERVER['PHP_SELF'] . '?success=1&new_senior_id=' . $senior_id);
 						exit;
 					}
-                }
+					if ($op === 'update') {
+						error_log("Redirecting to success page after update");
+						$update_success = true;
+						$updated_senior_id = $senior_id;
+						if (!is_ajax_request()) {
+							header('Location: ' . $_SERVER['PHP_SELF'] . '?success=1');
+							exit;
+						}
+					}
+				}
 			} catch (Exception $e) {
 				// Use safe rollback to handle connection issues
 				error_log("EXCEPTION in senior operation: " . $e->getMessage());
