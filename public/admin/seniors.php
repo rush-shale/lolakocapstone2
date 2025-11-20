@@ -969,7 +969,7 @@ try {
 
 // PDF render function (same as in reports.php)
 if (!function_exists('pdf_render')) {
-    function pdf_render(string $title, array $headers, array $rows, string $report_type = 'seniors'): void {
+    function pdf_render(string $title, array $headers, array $rows, string $report_type = 'seniors', string $back_url = ''): void {
         // Enhanced PDF-friendly HTML with A4 print optimization and professional styling
         echo '<!doctype html><html><head><meta charset="utf-8"><title>' . htmlspecialchars($title) . '</title>';
         echo '<style>
@@ -1080,6 +1080,10 @@ if (!function_exists('pdf_render')) {
         .noprint {
             margin-bottom: 20px;
             text-align: center;
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            flex-wrap: wrap;
         }
         .noprint button {
             padding: 12px 24px;
@@ -1095,6 +1099,14 @@ if (!function_exists('pdf_render')) {
         .noprint button:hover {
             background: #1e3a8a;
             transform: translateY(-2px);
+        }
+        .noprint .back-btn {
+            background: #6b7280;
+            border-color: #6b7280;
+        }
+        .noprint .back-btn:hover {
+            background: #4b5563;
+            border-color: #4b5563;
         }
         table {
             width: 100%;
@@ -1214,9 +1226,12 @@ if (!function_exists('pdf_render')) {
     </style>';
         echo '</head><body>';
         
-        echo '<div class="noprint">
-            <button onclick="window.print()">🖨️ Print / Save as PDF</button>
-        </div>';
+        echo '<div class="noprint">';
+        echo '<button onclick="window.print()">🖨️ Print / Save as PDF</button>';
+        if (!empty($back_url)) {
+            echo '<button class="back-btn" onclick="window.location.href=\'' . htmlspecialchars($back_url, ENT_QUOTES) . '\'">← Back to All Seniors</button>';
+        }
+        echo '</div>';
         
         // Header with logos and official format
         echo '<div class="header">';
@@ -1415,8 +1430,24 @@ if (isset($_GET['export']) && $_GET['export'] === 'pdf') {
     // Headers matching the reports format
     $headers = ['Last Name','First Name','Middle Name','Ext','Barangay','Age','Sex','Civil Status','Birthdate','OSCA ID No','Remarks','Health Condition','Purok','Place of Birth','Cellphone #','Life Status','Category'];
     
+    // Build back URL with preserved filters (excluding export parameter)
+    $backUrl = 'seniors.php';
+    $backParams = [];
+    if ($status && $status !== 'all') {
+        $backParams['status'] = $status;
+    }
+    if ($category && $category !== 'all') {
+        $backParams['category'] = $category;
+    }
+    if ($barangayFilter && $barangayFilter !== 'all') {
+        $backParams['barangay'] = $barangayFilter;
+    }
+    if (!empty($backParams)) {
+        $backUrl .= '?' . http_build_query($backParams);
+    }
+    
     // Render PDF
-    pdf_render($reportTitle, $headers, $rows, $reportType);
+    pdf_render($reportTitle, $headers, $rows, $reportType, $backUrl);
     exit;
 }
 
