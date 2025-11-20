@@ -967,6 +967,459 @@ try {
 	$barangays = [];
 }
 
+// PDF render function (same as in reports.php)
+if (!function_exists('pdf_render')) {
+    function pdf_render(string $title, array $headers, array $rows, string $report_type = 'seniors'): void {
+        // Enhanced PDF-friendly HTML with A4 print optimization and professional styling
+        echo '<!doctype html><html><head><meta charset="utf-8"><title>' . htmlspecialchars($title) . '</title>';
+        echo '<style>
+        @page {
+            size: A4;
+            margin: 1.5cm 1cm;
+        }
+        * {
+            box-sizing: border-box;
+        }
+        body {
+            font-family: "Times New Roman", serif;
+            margin: 0;
+            padding: 0;
+            color: #000;
+            background: white;
+            font-size: 11px;
+            line-height: 1.3;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+        }
+        .header-bottom {
+            border-bottom: 3px solid #000;
+            padding-bottom: 15px;
+        }
+        .logos {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-bottom: 15px;
+            gap: 20px;
+        }
+        .logo {
+            width: 60px;
+            height: 60px;
+            border: 2px solid #000;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            background: white;
+        }
+        .logo img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            border-radius: 50%;
+        }
+        .header-text {
+            text-align: center;
+            margin: 0 20px;
+        }
+        .header-text h1 {
+            font-size: 14px;
+            font-weight: bold;
+            margin: 0;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .header-text h2 {
+            font-size: 12px;
+            font-weight: bold;
+            margin: 3px 0;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+        }
+        .header-text h3 {
+            font-size: 16px;
+            font-weight: bold;
+            margin: 8px 0;
+            text-transform: uppercase;
+            color: #1e40af;
+            letter-spacing: 0.5px;
+        }
+        .datetime-display {
+            text-align: left;
+            margin: 0 0 5px 0;
+            font-size: 11px;
+            font-weight: bold;
+            min-height: 20px;
+        }
+        .signature-section {
+            margin-top: 25px;
+            display: flex;
+            align-items: flex-end;
+            page-break-inside: avoid;
+        }
+        .signature-field {
+            display: inline-block;
+            margin-right: 30px;
+        }
+        .signature-label {
+            font-size: 10px;
+            font-weight: bold;
+            margin-bottom: 5px;
+            display: block;
+        }
+        .signature-line {
+            width: 200px;
+            border-bottom: 1px solid #000;
+            margin-bottom: 5px;
+            height: 40px;
+        }
+        .noprint {
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        .noprint button {
+            padding: 12px 24px;
+            border: 2px solid #1e40af;
+            border-radius: 6px;
+            background: #1e40af;
+            color: white;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+        .noprint button:hover {
+            background: #1e3a8a;
+            transform: translateY(-2px);
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 6px;
+            margin-top: 10px;
+            page-break-inside: auto;
+            table-layout: fixed;
+        }
+        thead {
+            display: table-header-group;
+        }
+        tbody tr {
+            page-break-inside: avoid;
+            page-break-after: auto;
+        }
+        th, td {
+            border: 1px solid #000;
+            padding: 1px 2px;
+            text-align: left;
+            vertical-align: middle;
+            word-wrap: break-word;
+            overflow: hidden;
+        }
+        th {
+            background: #f5f5f5;
+            font-weight: bold;
+            text-align: center;
+            font-size: 6px;
+            text-transform: uppercase;
+            letter-spacing: 0.1px;
+        }
+        td {
+            font-size: 6px;
+        }
+        .number-col {
+            text-align: center;
+            width: 15px;
+            font-weight: bold;
+        }
+        .name-col {
+            width: 35px;
+            font-weight: 500;
+        }
+        .barangay-col {
+            width: 30px;
+        }
+        .age-col, .sex-col {
+            text-align: center;
+            width: 18px;
+        }
+        .osca-col {
+            text-align: center;
+            width: 30px;
+            font-weight: bold;
+        }
+        .ext-col {
+            width: 15px;
+            text-align: center;
+        }
+        .civil-col {
+            width: 25px;
+        }
+        .birthdate-col {
+            width: 35px;
+            text-align: center;
+        }
+        .remarks-col {
+            width: 40px;
+        }
+        .health-col {
+            width: 40px;
+        }
+        .purok-col {
+            width: 25px;
+        }
+        .place-col {
+            width: 40px;
+        }
+        .cellphone-col {
+            width: 35px;
+        }
+        .life-col {
+            width: 25px;
+            text-align: center;
+        }
+        .category-col {
+            width: 25px;
+        }
+        @media print {
+            .noprint { display: none; }
+            body { 
+                padding: 0;
+                font-size: 8px;
+            }
+            .header { 
+                page-break-inside: avoid;
+                margin-bottom: 15px;
+            }
+            table {
+                font-size: 5px;
+                width: 100%;
+            }
+            th, td {
+                padding: 1px 2px;
+                font-size: 5px;
+            }
+        }
+        @media screen {
+            body {
+                padding: 20px;
+                max-width: 210mm;
+                margin: 0 auto;
+                box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            }
+        }
+    </style>';
+        echo '</head><body>';
+        
+        echo '<div class="noprint">
+            <button onclick="window.print()">🖨️ Print / Save as PDF</button>
+        </div>';
+        
+        // Header with logos and official format
+        echo '<div class="header">';
+        echo '<div class="logos">';
+        echo '<div class="logo"><img src="' . BASE_URL . '/images/OSCA MAIN LOGO.png" alt="OSCA Logo" /></div>';
+        echo '<div class="header-text">';
+        echo '<h1>Republic of the Philippines</h1>';
+        echo '<h2>Province of Bukidnon</h2>';
+        echo '<h2>Municipality of Manolo Fortich</h2>';
+        echo '<h3>' . htmlspecialchars($title) . '</h3>';
+        echo '</div>';
+        echo '<div class="logo"><img src="' . BASE_URL . '/images/MANOLO FORTICH LOGO.png" alt="Manolo Fortich Logo" /></div>';
+        echo '</div>';
+        echo '<div class="datetime-display" id="datetimeDisplay"></div>';
+        echo '<div class="header-bottom"></div>';
+        echo '</div>';
+        
+        // Data table
+        echo '<table>';
+        echo '<thead><tr>';
+        echo '<th class="number-col">No.</th>';
+        foreach ($headers as $h) { 
+            $class = '';
+            if (in_array($h, ['Last Name', 'First Name', 'Middle Name'])) $class = 'name-col';
+            elseif ($h === 'Barangay') $class = 'barangay-col';
+            elseif (in_array($h, ['Age', 'Sex'])) $class = 'age-col';
+            elseif ($h === 'OSCA ID No') $class = 'osca-col';
+            elseif ($h === 'Ext') $class = 'ext-col';
+            elseif ($h === 'Civil Status') $class = 'civil-col';
+            elseif ($h === 'Birthdate') $class = 'birthdate-col';
+            elseif ($h === 'Remarks') $class = 'remarks-col';
+            elseif ($h === 'Health Condition') $class = 'health-col';
+            elseif ($h === 'Purok') $class = 'purok-col';
+            elseif ($h === 'Place of Birth') $class = 'place-col';
+            elseif ($h === 'Cellphone #') $class = 'cellphone-col';
+            elseif ($h === 'Life Status') $class = 'life-col';
+            elseif ($h === 'Category') $class = 'category-col';
+            echo '<th class="' . $class . '">' . htmlspecialchars($h) . '</th>'; 
+        }
+        echo '</tr></thead><tbody>';
+        
+        $rowNum = 1;
+        foreach ($rows as $r) {
+            echo '<tr>';
+            echo '<td class="number-col">' . $rowNum . '</td>';
+            foreach ($headers as $i => $h) { 
+                $value = (string)array_values($r)[$i] ?? '';
+                $class = '';
+                if (in_array($h, ['Last Name', 'First Name', 'Middle Name'])) $class = 'name-col';
+                elseif ($h === 'Barangay') $class = 'barangay-col';
+                elseif (in_array($h, ['Age', 'Sex'])) $class = 'age-col';
+                elseif ($h === 'OSCA ID No') $class = 'osca-col';
+                elseif ($h === 'Ext') $class = 'ext-col';
+                elseif ($h === 'Civil Status') $class = 'civil-col';
+                elseif ($h === 'Birthdate') $class = 'birthdate-col';
+                elseif ($h === 'Remarks') $class = 'remarks-col';
+                elseif ($h === 'Health Condition') $class = 'health-col';
+                elseif ($h === 'Purok') $class = 'purok-col';
+                elseif ($h === 'Place of Birth') $class = 'place-col';
+                elseif ($h === 'Cellphone #') $class = 'cellphone-col';
+                elseif ($h === 'Life Status') $class = 'life-col';
+                elseif ($h === 'Category') $class = 'category-col';
+                echo '<td class="' . $class . '">' . htmlspecialchars($value) . '</td>'; 
+            }
+            echo '</tr>';
+            $rowNum++;
+        }
+        echo '</tbody></table>';
+        
+        // Signature section
+        echo '<div class="signature-section">';
+        echo '<div class="signature-field">';
+        echo '<span class="signature-label">Printed Name:</span>';
+        echo '<div class="signature-line"></div>';
+        echo '</div>';
+        echo '<div class="signature-field">';
+        echo '<span class="signature-label">Signature:</span>';
+        echo '<div class="signature-line"></div>';
+        echo '</div>';
+        echo '</div>';
+        
+        // JavaScript for real-time date/time
+        echo '<script>
+            function updateDateTime() {
+                const now = new Date();
+                const months = ["January", "February", "March", "April", "May", "June", 
+                              "July", "August", "September", "October", "November", "December"];
+                const month = months[now.getMonth()];
+                const day = now.getDate();
+                const year = now.getFullYear();
+                let hours = now.getHours();
+                const minutes = String(now.getMinutes()).padStart(2, "0");
+                const seconds = String(now.getSeconds()).padStart(2, "0");
+                const ampm = hours >= 12 ? "PM" : "AM";
+                hours = hours % 12;
+                hours = hours ? hours : 12;
+                hours = String(hours).padStart(2, "0");
+                const dateTimeStr = month + " " + day + ", " + year + " at " + hours + ":" + minutes + ":" + seconds + " " + ampm;
+                document.getElementById("datetimeDisplay").textContent = dateTimeStr;
+            }
+            updateDateTime();
+            setInterval(updateDateTime, 1000);
+        </script>';
+        
+        echo '</body></html>';
+        exit;
+    }
+}
+
+// Handle PDF export before processing filters
+if (isset($_GET['export']) && $_GET['export'] === 'pdf') {
+    $pdo = get_db_connection();
+    
+    // Get current filter parameters
+    $status = $_GET['status'] ?? 'all';
+    $category = $_GET['category'] ?? 'all';
+    $barangayFilter = $_GET['barangay'] ?? 'all';
+    
+    // Build query based on filters
+    $where = [];
+    $params = [];
+    
+    // Life status filter
+    if ($status === 'deceased') {
+        $where[] = 'life_status = ?';
+        $params[] = 'deceased';
+    } elseif ($status === 'active') {
+        $where[] = 'life_status = ?';
+        $params[] = 'living';
+    } elseif ($status === 'inactive') {
+        $where[] = 'life_status = ?';
+        $params[] = 'living';
+    }
+    
+    // Category filter
+    if ($category === 'local' || $category === 'national') {
+        $where[] = 'category = ?';
+        $params[] = $category;
+    } elseif ($category === 'waiting') {
+        $where[] = 'category = ?';
+        $params[] = 'waiting';
+        if (empty($where) || !in_array('life_status = ?', $where)) {
+            $where[] = 'life_status = ?';
+            $params[] = 'living';
+        }
+    }
+    
+    // Barangay filter
+    if ($barangayFilter && $barangayFilter !== 'all') {
+        $where[] = 'barangay = ?';
+        $params[] = $barangayFilter;
+    }
+    
+    // Build SQL query with formatted date
+    $sql = "SELECT last_name, first_name, COALESCE(middle_name,'') AS middle_name, COALESCE(ext_name,'') AS ext_name, barangay, age,
+            sex, civil_status, 
+            CASE WHEN date_of_birth IS NOT NULL AND date_of_birth != '' THEN DATE_FORMAT(date_of_birth, '%M %d, %Y') ELSE '' END AS date_of_birth,
+            osca_id_no, COALESCE(remarks,'') AS remarks, COALESCE(health_condition,'') AS health_condition,
+            COALESCE(purok,'') AS purok, COALESCE(place_of_birth,'') AS place_of_birth, COALESCE(cellphone,'') AS cellphone,
+            life_status, category
+            FROM seniors";
+    
+    if (!empty($where)) {
+        $sql .= ' WHERE ' . implode(' AND ', $where);
+    }
+    
+    // Determine report title based on filters
+    $reportTitle = 'SENIORS DATA REPORT';
+    $reportType = 'seniors_official';
+    
+    if ($status === 'deceased') {
+        $reportTitle = 'DECEASED SENIORS REPORT';
+        $reportType = 'deceased';
+    } elseif ($category === 'waiting') {
+        $reportTitle = 'WAITING SENIORS REPORT';
+        $reportType = 'waiting';
+    } elseif ($category === 'local') {
+        $reportTitle = 'LOCAL SENIORS REPORT';
+        $reportType = 'seniors_official';
+    } elseif ($category === 'national') {
+        $reportTitle = 'NATIONAL SENIORS REPORT';
+        $reportType = 'seniors_official';
+    } elseif ($barangayFilter && $barangayFilter !== 'all') {
+        $reportTitle = 'SENIORS DATA REPORT - ' . strtoupper($barangayFilter);
+        $reportType = 'seniors_official';
+    }
+    
+    // Add ordering
+    $sql .= ' ORDER BY barangay, last_name, first_name';
+    
+    // Execute query
+    $stmt = $pdo->prepare($sql);
+    $stmt->execute($params);
+    $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    
+    // Headers matching the reports format
+    $headers = ['Last Name','First Name','Middle Name','Ext','Barangay','Age','Sex','Civil Status','Birthdate','OSCA ID No','Remarks','Health Condition','Purok','Place of Birth','Cellphone #','Life Status','Category'];
+    
+    // Render PDF
+    pdf_render($reportTitle, $headers, $rows, $reportType);
+    exit;
+}
+
 // Get status from URL parameter
 $status = $_GET['status'] ?? 'all';
 
@@ -2612,6 +3065,14 @@ try {
 				url.searchParams.set('barangay', barangay);
 			}
 			
+			window.location.href = url.toString();
+		}
+		
+		// Export table as PDF
+		function exportTable() {
+			const url = new URL(window.location.href);
+			url.searchParams.set('export', 'pdf');
+			// Preserve all current filter parameters
 			window.location.href = url.toString();
 		}
 
