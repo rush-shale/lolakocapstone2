@@ -1932,10 +1932,11 @@ try {
 								<input type="text" id="searchInput" placeholder="Search seniors...">
 							</div>
 							<div class="table-filters">
-								<button class="filter-btn <?= ($status === 'all' || !isset($_GET['category'])) ? 'active' : '' ?>" onclick="filterByCategory('all')" data-filter="all">All</button>
+								<button class="filter-btn <?= (($status === 'all' || !isset($_GET['status'])) && (!isset($_GET['category']) || $_GET['category'] === 'all')) ? 'active' : '' ?>" onclick="filterByCategory('all')" data-filter="all">All</button>
 								<button class="filter-btn <?= (isset($_GET['category']) && $_GET['category'] === 'local') ? 'active' : '' ?>" onclick="filterByCategory('local')" data-filter="local">Local</button>
 								<button class="filter-btn <?= (isset($_GET['category']) && $_GET['category'] === 'national') ? 'active' : '' ?>" onclick="filterByCategory('national')" data-filter="national">National</button>
 								<button class="filter-btn <?= (isset($_GET['category']) && $_GET['category'] === 'waiting') ? 'active' : '' ?>" onclick="filterByCategory('waiting')" data-filter="waiting">Waiting</button>
+								<button class="filter-btn <?= ($status === 'deceased') ? 'active' : '' ?>" onclick="filterByStatus('deceased')" data-filter="deceased">Deceased</button>
 							</div>
 							<div class="table-barangay-filter">
 								<select id="barangayFilter" class="filter-select" onchange="filterByBarangay(this.value)">
@@ -2571,17 +2572,32 @@ try {
 		// Filter by category (Local, National, Waiting)
 		function filterByCategory(category) {
 			const url = new URL(window.location.href);
-			const baseUrl = url.origin + url.pathname;
 			
 			if (category === 'all') {
 				url.searchParams.delete('category');
+				// Clear status filter when showing all
+				url.searchParams.delete('status');
 			} else {
 				url.searchParams.set('category', category);
+				// Clear status filter when filtering by category
+				url.searchParams.delete('status');
 			}
 			
-			// Preserve barangay filter if it exists
-			const barangayFilter = url.searchParams.get('barangay');
-			const finalUrl = baseUrl + (url.search ? url.search : '') + (barangayFilter ? '&barangay=' + barangayFilter : '');
+			window.location.href = url.toString();
+		}
+		
+		// Filter by life status (deceased)
+		function filterByStatus(status) {
+			const url = new URL(window.location.href);
+			
+			if (status === 'deceased') {
+				url.searchParams.set('status', 'deceased');
+			} else {
+				url.searchParams.delete('status');
+			}
+			
+			// Clear category filter when filtering by status
+			url.searchParams.delete('category');
 			
 			window.location.href = url.toString();
 		}
