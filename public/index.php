@@ -278,9 +278,15 @@ $csrf = generate_csrf_token();
 		// Register Service Worker for PWA
 		if ('serviceWorker' in navigator) {
 			window.addEventListener('load', () => {
-				navigator.serviceWorker.register('<?= BASE_URL ?>/sw.js')
+				navigator.serviceWorker.register('<?= BASE_URL ?>/sw.js', {
+					scope: '<?= BASE_URL ?>/'
+				})
 					.then((registration) => {
 						console.log('Service Worker registered:', registration);
+						// Update service worker if available
+						if (registration.update) {
+							registration.update();
+						}
 					})
 					.catch((error) => {
 						console.log('Service Worker registration failed:', error);

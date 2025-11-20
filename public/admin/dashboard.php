@@ -470,7 +470,9 @@ $user = current_user();
 		// Register Service Worker for PWA
 		if ('serviceWorker' in navigator) {
 			window.addEventListener('load', () => {
-				navigator.serviceWorker.register('<?= BASE_URL ?>/sw.js')
+				navigator.serviceWorker.register('<?= BASE_URL ?>/sw.js', {
+					scope: '<?= BASE_URL ?>/'
+				})
 					.then((registration) => {
 						console.log('Service Worker registered:', registration);
 					})
