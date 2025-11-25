@@ -236,7 +236,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 		$purok = trim($_POST['purok'] ?? '') ?: '';
 		$cellphone = trim($_POST['cellphone'] ?? '') ?: '';
 		$benefits_received = isset($_POST['benefits_received']) ? 1 : 0;
-		// Waiting list documents flags (1 = submitted)
+		// Waiting list documents flags (1 = missing, 0 = provided)
 		$waiting_birth_certificate = isset($_POST['doc_birth_certificate']) ? 1 : 0;
 		$waiting_marriage_contract = isset($_POST['doc_marriage_contract']) ? 1 : 0;
 		$waiting_valid_id = isset($_POST['doc_valid_id']) ? 1 : 0;
@@ -3483,7 +3483,7 @@ try {
 										Valid ID
 									</label>
 								</div>
-								<small class="help-text">Enable the waiting list checkbox first to mark submitted documents.</small>
+								<small class="help-text">Enable the waiting list checkbox first to mark missing documents.</small>
 							</div>
 						</div>
 					</div>
