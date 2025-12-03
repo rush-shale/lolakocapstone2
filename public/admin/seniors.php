@@ -4176,17 +4176,6 @@ try {
 					<div style="font-weight: 600; margin-bottom: 0.5rem; font-size: 1rem;">Date of Death:</div>
 					<input type="date" id="deathDate" name="death_date" required style="width: 100%; padding: 0.5rem; border: 1px solid #d1d5db; border-radius: 6px;" max="<?= $todayDate ?>">
 				</div>
-				
-				<div>
-					<div style="font-weight: 600; margin-bottom: 0.5rem; font-size: 1rem;">Place of Death:</div>
-					<input type="text" id="deathPlace" name="death_place" required style="width: 100%; padding: 0.5rem; border: 1px solid #d1d5db; border-radius: 6px;" placeholder="e.g., Hospital, Home, etc.">
-				</div>
-				
-				<div>
-					<div style="font-weight: 600; margin-bottom: 0.5rem; font-size: 1rem;">Cause of Death:</div>
-					<input type="text" id="deathCause" name="death_cause" required style="width: 100%; padding: 0.5rem; border: 1px solid #d1d5db; border-radius: 6px;" placeholder="e.g., Natural causes, Illness, etc.">
-				</div>
-				
 				<div style="display: flex; justify-content: flex-end; gap: 1rem; margin-top: 2rem;">
 					<button type="button" onclick="closeDeceasedModal()" style="padding: 0.75rem 1.5rem; background: #f3f4f6; border: 1px solid #d1d5db; border-radius: 6px; cursor: pointer; font-weight: 500;">Cancel</button>
 					<button type="submit" style="padding: 0.75rem 1.5rem; background: #dc2626; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 500;">Mark as Deceased</button>

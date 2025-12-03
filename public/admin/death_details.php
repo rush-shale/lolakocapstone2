@@ -90,10 +90,6 @@ $death = $stmtDeath->fetch();
             <div class="label">Place of Death</div>
             <div class="value"><?= $death && $death['place_of_death'] ? htmlspecialchars($death['place_of_death']) : '<span class="muted">Not specified</span>' ?></div>
         </div>
-        <div class="detail">
-            <div class="label">Cause of Death</div>
-            <div class="value"><?= $death && $death['cause_of_death'] ? htmlspecialchars($death['cause_of_death']) : '<span class="muted">Not specified</span>' ?></div>
-        </div>
     </div>
 </body>
 </html>
